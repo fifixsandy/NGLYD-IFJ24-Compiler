@@ -22,12 +22,12 @@
  
  
  typedef struct symtable{
-    symNode *root;
-    int nodeCnt;
+    symNode *rootPtr;
+    int      nodeCnt;
  }symtable;
 
- symtable* createSymtable();
- symtable* initSymtable();
+symtable*  createSymtable();
+symtable*  initSymtable  ();
 
 symNode*   createSymNode (int key, symData data);
 symNode*   insertSymNode (symNode *rootPtr, int key, symData data);
