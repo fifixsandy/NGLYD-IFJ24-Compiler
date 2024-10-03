@@ -27,7 +27,7 @@
  }symtable;
 
 symtable*  createSymtable();
-symtable*  initSymtable  ();
+void       initSymtable  (symtable *symtable);
 
 symNode*   createSymNode (int key, symData data);
 symNode*   insertSymNode (symNode *rootPtr, int key, symData data);
