@@ -79,7 +79,7 @@ symNode *createSymNode(int key, symData data){
  * The pointer to the root node is necessary for recursion, that is why there is not just the 
  * pointer to the whole tree.
  *  
- * @todo Verify the rotations.
+ * @todo Verify the rotations, add increment.
  * 
  * @param rootPtr Pointer to the root of the tree (subtree if in recursion).
  * @param key     Key of the node to be inserted.
@@ -103,30 +103,11 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
             rootPtr->data = data;
         }
     }
+
     rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
-    int balance = balanceVal(rootPtr);
-    if(balance < -1){
-        if(balanceVal(rootPtr->l) < -1){ // CHECK 0 OR 1
-            rRotate(rootPtr);
-        }
-        else if(balanceVal(rootPtr->l > 1)){ // CHECK 0 OR 1
-            lRotate(rootPtr);
-            rRotate(rootPtr);
-        }
-    }
-    else if(balance > 1){
-        if(balanceVal(rootPtr->r > 1)){ // CHECK 0 OR 1
-            lRotate(rootPtr);
-        }
-        else if(balanceVal(rootPtr->r < -1)){ // CHECK 0 OR 1
-            rRotate(rootPtr);
-            lRotate(rootPtr);
-        }
-    }
 
-    return rootPtr;
+    return rebalanceIn(rootPtr);
 }
-
 
 /**
  * @brief Deletes a node from the symtable (AVL tree).
@@ -143,7 +124,7 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
  * 
  * @return        The new root of the balanced tree after deletion.
  * 
- * @todo          Verify the rotations
+ * @todo          Verify the rotations, add decrement
  */
 
 symNode *deleteSymNode(symNode *rootPtr, int key){
@@ -184,33 +165,10 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
             return tmp;
         }
     }
+
     rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
-    int balance = balanceVal(rootPtr);
-    if(balance < -1){
-        if(balanceVal(rootPtr->l) < -1){
-            rRotate(rootPtr);
-        }
-        else if(balanceVal(rootPtr->l > 1)){
-            lRotate(rootPtr);
-            rRotate(rootPtr);
-        }
-        else{
-            rRotate(rootPtr);
-        }
-    }
-    else if(balance > 1){
-        if(balanceVal(rootPtr->r > 1)){
-            lRotate(rootPtr);
-        }
-        else if(balanceVal(rootPtr->r < -1)){
-            rRotate(rootPtr);
-            lRotate(rootPtr);
-        }
-        else{
-            lRotate(rootPtr);
-        }
-    }
-    return rootPtr;
+
+    return rebalanceDel(rootPtr);
 }
 
 /**
@@ -342,6 +300,62 @@ int heightVal(symNode *node){
 int balanceVal(symNode *node){
     return(heightVal(node->r) - heightVal(node->l));
 }
+
+symNode *rebalanceIn(symNode *node){
+        int balance = balanceVal(node);
+    if(balance < -1){
+        if(balanceVal(node->l) < -1){ // CHECK 0 OR 1
+            rRotate(node);
+        }
+        else if(balanceVal(node->l) > 1){ // CHECK 0 OR 1
+            lRotate(node);
+            rRotate(node);
+        }
+    }
+    else if(balance > 1){
+        if(balanceVal(node->r) > 1){ // CHECK 0 OR 1
+            lRotate(node);
+        }
+        else if(balanceVal(node->r) < -1){ // CHECK 0 OR 1
+            rRotate(node);
+            lRotate(node);
+        }
+    }
+    
+    return node;
+}
+
+symNode *rebalanceDel(symNode *node){
+    int balance = balanceVal(node);
+    if(balance < -1){
+        if(balanceVal(node->l) < -1){
+            rRotate(node);
+        }
+        else if(balanceVal(node->l) > 1){
+            lRotate(node);
+            rRotate(node);
+        }
+        else{
+            rRotate(node);
+        }
+    }
+    else if(balance > 1){
+        if(balanceVal(node->r) > 1){
+            lRotate(node);
+        }
+        else if(balanceVal(node->r) < -1){
+            rRotate(node);
+            lRotate(node);
+        }
+        else{
+            lRotate(node);
+        }
+    }
+
+    return node;
+}
+
+
 
 int max(int a, int b){
     return(a > b) ? a : b;
