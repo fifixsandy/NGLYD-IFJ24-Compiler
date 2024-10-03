@@ -51,18 +51,20 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
     int balance = balanceVal(rootPtr);
     if(balance < -1){
         if(balanceVal(rootPtr->l) < -1){ // CHECK 0 OR 1
-            //LL
+            rRotate(rootPtr);
         }
         else if(balanceVal(rootPtr->l > 1)){ // CHECK 0 OR 1
-            //LR
+            lRotate(rootPtr);
+            rRotate(rootPtr);
         }
     }
     else if(balance > 1){
         if(balanceVal(rootPtr->r > 1)){ // CHECK 0 OR 1
-            //RR
+            lRotate(rootPtr);
         }
         else if(balanceVal(rootPtr->r < -1)){ // CHECK 0 OR 1
-            //RL
+            rRotate(rootPtr);
+            lRotate(rootPtr);
         }
     }
 
@@ -111,24 +113,26 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
     int balance = balanceVal(rootPtr);
     if(balance < -1){
         if(balanceVal(rootPtr->l) < -1){
-            //LL
+            rRotate(rootPtr);
         }
         else if(balanceVal(rootPtr->l > 1)){
-            //LR
+            lRotate(rootPtr);
+            rRotate(rootPtr);
         }
         else{
-            //LL
+            rRotate(rootPtr);
         }
     }
     else if(balance > 1){
         if(balanceVal(rootPtr->r > 1)){
-            //RR
+            lRotate(rootPtr);
         }
         else if(balanceVal(rootPtr->r < -1)){
-            //RL
+            rRotate(rootPtr);
+            lRotate(rootPtr);
         }
         else{
-            //RR
+            lRotate(rootPtr);
         }
     }
     return rootPtr;
