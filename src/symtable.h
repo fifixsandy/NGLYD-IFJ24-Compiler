@@ -1,4 +1,8 @@
- 
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
  typedef struct symData{
     // TODO add whether float/int/string...
     bool isConst;

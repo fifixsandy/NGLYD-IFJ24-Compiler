@@ -1,6 +1,4 @@
 #include "symtable.h"
-#include <stdio.h>
-#include <stdlib.h>
  
 
 symtable* createSymtable(){
@@ -60,3 +58,56 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
 
     return rootPtr;
 }
+
+symNode *deleteSymNode(symNode *rootPtr, int key){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+
+    if(key < rootPtr->key){ // goes to left
+        rootPtr->l = deleteSymNode(rootPtr->l, key);
+        return rootPtr;
+    }
+    else if(key > rootPtr->key){ // goes to right
+        rootPtr->r = deleteSymNode(rootPtr->r, key);
+    }
+    else{ // found
+        if(rootPtr->r == NULL && rootPtr->l == NULL){ // no children
+            free(rootPtr);
+            return NULL;
+            // TODO add -- of number of nodes
+        }
+        else if(rootPtr->r != NULL && rootPtr->l != NULL){ // both children
+            symNode *min  = minSymNode(rootPtr->r);
+            rootPtr->key  = min->key;
+            rootPtr->data = min->data;
+            rootPtr->r    = deleteSymNode(rootPtr->r, min->key);
+            return rootPtr;
+        }
+        else{ // only one child
+            symNode *tmp = NULL;
+            if(rootPtr->l = NULL){
+                tmp = rootPtr->r;
+            }
+            else{
+                tmp = rootPtr->l;
+            }
+            free(rootPtr);
+            // TODO add -- of number of nodes
+            return tmp;
+        }
+    }
+}
+
+
+
+// helper functions
+symNode *minSymNode(symNode *rootPtr){
+    if(rootPtr->l = NULL){
+        return rootPtr;
+    }
+    else{
+        return(minSymNode(rootPtr->l));
+    }
+}
+
