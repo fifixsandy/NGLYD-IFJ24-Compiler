@@ -38,6 +38,7 @@ symNode*   minSymNode    (symNode *rootPtr);
 symNode*   rRotate       (symNode *node);
 symNode*   lRotate       (symNode *node);
 int        heightVal     (symNode *node);
-
+int        balanceVal    (symNode *node);
+int        max           (int first, int second);
 
  
