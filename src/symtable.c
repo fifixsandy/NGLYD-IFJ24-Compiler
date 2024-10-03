@@ -49,11 +49,21 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
     }
     rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
     int balance = balanceVal(rootPtr);
-    if(balance == -2){
-        //TODO rotations
+    if(balance < -1){
+        if(balanceVal(rootPtr->l) < -1){ // CHECK 0 OR 1
+            //LL
+        }
+        else if(balanceVal(rootPtr->l > 1)){ // CHECK 0 OR 1
+            //LR
+        }
     }
-    if(balance == 2){
-        //TODO rotations
+    else if(balance > 1){
+        if(balanceVal(rootPtr->r > 1)){ // CHECK 0 OR 1
+            //RR
+        }
+        else if(balanceVal(rootPtr->r < -1)){ // CHECK 0 OR 1
+            //RL
+        }
     }
 
     return rootPtr;
@@ -86,7 +96,7 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
         }
         else{ // only one child
             symNode *tmp = NULL;
-            if(rootPtr->l = NULL){
+            if(rootPtr->l == NULL){
                 tmp = rootPtr->r;
             }
             else{
@@ -97,17 +107,70 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
             return tmp;
         }
     }
+    rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
+    int balance = balanceVal(rootPtr);
+    if(balance < -1){
+        if(balanceVal(rootPtr->l) < -1){
+            //LL
+        }
+        else if(balanceVal(rootPtr->l > 1)){
+            //LR
+        }
+        else{
+            //LL
+        }
+    }
+    else if(balance > 1){
+        if(balanceVal(rootPtr->r > 1)){
+            //RR
+        }
+        else if(balanceVal(rootPtr->r < -1)){
+            //RL
+        }
+        else{
+            //RR
+        }
+    }
+    return rootPtr;
 }
 
-
+symNode *findSymNode(symNode *rootPtr, int key){
+    if(rootPtr == NULL){
+        return NULL;
+    }
+    else{
+        if(rootPtr->key != key){
+            if(rootPtr->key > key){
+                return(findSymNode(rootPtr->l, key));
+            }
+            else{
+                return(findSymNode(rootPtr->r, key));
+            }
+        }
+        else{
+            return rootPtr;
+        }
+    }
+}
 
 // helper functions
 symNode *minSymNode(symNode *rootPtr){
-    if(rootPtr->l = NULL){
+    if(rootPtr->l == NULL){
         return rootPtr;
     }
     else{
         return(minSymNode(rootPtr->l));
     }
+}
+
+symNode *rRotate(symNode *node){
+
+    symNode *x = node->l;
+    node->l    = x->r;
+
+    node->height = max(heightVal(node->l), heightVal(node->r)) + 1;
+    x->height    = max(heightVal(x->l), heightVal(x->r)) + 1;
+    
+    return x;
 }
 
