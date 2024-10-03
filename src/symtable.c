@@ -168,14 +168,14 @@ symNode *rRotate(symNode *node){
     symNode *x = node->l;
     node->l    = x->r;
     x->r       = node;
-    
+
     node->height = max(heightVal(node->l), heightVal(node->r)) + 1;
     x->height    = max(heightVal(x->l), heightVal(x->r)) + 1;
     
     return x;
 }
 
-symNode *lRotate(symNode *node) {
+symNode *lRotate(symNode *node){
 
     symNode *x = node->r; 
     node->r    = x->l;     
@@ -185,4 +185,16 @@ symNode *lRotate(symNode *node) {
     x->height    = max(heightVal(x->l), heightVal(x->r)) + 1;
 
     return x;
+}
+
+int heightVal(symNode *node){
+    return(node->height);
+}
+
+int balanceVal(symNode *node){
+    return(heightVal(node->r) - heightVal(node->l));
+}
+
+int max(int a, int b){
+    return(a > b) ? a : b;
 }
