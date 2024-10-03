@@ -7,7 +7,7 @@
  * implemented as a height-balanced binary search tree. Most of the functions are implemented recursively.
  * The tree balances when inserting or deleting a node, when necessary using rotations.
  * 
- * @todo Error handling, verify rotation correctness, increase/decrease number of nodes
+ * @todo Error handling
  * @author xnovakf00
  * @date 03.10.2024
 */
@@ -78,28 +78,28 @@ symNode *createSymNode(int key, symData data){
  * It is implemented recursively.
  * The pointer to the root node is necessary for recursion, that is why there is not just the 
  * pointer to the whole tree.
- *  
- * @todo Verify the rotations, add increment.
  * 
  * @param rootPtr Pointer to the root of the tree (subtree if in recursion).
  * @param key     Key of the node to be inserted.
  * @param data    Data for the node.
+ * @param tb      Pointer to a symtable for increasing the count.
  * 
  * @return        The root of the updated tree (subtree) after insertion.
  * 
  */
-symNode *insertSymNode(symNode *rootPtr, int key, symData data){
+symNode *insertSymNode(symNode *rootPtr, int key, symData data, symtable *tb){
     if(rootPtr == NULL){
+        tb->nodeCnt++;
         return createSymNode(key, data);
     }
     else{
-        if(key < rootPtr->key){
-            rootPtr->l = insertSymNode(rootPtr->l, key, data);
+        if(key < rootPtr->key){ // going left
+            rootPtr->l = insertSymNode(rootPtr->l, key, data, tb);
         }
-        else if(key > rootPtr->key){
-            rootPtr->r = insertSymNode(rootPtr->r, key, data);
+        else if(key > rootPtr->key){ // going right
+            rootPtr->r = insertSymNode(rootPtr->r, key, data, tb);
         }
-        else{
+        else{ // keys are identical, data rewrite
             rootPtr->data = data;
         }
     }
@@ -121,35 +121,34 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
  * 
  * @param rootPtr Pointer to the root of the tree (or subtree).
  * @param key     Key of the node to be deleted.
+ * @param tb      Pointer to a symtable for decreasing the count.
  * 
  * @return        The new root of the balanced tree after deletion.
- * 
- * @todo          Verify the rotations, add decrement
  */
 
-symNode *deleteSymNode(symNode *rootPtr, int key){
+symNode *deleteSymNode(symNode *rootPtr, int key, symtable *tb){
     if(rootPtr == NULL){
         return NULL;
     }
 
-    if(key < rootPtr->key){ // goes to left
-        rootPtr->l = deleteSymNode(rootPtr->l, key);
+    if(key < rootPtr->key){ // going left
+        rootPtr->l = deleteSymNode(rootPtr->l, key, tb);
         return rootPtr;
     }
-    else if(key > rootPtr->key){ // goes to right
-        rootPtr->r = deleteSymNode(rootPtr->r, key);
+    else if(key > rootPtr->key){ // going right
+        rootPtr->r = deleteSymNode(rootPtr->r, key, tb);
     }
     else{ // found
         if(rootPtr->r == NULL && rootPtr->l == NULL){ // no children
             free(rootPtr);
+            tb->nodeCnt--;
             return NULL;
-            // TODO add -- of number of nodes
         }
         else if(rootPtr->r != NULL && rootPtr->l != NULL){ // both children
             symNode *min  = minSymNode(rootPtr->r);
             rootPtr->key  = min->key;
             rootPtr->data = min->data;
-            rootPtr->r    = deleteSymNode(rootPtr->r, min->key);
+            rootPtr->r    = deleteSymNode(rootPtr->r, min->key, tb);
             return rootPtr;
         }
         else{ // only one child
@@ -161,7 +160,7 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
                 tmp = rootPtr->l;
             }
             free(rootPtr);
-            // TODO add -- of number of nodes
+            tb->nodeCnt--;
             return tmp;
         }
     }

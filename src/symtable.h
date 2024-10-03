@@ -50,15 +50,15 @@ symtable*  createSymtable();
 void       initSymtable  (symtable *symtable);
 
 symNode*   createSymNode (int key, symData data);
-symNode*   insertSymNode (symNode *rootPtr, int key, symData data);
-symNode*   deleteSymNode (symNode *rootPtr, int key);
+symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
+symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, int key);
 
 /* Helper functions used in implementations of the above */
 symNode*   minSymNode    (symNode *rootPtr);
 symNode*   rRotate       (symNode *node);
 symNode*   lRotate       (symNode *node);
-symNode*   rebalance   (symNode *node);
+symNode*   rebalance     (symNode *node);
 int        heightVal     (symNode *node);
 int        balanceVal    (symNode *node);
 int        max           (int a, int b);
