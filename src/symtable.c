@@ -1,6 +1,26 @@
-#include "symtable.h"
- 
+/**
+ * @file symtable.c
+ * 
+ * @brief AVL-balanced binary search (vv-BVS) tree implementation of a table of symbols for a compiler.
+ * 
+ * File contains implementation for functions declared in symtable.h. Table of symbols is
+ * implemented as a height-balanced binary search tree. Most of the functions are implemented recursively.
+ * The tree balances when inserting or deleting a node, when necessary using rotations.
+ * 
+ * @todo Error handling, verify rotation correctness, increase/decrease number of nodes
+ * @author xnovakf00
+ * @date 03.10.2024
+*/
 
+#include "symtable.h"
+
+
+/**
+ * @brief  Creates an empty symtable.
+ * 
+ * @return Initialised table if allocation is successful, NULL otherwise.
+ * @todo   Error handling
+ */
 symtable* createSymtable(){
     symtable *table = (symtable *)malloc(sizeof(symtable));
     if(table == NULL){
@@ -11,11 +31,28 @@ symtable* createSymtable(){
     return table;
 }
 
+/**
+ * @brief Initialises symtable for further work.
+ * 
+ * @param symtable Symtable to be initialised.
+ * @todo Error handling
+ */
+
 void initSymtable(symtable *symtable){
     symtable->nodeCnt = 0;
     symtable->rootPtr = NULL;
 }
 
+/**
+ * @brief Creates an element of a symtable, symNode with key and data.
+ * 
+ * @param key  Key on which the node will be located in the tree.
+ * @param data Extra useful data describing the symbol element.
+ * 
+ * @todo Error handling.
+ * 
+ * @return Pointer to the created symNode.
+ */
 symNode *createSymNode(int key, symData data){
     symNode *newNode = (symNode *)malloc(sizeof(symNode));
     if(newNode == NULL){
@@ -32,6 +69,25 @@ symNode *createSymNode(int key, symData data){
     return newNode;
 }
 
+/**
+ * @brief Inserts a new node into a symtable.
+ * 
+ * When there is no node in the symtable with the same key as the inserted node, it is
+ * created and added. If the tree includes a node with the same key, the data is rewritten.
+ * After inserting, rotations are performed, if necessary to keep the tree balanced.
+ * It is implemented recursively.
+ * The pointer to the root node is necessary for recursion, that is why there is not just the 
+ * pointer to the whole tree.
+ *  
+ * @todo Verify the rotations.
+ * 
+ * @param rootPtr Pointer to the root of the tree (subtree if in recursion).
+ * @param key     Key of the node to be inserted.
+ * @param data    Data for the node.
+ * 
+ * @return        The root of the updated tree (subtree) after insertion.
+ * 
+ */
 symNode *insertSymNode(symNode *rootPtr, int key, symData data){
     if(rootPtr == NULL){
         return createSymNode(key, data);
@@ -70,6 +126,25 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
 
     return rootPtr;
 }
+
+
+/**
+ * @brief Deletes a node from the symtable (AVL tree).
+ * 
+ * If a node with the specified key exists, it is removed from the tree and the tree is reconstructed,
+ * if the deleted node had children. 
+ * After deletion, rotations are performed if necessary.
+ * 
+ * Similar to insertion, the function is implemented recursively, requiring the pointer 
+ * to the root node to traverse the tree. 
+ * 
+ * @param rootPtr Pointer to the root of the tree (or subtree).
+ * @param key     Key of the node to be deleted.
+ * 
+ * @return        The new root of the balanced tree after deletion.
+ * 
+ * @todo          Verify the rotations
+ */
 
 symNode *deleteSymNode(symNode *rootPtr, int key){
     if(rootPtr == NULL){
@@ -138,6 +213,16 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
     return rootPtr;
 }
 
+/**
+ * @brief Recursively finds a node in the symtable based on the key.
+ * 
+ * As with the insertSymNode and deleteSymNode, the root is needed.
+ * 
+ * @param rootPtr Pointer to the tree (subtree) for the node to be found.
+ * @param key     Key of the node to be found.
+ * 
+ * @return If the node is found, the pointer to it. If the node does not exist, NULL.
+ */
 symNode *findSymNode(symNode *rootPtr, int key){
     if(rootPtr == NULL){
         return NULL;
@@ -157,7 +242,18 @@ symNode *findSymNode(symNode *rootPtr, int key){
     }
 }
 
-// helper functions
+
+/* SECTION Helper functions -> used for implementation of the above */
+
+/**
+ * @brief Finds the leftenmost node in a subtree, the node with the smallest key.
+ * 
+ * @param rootPtr Pointer to the root of the subtree.
+ * 
+ * @see deleteSymNode
+ * 
+ * @return Leftenmost node.
+ */
 symNode *minSymNode(symNode *rootPtr){
     if(rootPtr->l == NULL){
         return rootPtr;
@@ -167,6 +263,17 @@ symNode *minSymNode(symNode *rootPtr){
     }
 }
 
+/**
+ * @brief Performs right-rotation of the subtree from the node.
+ * 
+ * Used for rebalancing the tree if the left side is heavier than the right.
+ * 
+ * @param node Pointer to the critical node around which the rotation is performed.
+ * 
+ * @see symNodeInsert, symNodeDelete
+ * 
+ * @return Pointer to a new root of a rotated subtree.
+ */
 symNode *rRotate(symNode *node){
 
     symNode *x = node->l;
@@ -179,6 +286,17 @@ symNode *rRotate(symNode *node){
     return x;
 }
 
+/**
+ * @brief Performs left-rotation of the subtree from the node.
+ * 
+ * Used for rebalancing the tree if the righht side is heavier than the right.
+ * 
+ * @param node Pointer to the critical node around which the rotation is performed.
+ * 
+ * @see symNodeInsert, symNodeDelete
+ * 
+ * @return Pointer to a new root of a rotated subtree.
+ */
 symNode *lRotate(symNode *node){
 
     symNode *x = node->r; 
@@ -191,10 +309,36 @@ symNode *lRotate(symNode *node){
     return x;
 }
 
+/**
+ * @brief Gets the height of a node.
+ * 
+ * Height is the maximum number of edges from the node to any of leaf nodes in its subtree.
+ * 
+ * @see balanceVal
+ * 
+ * @param node Pointer to a node we want height of.
+ * 
+ * @return Height of the node or 0 if node does not exist.
+ */
 int heightVal(symNode *node){
+    if(node == NULL){
+        return 0;
+    }
     return(node->height);
 }
 
+/**
+ * @brief Calculates the balance of a node.
+ * 
+ * Balance is the difference between the height of the right and the left node.
+ * If its negative, the node is heavier on the left, if positive, on the right and if 0 it is balanced.
+ * In AVL height-balanced trees, the height of each node should be <-1,1>. If it is out of these bounds, 
+ * rotation is required.
+ * 
+ * @param node Node to check the balance of.
+ * 
+ * @return Balance number based on the heights of the children.
+ */
 int balanceVal(symNode *node){
     return(heightVal(node->r) - heightVal(node->l));
 }
@@ -202,3 +346,5 @@ int balanceVal(symNode *node){
 int max(int a, int b){
     return(a > b) ? a : b;
 }
+
+/* EOF symtable.c */

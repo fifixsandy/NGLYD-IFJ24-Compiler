@@ -4,7 +4,7 @@
  * @brief Header file for a table of symbols for a compiler.
  * 
  * File contains function declarations for working with symtable, implemented as a 
- * AVL-balanced binary search tree, such as insertion, deletion, search. It also includes 
+ * AVL-balanced binary search tree (vv-BVS), such as insertion, deletion, search. It also includes 
  * data structs used in the implementation.
  * 
  * @todo complete symData struct to handle multiple types.
@@ -30,13 +30,13 @@
  
  typedef struct symNode{
     int key;
-    int height;
+    int height; // the maximum number of edges from the node to any of the leaves in its subtree
 
     symData data;
 
-    struct symNode *r;
-    struct symNode *l;
- }symNode;
+    struct symNode *r; // pointer to the right node (with greater key)
+    struct symNode *l; // pointer to the right node (with lower key)
+ }symNode; // structure representing the entry in the table of symbols (node of a tree)
  
  
  typedef struct symtable{
@@ -45,7 +45,7 @@
  }symtable;
 
 
-/* Functions for working with symtable (user)*/
+/* Functions for working with symtable (user) */
 symtable*  createSymtable();
 void       initSymtable  (symtable *symtable);
 
