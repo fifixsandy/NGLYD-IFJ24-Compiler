@@ -7,7 +7,7 @@
  * AVL-balanced binary search tree (vv-BVS), such as insertion, deletion, search. It also includes 
  * data structs used in the implementation.
  * 
- * @todo complete symData struct to handle multiple types.
+ * @todo complete symData struct to handle multiple types, STACKING
  * @author xnovakf00
  * @date 03.10.2024
 */

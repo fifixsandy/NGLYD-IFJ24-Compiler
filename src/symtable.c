@@ -7,7 +7,7 @@
  * implemented as a height-balanced binary search tree. Most of the functions are implemented recursively.
  * The tree balances when inserting or deleting a node, when necessary using rotations.
  * 
- * @todo Error handling
+ * @todo Error handling, STACKING
  * @author xnovakf00
  * @date 03.10.2024
 */
