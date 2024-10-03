@@ -17,6 +17,9 @@ typedef enum {
     tokentype_lbracket,
     tokentype_rbracket,
 
+    tokentype_lcbracket,
+    tokentype_rcbracket,
+
     tokentype_plus,
     tokentype_minus,
     tokentype_divide,

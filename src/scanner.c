@@ -90,6 +90,13 @@ int getToken() {
             current_token.type = tokentype_rbracket;
             break;
         
+        case '{':
+            current_token.type = tokentype_lcbracket;
+            break;
+
+        case '}':
+            current_token.type = tokentype_rcbracket;
+
         case '!':
             nextchar = getc(input_file);
             if (nextchar == '=') {
@@ -100,10 +107,16 @@ int getToken() {
                 //TODO ERROR
             }
             break;
+        case '0':
+            current_token.type = tokentype_zeroint;
+            break;
+        case '1' ... '9':
+            current_token.type = tokentype_int;
+            break;
     }
 
-    if(isdigit(c)) {
-        current_token.type = tokentype_int;
+    if(current_token.type == tokentype_zeroint || current_token.type == tokentype_int) {
+        
         size_t buffer_size = 2;
         current_token.value = malloc(buffer_size);
         if(current_token.value == NULL) {
@@ -118,13 +131,14 @@ int getToken() {
                 buffer_size *= 2;
                 current_token.value = realloc(current_token.value, buffer_size);
                 if (current_token.value == NULL) {
-                    fprintf(stderr, "Failed to reallocate memory");
+                    fprintf(stderr, "Failed to reallocate memory\n");
                     return -1;
                 }
             }
 
             current_token.value[index++] = (char) nextchar;
         }
+
         //current_token->value[index] = '\0' TREBA NETREBA? POVEDZTE CHAT
         if (nextchar == '.') {
             current_token.type = tokentype_float;
@@ -135,17 +149,21 @@ int getToken() {
                     buffer_size *= 2;
                     current_token.value = realloc(current_token.value, buffer_size);
                     if (current_token.value == NULL) {
-                        fprintf(stderr, "Failed to reallocate memory");
-                    return -1;
+                        fprintf(stderr, "Failed to reallocate memory\n");
+                        return -1;
                     }
                 }
                 current_token.value[index++] = (char) nextchar;
             }
         }
         if(nextchar == 'e' || nextchar == 'E') {
+            if(current_token.type == tokentype_zeroint) {
+                fprintf(stderr, "Number zero cannot have an exponent\n");
+                return -1;
+            }
             current_token.type = tokentype_exponentialnum;
             current_token.value[index++] = (char) nextchar;
-            
+
             nextchar = getc(input_file);
             if(nextchar == '+' || nextchar == '-') {
                 current_token.value[index++] = (char) nextchar;
@@ -157,13 +175,17 @@ int getToken() {
                     buffer_size *= 2;
                     current_token.value = realloc(current_token.value, buffer_size);
                     if (current_token.value == NULL) {
-                        fprintf(stderr, "Failed to reallocate memory");
-                    return -1;
+                        fprintf(stderr, "Failed to reallocate memory\n");
+                        return -1;
                     }
                 }
                 current_token.value[index++] = (char) nextchar;
                 nextchar = getc(input_file);
             }
+        }
+        if(current_token.value[index-1] == 'e' || current_token.value[index-1] == 'E' || current_token.value[index-1] == '.') {
+            fprintf(stderr, "Number incomplete\n");
+            return -1;
         }
 
         printf("%s\n", current_token.value); //POMOCNE VYPISY
