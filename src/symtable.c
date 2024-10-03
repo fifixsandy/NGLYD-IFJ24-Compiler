@@ -106,7 +106,7 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data){
 
     rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
 
-    return rebalanceIn(rootPtr);
+    return rebalance(rootPtr);
 }
 
 /**
@@ -168,7 +168,7 @@ symNode *deleteSymNode(symNode *rootPtr, int key){
 
     rootPtr->height = max(heightVal(rootPtr->l),heightVal(rootPtr->r)) + 1;
 
-    return rebalanceDel(rootPtr);
+    return rebalance(rootPtr);
 }
 
 /**
@@ -201,7 +201,11 @@ symNode *findSymNode(symNode *rootPtr, int key){
 }
 
 
-/* SECTION Helper functions -> used for implementation of the above */
+/************************************************************************************************************** 
+                                    SECTION Helper functions 
+                         Used for implementation of the above functions
+                      (if you are just using the ADT, you can ignore these)
+*************************************************************************************************************/
 
 /**
  * @brief Finds the leftenmost node in a subtree, the node with the smallest key.
@@ -301,60 +305,39 @@ int balanceVal(symNode *node){
     return(heightVal(node->r) - heightVal(node->l));
 }
 
-symNode *rebalanceIn(symNode *node){
-        int balance = balanceVal(node);
-    if(balance < -1){
-        if(balanceVal(node->l) < -1){ // CHECK 0 OR 1
-            rRotate(node);
-        }
-        else if(balanceVal(node->l) > 1){ // CHECK 0 OR 1
-            lRotate(node);
-            rRotate(node);
-        }
-    }
-    else if(balance > 1){
-        if(balanceVal(node->r) > 1){ // CHECK 0 OR 1
-            lRotate(node);
-        }
-        else if(balanceVal(node->r) < -1){ // CHECK 0 OR 1
-            rRotate(node);
-            lRotate(node);
-        }
-    }
-    
-    return node;
-}
-
-symNode *rebalanceDel(symNode *node){
+/**
+ * @brief Rebalances the node according to AVL tree balancing rules
+ * 
+ * This function firstly checks, whether the rotations for rebalancing are needed. If yes,
+ * it rotates the nodes according to 4 different scenarios: LL, LR, RR, RL.
+ * 
+ * @param node Pointer to a node to be rebalanced.
+ * 
+ * @return New root after rebalancing.
+ */
+symNode *rebalance(symNode *node){
     int balance = balanceVal(node);
-    if(balance < -1){
-        if(balanceVal(node->l) < -1){
-            rRotate(node);
+    if(balance < -1){ // The node is left-heavy (out of <-1,1> bounds)
+        if(balanceVal(node->l) <= 0){ // Left child is left-heavy (or balanced after deletion) -> LL
+           return rRotate(node);
         }
-        else if(balanceVal(node->l) > 1){
-            lRotate(node);
-            rRotate(node);
-        }
-        else{
-            rRotate(node);
+        else if(balanceVal(node->l) > 0){ // Left child is right-heavy -> LR
+            node->l = lRotate(node->l);
+            return rRotate(node);
         }
     }
-    else if(balance > 1){
-        if(balanceVal(node->r) > 1){
-            lRotate(node);
+    else if(balance > 1){ // The node is right-heavy (out of <-1,1> bounds)
+        if(balanceVal(node->r) >= 0){ // Right child is right-heavy (or balanced after deletion) -> RR
+            return lRotate(node);
         }
-        else if(balanceVal(node->r) < -1){
-            rRotate(node);
-            lRotate(node);
-        }
-        else{
-            lRotate(node);
+        else if(balanceVal(node->r) < 0){ // Right child is right-heavy -> RL
+            node->r = rRotate(node->r);
+            return lRotate(node);
         }
     }
 
-    return node;
+    return node; // The node is balanced
 }
-
 
 
 int max(int a, int b){
