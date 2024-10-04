@@ -64,11 +64,12 @@ symNode*   createSymNode (int key, symData data);
 symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
 symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, int key);
-void       freeSymNode   (symNode *node);
+void       freeSymNodes   (symNode *node);
 
 void       initStack     (stack *st);
 void       push          (stack *st, symtable *tb);
 void       pop           (stack *st);
+bool       stackEmpty    (stack *st);
 
 
 /* Helper functions used in implementations of the above */

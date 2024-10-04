@@ -200,6 +200,35 @@ symNode *findSymNode(symNode *rootPtr, int key){
 }
 
 
+/**
+ * @brief      Frees all nodes in the tree starting from the given node.
+ * 
+ * @param node Pointer to the root of the subtree to be freed.
+ * 
+ * @warning    Don't confuse it with deleteSymNode. This function does not rebalance the tree
+ *             but frees all nodes in it. Should only be used when removing the tree.
+ */
+void freeSymNodes(symNode *node){
+    if(node == NULL){
+        return;
+    }
+    freeSymNodes(node->r);
+    freeSymNodes(node->l);
+    free(node);
+}
+
+/**
+ * @brief Frees the symbol table and all its nodes.
+ * 
+ * @param tb Pointer to the symbol table to be deleted.
+ */
+void deleteSymtable(symtable *tb){
+    if(tb == NULL){
+        return;
+    }
+    freeSymNode(tb->rootPtr);
+    free(tb);
+}
 /************************************************************************************************************** 
                                     SECTION Helper functions 
                          Used for implementation of the above functions
