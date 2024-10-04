@@ -6,10 +6,11 @@
  * File contains implementation for functions declared in symtable.h. Table of symbols is
  * implemented as a height-balanced binary search tree. Most of the functions are implemented recursively.
  * The tree balances when inserting or deleting a node, when necessary using rotations.
+ * Symtables can be stored in a stack, so that representation of scopes in code is possible.
  * 
- * @todo Error handling, STACKING
+ * @todo Error handling
  * @author xnovakf00
- * @date 03.10.2024
+ * @date 04.10.2024
 */
 
 #include "symtable.h"

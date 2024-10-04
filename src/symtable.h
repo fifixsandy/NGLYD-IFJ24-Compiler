@@ -6,10 +6,13 @@
  * File contains function declarations for working with symtable, implemented as a 
  * AVL-balanced binary search tree (vv-BVS), such as insertion, deletion, search. It also includes 
  * data structs used in the implementation.
+ * Another part is the stack of symtables, which represents different scopes in code. Basic operations as
+ * init, pop, push are present, but also a very important function findInStack (for more information check
+ * function documentation in symtable.c).
  * 
- * @todo complete symData struct to handle multiple types, STACKING
+ * @todo complete symData struct to handle multiple types
  * @author xnovakf00
- * @date 03.10.2024
+ * @date 04.10.2024
 */
 
 #include <stdbool.h>
@@ -55,7 +58,7 @@ typedef struct stack{
    int       elemCnt;
 }stack;
 
-/* Functions for working with symtable (user) */
+/* Functions for working with symtable and stack of symtables (user) */
 symtable*  createSymtable();
 void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
