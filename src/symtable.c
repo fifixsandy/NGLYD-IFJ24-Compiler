@@ -226,9 +226,104 @@ void deleteSymtable(symtable *tb){
     if(tb == NULL){
         return;
     }
-    freeSymNode(tb->rootPtr);
+    freeSymNodes(tb->rootPtr);
     free(tb);
 }
+
+/**
+ * @brief Initializes the stack.
+ * 
+ * @param st Pointer to the stack to initialize.
+ */
+void initStack(stack *st){
+    st->top     = NULL;
+    st->elemCnt = 0;
+}
+
+/**
+ * @brief Creates a new stack element.
+ * 
+ * @param tb Pointer to the symbol table to be stored in the new element.
+ * 
+ * @return Pointer to the created stack element or NULL if allocation fails.
+ * 
+ * @todo Handle errors
+ */
+stackElem *createStElem(symtable *tb){
+    stackElem* newElem = (stackElem*)malloc(sizeof(stackElem));
+    if(newElem == NULL){
+        //ERROR
+        return NULL;
+    }
+    newElem->tbPtr = tb;
+    newElem->next  = NULL;
+    return newElem;
+}
+
+/**
+ * @brief Pushes a symbol table onto the stack.
+ * 
+ * Creates a new stack element containing the symbol table and adds it to the top of the stack.
+ * 
+ * @param st Pointer to the stack.
+ * @param tb Pointer to the symbol table to be pushed.
+ */
+void push(stack *st, symtable *tb){
+    stackElem *newElem = createStElem(tb);
+    newElem->next      = st->top;
+    st->top            = newElem;
+    st->elemCnt++;
+}
+
+/**
+ * @brief Checks if the stack is empty.
+ * 
+ * @param st Pointer to the stack.
+ * @return True if the stack is empty, false otherwise.
+ */
+bool stackEmpty(stack *st){
+    return(st->top == NULL);
+}
+
+/**
+ * @brief Pops a symbol table from the stack.
+ * 
+ * Removes the top element from the stack and returns its symbol table pointer.
+ * 
+ * @warning If you don't need the symbol table after poping, call deleteSymtable on it.
+ * 
+ * @param st Pointer to the stack.
+ * 
+ * @return Pointer to the symbol table removed from the top of the stack or NULL if the stack is empty.
+ */
+symtable *pop(stack *st){
+    if(stackEmpty(st)){
+        return NULL;
+    }
+
+    stackElem *tmp    = st->top;
+    symtable  *tbPtr  = tmp->tbPtr;
+    st->top           = tmp->next;
+    st->elemCnt--;
+    free(tmp);
+
+    return tbPtr;
+}
+
+/**
+ * @brief Frees the entire stack and its elements.
+ * 
+ * Pops all elements from the stack and deletes their associated symbol tables.
+ * 
+ * @param st Pointer to the stack to be freed.
+ */
+void freeStack(stack *st){
+    while(!stackEmpty(st)){
+        symtable *tb = pop(st);
+        deleteSymtable(tb);
+    }
+}
+
 /************************************************************************************************************** 
                                     SECTION Helper functions 
                          Used for implementation of the above functions

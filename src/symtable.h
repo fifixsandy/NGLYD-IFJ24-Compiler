@@ -46,7 +46,7 @@
 
 
 typedef struct stackElem{
-   symtable         *tb;
+   symtable         *tbPtr;
    struct stackElem *next;
 }stackElem;
 
@@ -64,12 +64,14 @@ symNode*   createSymNode (int key, symData data);
 symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
 symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, int key);
-void       freeSymNodes   (symNode *node);
+void       freeSymNodes  (symNode *node);
 
 void       initStack     (stack *st);
 void       push          (stack *st, symtable *tb);
-void       pop           (stack *st);
+symtable*  pop           (stack *st);
 bool       stackEmpty    (stack *st);
+stackElem* createStElem  (symtable *tb);
+void       freeStack     (stack *st);
 
 
 /* Helper functions used in implementations of the above */
