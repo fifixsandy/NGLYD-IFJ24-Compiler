@@ -65,7 +65,7 @@ symNode *createSymNode(int key, symData data){
 
     newNode->data   = data;
     newNode->key    = key;
-    newNode->height = 0;
+    newNode->height = 1;
     newNode->l      = NULL;
     newNode->r      = NULL;
 
@@ -407,7 +407,7 @@ symNode *rRotate(symNode *node){
  * @return     Pointer to a new root of a rotated subtree.
  */
 symNode *lRotate(symNode *node){
-
+    
     symNode *x = node->r; 
     node->r    = x->l;     
     x->l       = node;
