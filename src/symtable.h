@@ -1,18 +1,18 @@
 /**
- * @file symtable.h
+ * @file   symtable.h
  * 
- * @brief Header file for a table of symbols for a compiler.
+ * @brief  Header file for a table of symbols for a compiler.
  * 
- * File contains function declarations for working with symtable, implemented as a 
- * AVL-balanced binary search tree (vv-BVS), such as insertion, deletion, search. It also includes 
- * data structs used in the implementation.
- * Another part is the stack of symtables, which represents different scopes in code. Basic operations as
- * init, pop, push are present, but also a very important function findInStack (for more information check
- * function documentation in symtable.c).
+ *         File contains function declarations for working with symtable, implemented as a 
+ *         AVL-balanced binary search tree (vv-BVS), such as insertion, deletion, search. It also includes 
+ *         data structs used in the implementation.
+ *         Another part is the stack of symtables, which represents different scopes in code. Basic operations as
+ *         init, pop, push are present, but also a very important function findInStack (for more information check
+ *         function documentation in symtable.c).
  * 
- * @todo complete symData struct to handle multiple types
+ * @todo   complete symData struct to handle multiple types
  * @author xnovakf00
- * @date 04.10.2024
+ * @date   04.10.2024
 */
 
 #include <stdbool.h>
