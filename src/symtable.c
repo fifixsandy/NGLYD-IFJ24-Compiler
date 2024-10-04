@@ -505,4 +505,54 @@ int max(int a, int b){
     return(a > b) ? a : b;
 }
 
+/************************************************************************************************************** 
+                                         SECTION Debug print
+                       These functions print out .dot representation of symtable.
+          They should SOLELY be used when debugging and should not be used in final product!
+*************************************************************************************************************/
+
+/**
+ * @brief      Prints .dot representation of symtable
+ * 
+ *             Copy the printed representation to https://dreampuf.github.io/GraphvizOnline and see.
+ *             Recommended output file is stdout.
+ * 
+ * @param file Output file
+ * @param tb   Pointer to symtable for printing
+ */
+void printSymtable(FILE *file, symtable *tb){
+    if(tb == NULL){
+        return;
+    }
+    fprintf(file, "digraph G{\n");
+    printNode(file, tb->rootPtr);
+    fprintf(file, "}\n");
+
+}
+
+/**
+ * @brief       Function for printing .dot of individual nodes.
+ * 
+ * @param file  Output file.
+ * @param node  Pointer to node to be printed out.
+ */
+void printNode(FILE *file, symNode *node){
+    if(node == NULL)
+    {
+        return;
+    }
+
+    fprintf(file, "%d [label=\"%d\"];\n", node->key, node->key);
+    
+    if(node->l != NULL){
+        fprintf(file, "%d -> %d [style=dashed];\n", node->key, node->l->key);
+        printNode(file, node->l);
+    }
+    if(node->r != NULL){
+        fprintf(file, "%d -> %d;\n", node->key, node->r->key);
+        printNode(file, node->r);
+    }
+}
+
+
 /* EOF symtable.c */

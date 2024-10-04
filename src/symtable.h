@@ -9,6 +9,7 @@
  *         Another part is the stack of symtables, which represents different scopes in code. Basic operations as
  *         init, pop, push are present, but also a very important function findInStack (for more information check
  *         function documentation in symtable.c).
+ *         Includes also functions for printing out .dot representation of symtable.
  * 
  * @todo   complete symData struct to handle multiple types
  * @author xnovakf00
@@ -89,4 +90,7 @@ int        heightVal     (symNode *node);
 int        balanceVal    (symNode *node);
 int        max           (int a, int b);
 
+/* Functions for printing .dot file for debugging */
+void printSymtable(FILE *file, symtable *tb);
+void printNode(FILE *file, symNode *node);
 /* EOF symtable.h */
