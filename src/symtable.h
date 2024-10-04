@@ -45,14 +45,31 @@
  }symtable;
 
 
+typedef struct stackElem{
+   symtable         *tb;
+   struct stackElem *next;
+}stackElem;
+
+typedef struct stack{
+   stackElem *top;
+   int       elemCnt;
+}stack;
+
 /* Functions for working with symtable (user) */
 symtable*  createSymtable();
-void       initSymtable  (symtable *symtable);
+void       initSymtable  (symtable *tb);
+void       deleteSymtable(symtable *tb);
 
 symNode*   createSymNode (int key, symData data);
 symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
 symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, int key);
+void       freeSymNode   (symNode *node);
+
+void       initStack     (stack *st);
+void       push          (stack *st, symtable *tb);
+void       pop           (stack *st);
+
 
 /* Helper functions used in implementations of the above */
 symNode*   minSymNode    (symNode *rootPtr);

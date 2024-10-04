@@ -38,9 +38,9 @@ symtable* createSymtable(){
  * @todo Error handling
  */
 
-void initSymtable(symtable *symtable){
-    symtable->nodeCnt = 0;
-    symtable->rootPtr = NULL;
+void initSymtable(symtable *tb){
+    tb->nodeCnt = 0;
+    tb->rootPtr = NULL;
 }
 
 /**
