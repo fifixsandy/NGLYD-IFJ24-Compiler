@@ -199,7 +199,6 @@ symNode *findSymNode(symNode *rootPtr, int key){
     }
 }
 
-
 /**
  * @brief      Frees all nodes in the tree starting from the given node.
  * 
@@ -322,6 +321,28 @@ void freeStack(stack *st){
         symtable *tb = pop(st);
         deleteSymtable(tb);
     }
+}
+
+/**
+ * @brief     Looks for an entry of a symbol with given key in the whole stack of symtables.
+ * 
+ *            Checks all of symtables in stack, until a node with the key is found 
+ *            or until there are no more tables to check.
+ * 
+ * @param st  Pointer to the stack to search in.
+ * @param key Key of the wanted symbol.
+ * 
+ * @return    Pointer to the symNode representing the symbol if found, NULL if not found in any of the parts of the stack. 
+ */
+symNode *findInStack(stack *st, int key){
+    symNode   *found = NULL;
+    stackElem *se    = st->top;
+    while(!stackBottom(se) && found == NULL){
+        found = findSymNode(se->tbPtr->rootPtr, key);
+        se = se->next;
+    }
+
+    return found;
 }
 
 /************************************************************************************************************** 
@@ -460,6 +481,20 @@ symNode *rebalance(symNode *node){
     }
 
     return node; // The node is balanced
+}
+
+/**
+ * @brief    Checks whether the stack element is the floor of the stack.
+ * 
+ * @warning  The function checks if the pointer is NULL, representing the end of the stack,
+ *           not the lowest element.
+
+ * @param se Pointer to the stack element to check.
+ * 
+ * @return   True if it is the bottom (NULL), false otherwise.
+ */
+bool stackBottom(stackElem *se){
+    return(se == NULL);
 }
 
 

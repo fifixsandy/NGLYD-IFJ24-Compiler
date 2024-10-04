@@ -72,6 +72,9 @@ symtable*  pop           (stack *st);
 bool       stackEmpty    (stack *st);
 stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
+bool       stackBottom   (stackElem *se);
+
+symNode*   findInStack   (stack *st, int key);
 
 
 /* Helper functions used in implementations of the above */
