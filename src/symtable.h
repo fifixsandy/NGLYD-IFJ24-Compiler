@@ -33,7 +33,7 @@
  
  
  typedef struct symNode{
-    int key;
+    char *key;
     int height; // the maximum number of edges from the node to any of the leaves in its subtree
 
     symData data;
@@ -64,10 +64,10 @@ symtable*  createSymtable();
 void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
-symNode*   createSymNode (int key, symData data);
-symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
-symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
-symNode*   findSymNode   (symNode *rootPtr, int key);
+symNode*   createSymNode (char *key, symData data);
+symNode*   insertSymNode (symNode *rootPtr, char *key, symData data, symtable *tb);
+symNode*   deleteSymNode (symNode *rootPtr,  char *key, symtable *tb);
+symNode*   findSymNode   (symNode *rootPtr, char *key);
 void       freeSymNodes  (symNode *node);
 
 void       initStack     (stack *st);
@@ -78,7 +78,7 @@ stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
 bool       stackBottom   (stackElem *se);
 
-symNode*   findInStack   (stack *st, int key);
+symNode*   findInStack   (stack *st, char *key);
 
 
 /* Helper functions used in implementations of the above */
