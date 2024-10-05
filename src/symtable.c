@@ -56,7 +56,7 @@ void initSymtable(symtable *tb){
  * 
  * @return     Pointer to the created symNode.
  */
-symNode *createSymNode(int key, symData data){
+symNode *createSymNode(char *key, symData data){
     symNode *newNode = (symNode *)malloc(sizeof(symNode));
     if(newNode == NULL){
         // TODO HANDLE ERROR;
@@ -90,16 +90,16 @@ symNode *createSymNode(int key, symData data){
  * @return        The root of the updated tree (subtree) after insertion.
  * 
  */
-symNode *insertSymNode(symNode *rootPtr, int key, symData data, symtable *tb){
+symNode *insertSymNode(symNode *rootPtr, char *key, symData data, symtable *tb){
     if(rootPtr == NULL){
         tb->nodeCnt++;
         return createSymNode(key, data);
     }
     else{
-        if(key < rootPtr->key){ // going left
+        if(strcmp(key, rootPtr->key) < 0){ // going left
             rootPtr->l = insertSymNode(rootPtr->l, key, data, tb);
         }
-        else if(key > rootPtr->key){ // going right
+        else if(strcmp(key, rootPtr->key) > 0){ // going right
             rootPtr->r = insertSymNode(rootPtr->r, key, data, tb);
         }
         else{ // keys are identical, data rewrite
@@ -128,16 +128,16 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data, symtable *tb){
  * 
  * @return        The new root of the balanced tree after deletion.
  */
-symNode *deleteSymNode(symNode *rootPtr, int key, symtable *tb){
+symNode *deleteSymNode(symNode *rootPtr, char *key, symtable *tb){
     if(rootPtr == NULL){
         return NULL;
     }
 
-    if(key < rootPtr->key){ // going left
+    if(strcmp(key, rootPtr->key) < 0){ // going left
         rootPtr->l = deleteSymNode(rootPtr->l, key, tb);
         return rootPtr;
     }
-    else if(key > rootPtr->key){ // going right
+    else if(strcmp(key, rootPtr->key) > 0){ // going right
         rootPtr->r = deleteSymNode(rootPtr->r, key, tb);
     }
     else{ // found
@@ -182,12 +182,12 @@ symNode *deleteSymNode(symNode *rootPtr, int key, symtable *tb){
  * 
  * @return        If the node is found, the pointer to it. If the node does not exist, NULL.
  */
-symNode *findSymNode(symNode *rootPtr, int key){
+symNode *findSymNode(symNode *rootPtr, char *key){
     if(rootPtr == NULL){
         return NULL;
     }
     else{
-        if(rootPtr->key != key){
+        if(strcmp(key, rootPtr->key) != 0){
             if(rootPtr->key > key){
                 return(findSymNode(rootPtr->l, key));
             }
@@ -337,7 +337,7 @@ void freeStack(stack *st){
  * 
  * @return    Pointer to the symNode representing the symbol if found, NULL if not found in any of the parts of the stack. 
  */
-symNode *findInStack(stack *st, int key){
+symNode *findInStack(stack *st, char *key){
     symNode   *found = NULL;
     stackElem *se    = st->top;
     while(!stackBottom(se) && found == NULL){
@@ -542,14 +542,14 @@ void printNode(FILE *file, symNode *node){
         return;
     }
 
-    fprintf(file, "%d [label=\"%d\"];\n", node->key, node->key);
+    fprintf(file, "%s [label=\"%s\"];\n", node->key, node->key);
     
     if(node->l != NULL){
-        fprintf(file, "%d -> %d [style=dashed];\n", node->key, node->l->key);
+        fprintf(file, "%s -> %s [style=dashed];\n", node->key, node->l->key);
         printNode(file, node->l);
     }
     if(node->r != NULL){
-        fprintf(file, "%d -> %d;\n", node->key, node->r->key);
+        fprintf(file, "%s -> %s;\n", node->key, node->r->key);
         printNode(file, node->r);
     }
 }
