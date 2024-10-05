@@ -15,6 +15,25 @@ token_types is_next_token(FILE *file, Token *token, char expected_char, token_ty
             }
 }
 
+int init_value(char **buffer, size_t initial_size) {
+    *buffer = malloc(initial_size);
+    if (*buffer == NULL) {
+        fprintf(stderr, "Failed to allocate memory\n");
+        return -1;
+    }
+    return 0;
+}
+
+int realloc_value(char **buffer, size_t *buffer_size) {
+    *buffer_size *= 2;
+    *buffer = realloc(*buffer, *buffer_size);
+    if (*buffer == NULL) {
+        fprintf(stderr, "Failed to reallocate memory\n");
+        return -1;
+    }
+    return 0;
+}
+
 int getToken() {
     char c;
     char nextchar;
@@ -113,14 +132,15 @@ int getToken() {
         case '1' ... '9':
             current_token.type = tokentype_int;
             break;
+        case '"':
+            current_token.type = tokentype_string;
     }
 
     if(current_token.type == tokentype_zeroint || current_token.type == tokentype_int) {
         
         size_t buffer_size = 2;
-        current_token.value = malloc(buffer_size);
-        if(current_token.value == NULL) {
-            return -1; //TODO
+        if(init_value(&current_token.value, buffer_size) == -1) {
+            return -1;
         }
 
         int index = 0;
@@ -128,10 +148,7 @@ int getToken() {
         
         while(isdigit((nextchar = getc(input_file)))) {
             if (index >= buffer_size - 1) {
-                buffer_size *= 2;
-                current_token.value = realloc(current_token.value, buffer_size);
-                if (current_token.value == NULL) {
-                    fprintf(stderr, "Failed to reallocate memory\n");
+                if (realloc_value(&current_token.value, &buffer_size) == -1) {
                     return -1;
                 }
             }
@@ -145,11 +162,8 @@ int getToken() {
             current_token.value[index++] = (char) nextchar;
             
             while(isdigit((nextchar = getc(input_file)))) {
-                if(index >= buffer_size - 1) {
-                    buffer_size *= 2;
-                    current_token.value = realloc(current_token.value, buffer_size);
-                    if (current_token.value == NULL) {
-                        fprintf(stderr, "Failed to reallocate memory\n");
+                if (index >= buffer_size - 1) {
+                    if (realloc_value(&current_token.value, &buffer_size) == -1) {
                         return -1;
                     }
                 }
@@ -171,11 +185,8 @@ int getToken() {
             }
 
             while(isdigit(nextchar)) {
-                if(index >= buffer_size - 1) {
-                    buffer_size *= 2;
-                    current_token.value = realloc(current_token.value, buffer_size);
-                    if (current_token.value == NULL) {
-                        fprintf(stderr, "Failed to reallocate memory\n");
+                if (index >= buffer_size - 1) {
+                    if (realloc_value(&current_token.value, &buffer_size) == -1) {
                         return -1;
                     }
                 }
@@ -186,20 +197,45 @@ int getToken() {
         if(current_token.value[index-1] == 'e' || current_token.value[index-1] == 'E' || current_token.value[index-1] == '.') {
             fprintf(stderr, "Number incomplete\n");
             return -1;
-        }
-
-        printf("%s\n", current_token.value); //POMOCNE VYPISY
-        printf("%d\n", current_token.type);
-        
+        }       
         if(!isdigit(nextchar)) {
             ungetc(nextchar, input_file);
         }
     }
     
+    else if(current_token.type == tokentype_string) {
+        
+        size_t buffer_size = 2;
+        if(init_value(&current_token.value, buffer_size) == -1) {
+            return -1;
+        }
+
+        int index = 0;
+        current_token.value[index++] = c;
+        char nextchar;
+        
+        while((nextchar = getc(input_file)) != '"' && nextchar != 92) {
+            if (index >= buffer_size - 1) {
+                if (realloc_value(&current_token.value, &buffer_size) == -1) {
+                    return -1;
+                }
+            }
+
+            current_token.value[index++] = nextchar;
+        }
+        current_token.value[index++] = nextchar;
+    }
+
+    printf("%s\n", current_token.value); //POMOCNE VYPISY
+    printf("%d\n", current_token.type);
+    return 0;
 }   
 
 int main() {
 
     input_file = fopen("file.txt", "r");
+    getToken();
+    getToken();
+    getToken();
     getToken();
 }
