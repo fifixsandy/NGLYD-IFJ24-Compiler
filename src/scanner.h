@@ -42,6 +42,8 @@ typedef enum {
     tokentype_float,
     tokentype_exponentialnum,
 
+    tokentype_invalid,
+
 }token_types;
 
 typedef struct {
@@ -50,5 +52,9 @@ typedef struct {
     int column;
     char* value;
 } Token;
+
+Token process_Number_Token(char firstchar, FILE *input_file);
+
+Token process_String_Token(char firstchar, FILE *input_file);
 
 #endif
