@@ -15,6 +15,17 @@ token_types is_next_token(FILE *file, Token *token, char expected_char, token_ty
             }
 }
 
+int is_keyword(const char *str, Token *token) {
+    for(int i = 0; i < NUM_OF_KEYWORDS; i++) {
+        if(strcmp(str, keywords[i]) == 0) {
+            token->type = tokentype_keyword;
+            //token->value = i; TODO
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int init_value(char **buffer, size_t initial_size) {
     *buffer = malloc(initial_size);
     if (*buffer == NULL) {
@@ -141,7 +152,7 @@ Token getToken() {
             break;
 
         default:
-            current_token.type = tokentype_id;
+            current_token = process_ID_Token(c, input_file);
     }
     return current_token;
 }   
@@ -342,9 +353,54 @@ Token process_String_Token(char firstchar, FILE *input_file) {
     printf("%d\n", current_token.type);
     }
 
+
+
+Token process_ID_Token(char firstchar, FILE *input_file) {
+    
+    Token current_token;
+    char nextchar;
+    size_t buffer_size = 2;
+    int index = 0;
+
+    if(init_value(&current_token.value, buffer_size) == -1) {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+    
+    if(isalpha(firstchar)) {
+        current_token.type = tokentype_id;
+    }
+    else if(firstchar == '_') {
+        current_token.type = tokentype_pseudovar;
+    }
+    else {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+    
+    current_token.value[index++] = firstchar;
+
+    while((isalpha(nextchar = getc(input_file))) || nextchar == '_') {
+        if (index >= buffer_size - 1) {
+            if (realloc_value(&current_token.value, &buffer_size) == -1) {
+                current_token.type = tokentype_invalid;
+                return current_token;
+            }
+        }
+        current_token.value[index++] = nextchar;
+    }
+
+    is_keyword(current_token.value, &current_token);
+
+
+    printf("%s\n", current_token.value);
+    printf("%d\n", current_token.type);
+}
+
 int main() {
 
     input_file = fopen("file.txt", "r");
+    getToken();
     getToken();
     getToken();
 }

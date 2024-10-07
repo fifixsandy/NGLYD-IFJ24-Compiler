@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <string.h>
+
+#define NUM_OF_KEYWORDS 13
 
 typedef enum {
     tokentype_EOL,
@@ -36,6 +39,7 @@ typedef enum {
     tokentype_colon,
     tokentype_string,
     tokentype_id,
+    tokentype_keyword,
     tokentype_pseudovar,
     tokentype_zeroint,
     tokentype_int,
@@ -53,8 +57,15 @@ typedef struct {
     char* value;
 } Token;
 
+const char *keywords[NUM_OF_KEYWORDS] = {
+    "const", "else", "fn", "if", "i32", "f64", "null", 
+    "pub", "return", "u8", "var", "void", "while"
+};
+
 Token process_Number_Token(char firstchar, FILE *input_file);
 
 Token process_String_Token(char firstchar, FILE *input_file);
+
+Token process_ID_Token(char firstchar, FILE *input_file);
 
 #endif
