@@ -45,6 +45,8 @@ typedef enum {
     tokentype_int,
     tokentype_float,
     tokentype_exponentialnum,
+    tokentype_nullid,
+    tokentype_chararr,
 
     tokentype_invalid,
 
@@ -62,10 +64,24 @@ const char *keywords[NUM_OF_KEYWORDS] = {
     "pub", "return", "u8", "var", "void", "while"
 };
 
+Token getToken();
+
 Token process_Number_Token(char firstchar, FILE *input_file);
 
 Token process_String_Token(char firstchar, FILE *input_file);
 
 Token process_ID_Token(char firstchar, FILE *input_file);
+
+Token process_Char_Arr(FILE *input_file);
+
+Token process_Import(FILE *input_file);
+
+token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1, token_types type2);
+
+int is_keyword(const char *str, Token *token);
+
+int init_value(char **buffer, int initial_size);
+
+int realloc_value(char **buffer, int *buffer_size);
 
 #endif

@@ -26,7 +26,7 @@ int is_keyword(const char *str, Token *token) {
     return 0;
 }
 
-int init_value(char **buffer, size_t initial_size) {
+int init_value(char **buffer, int initial_size) {
     *buffer = malloc(initial_size);
     if (*buffer == NULL) {
         fprintf(stderr, "Failed to allocate memory\n");
@@ -35,7 +35,7 @@ int init_value(char **buffer, size_t initial_size) {
     return 0;
 }
 
-int realloc_value(char **buffer, size_t *buffer_size) {
+int realloc_value(char **buffer, int *buffer_size) {
     *buffer_size *= 2;
     *buffer = realloc(*buffer, *buffer_size);
     if (*buffer == NULL) {
@@ -45,24 +45,37 @@ int realloc_value(char **buffer, size_t *buffer_size) {
     return 0;
 }
 
+int cleanup_value(Token *token) {
+    if (token == NULL) {
+        return -1;  
+    }
+
+    if (token->value != NULL) {
+        free(token->value);  
+        token->value = NULL;
+    }
+    return 0;
+}
+
 Token getToken() {
     char c;
     char nextchar;
     char expected_char;
-    
     Token current_token;
     current_token.value = NULL;
     current_token.type = tokentype_invalid;
     
-    while((c = getc(input_file)) == ' ' || c == '\n' || c == '\t') {
-        if(c == '\n') {
-            current_token.type == tokentype_EOL;
-        }
-        else if(c == EOF) {
-            current_token.type == tokentype_EOF;
-        }
+    while((c = getc(input_file)) == ' ' || c == '\t') {
+        continue;
     }
-
+    if(c == '\n') {
+        current_token.type = tokentype_EOL;
+        return current_token;
+    }
+    else if(c == EOF) {
+        current_token.type = tokentype_EOF;
+        return current_token;
+    }
     switch(c) {
         case '.':
             current_token.type = tokentype_dot;
@@ -73,8 +86,7 @@ Token getToken() {
             break;
         
         case '@':
-            //TODO
-            //import_function();
+            current_token = process_Import(input_file);
             break;
         
         case '|':
@@ -131,6 +143,11 @@ Token getToken() {
 
         case '}':
             current_token.type = tokentype_rcbracket;
+            break;
+
+        case '?':
+            current_token.type = tokentype_nullid;
+            break;
 
         case '!':
             nextchar = getc(input_file);
@@ -139,20 +156,25 @@ Token getToken() {
             }
             else {
                 current_token.type = tokentype_invalid;
-                return current_token;
             }
-            break;
-        
-        case '0' ... '9':
-            current_token = process_Number_Token(c, input_file);
             break;
         
         case '"':
             current_token = process_String_Token(c, input_file);
             break;
 
+        case '[':
+            current_token = process_Char_Arr(input_file);
+            break;
+
         default:
-            current_token = process_ID_Token(c, input_file);
+            if(c >= '0' && c <= '9') {
+                current_token = process_Number_Token(c, input_file);
+            }
+
+            else {
+                current_token = process_ID_Token(c, input_file);
+            }    
     }
     return current_token;
 }   
@@ -161,7 +183,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         
     Token current_token;
     char nextchar;
-    size_t buffer_size = 2;
+    int buffer_size = 2;
     int index = 0;
         
     if(init_value(&current_token.value, buffer_size) == -1) {
@@ -253,6 +275,8 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     current_token.value[index] = '\0';
     printf("%s\n", current_token.value);
     printf("%d\n", current_token.type);
+
+    return current_token;
 }
 
 
@@ -260,7 +284,7 @@ Token process_String_Token(char firstchar, FILE *input_file) {
         
     Token current_token;
     char nextchar;
-    size_t buffer_size = 2;
+    int buffer_size = 2;
     int index = 0;
 
     current_token.type = tokentype_string;
@@ -351,7 +375,9 @@ Token process_String_Token(char firstchar, FILE *input_file) {
     current_token.value[index] = '\0';
     printf("%s\n", current_token.value);
     printf("%d\n", current_token.type);
-    }
+
+    return current_token;
+}
 
 
 
@@ -359,7 +385,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     
     Token current_token;
     char nextchar;
-    size_t buffer_size = 2;
+    int buffer_size = 2;
     int index = 0;
 
     if(init_value(&current_token.value, buffer_size) == -1) {
@@ -371,7 +397,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
         current_token.type = tokentype_id;
     }
     else if(firstchar == '_') {
-        current_token.type = tokentype_pseudovar;
+        current_token.type = tokentype_pseudovar; //TODO DOROB TOTO PLS 
     }
     else {
         current_token.type = tokentype_invalid;
@@ -380,7 +406,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     
     current_token.value[index++] = firstchar;
 
-    while((isalpha(nextchar = getc(input_file))) || nextchar == '_') {
+    while((isalpha(nextchar = getc(input_file))) || isdigit(nextchar) || nextchar == '_') {
         if (index >= buffer_size - 1) {
             if (realloc_value(&current_token.value, &buffer_size) == -1) {
                 current_token.type = tokentype_invalid;
@@ -390,17 +416,66 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
         current_token.value[index++] = nextchar;
     }
 
+    ungetc(nextchar, input_file);
+
     is_keyword(current_token.value, &current_token);
 
 
     printf("%s\n", current_token.value);
     printf("%d\n", current_token.type);
+
+    return current_token;
 }
+
+Token process_Char_Arr(FILE *input_file) {
+
+    Token current_token;
+    char nextchar;
+    current_token.type = tokentype_invalid;
+
+    if((nextchar = getc(input_file)) == ']') {
+        if((nextchar = getc(input_file)) == 'u') {
+            if((nextchar = getc(input_file)) == '8') {
+                current_token.type = tokentype_chararr;
+            }
+        }
+    }
+    printf("%d\n", current_token.type);
+    return current_token;
+}
+
+Token process_Import(FILE *input_file) {
+    
+    Token current_token;
+    current_token.type = tokentype_invalid;
+
+    const char *keyword = "import";
+    char nextchar;
+    int i = 0;
+
+    while (keyword[i] != '\0') {
+        nextchar = getc(input_file);
+
+        if (nextchar != keyword[i]) {
+            return current_token;  
+        }
+        i++; 
+    }
+    current_token.type = tokentype_import;
+    
+    printf("%d\n", current_token.type);
+    return current_token;
+}
+
+//TODO FUNCKCIA NA BUILTIN FUNKCIE
 
 int main() {
 
     input_file = fopen("file.txt", "r");
-    getToken();
-    getToken();
-    getToken();
+    
+    for(int i = 0; i < 1000; i++) {
+        getToken();
+    }
+
+    return 0;
 }
