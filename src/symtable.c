@@ -188,7 +188,7 @@ symNode *findSymNode(symNode *rootPtr, char *key){
     }
     else{
         if(strcmp(key, rootPtr->key) != 0){
-            if(rootPtr->key > key){
+            if(strcmp(key, rootPtr->key) < 0){
                 return(findSymNode(rootPtr->l, key));
             }
             else{
