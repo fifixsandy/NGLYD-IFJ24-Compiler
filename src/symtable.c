@@ -73,6 +73,22 @@ symNode *createSymNode(char *key, symData data){
 }
 
 /**
+ * @brief      Insert new symbol into table of symbols.
+ * 
+ *             This function is a wrapper of insertSymNodeRec function.
+ * 
+ * @param tb   Pointer to a symtable.
+ * @param key  String key of a symbol to add.
+ * @param data Data for the new symbol to hold.
+ * 
+ * @see        insertSymNodeRec
+ * 
+ */
+void insertSymNode(symtable *tb, char *key, symData data){
+    tb->rootPtr = insertSymNodeRec(tb->rootPtr, key, data, tb);
+}
+
+/**
  * @brief         Inserts a new node into a symtable.
  * 
  *                When there is no node in the symtable with the same key as the inserted node, it is
@@ -90,17 +106,17 @@ symNode *createSymNode(char *key, symData data){
  * @return        The root of the updated tree (subtree) after insertion.
  * 
  */
-symNode *insertSymNode(symNode *rootPtr, char *key, symData data, symtable *tb){
+symNode *insertSymNodeRec(symNode *rootPtr, char *key, symData data, symtable *tb){
     if(rootPtr == NULL){
         tb->nodeCnt++;
         return createSymNode(key, data);
     }
     else{
         if(strcmp(key, rootPtr->key) < 0){ // going left
-            rootPtr->l = insertSymNode(rootPtr->l, key, data, tb);
+            rootPtr->l = insertSymNodeRec(rootPtr->l, key, data, tb);
         }
         else if(strcmp(key, rootPtr->key) > 0){ // going right
-            rootPtr->r = insertSymNode(rootPtr->r, key, data, tb);
+            rootPtr->r = insertSymNodeRec(rootPtr->r, key, data, tb);
         }
         else{ // keys are identical, data rewrite
             rootPtr->data = data;
@@ -379,7 +395,7 @@ symNode *minSymNode(symNode *rootPtr){
  * 
  * @param node Pointer to the critical node around which the rotation is performed.
  * 
- * @see        symNodeInsert, symNodeDelete
+ * @see        insertSymNode, symNodeDelete
  * 
  * @return     Pointer to a new root of a rotated subtree.
  */
@@ -402,7 +418,7 @@ symNode *rRotate(symNode *node){
  * 
  * @param node Pointer to the critical node around which the rotation is performed.
  * 
- * @see        symNodeInsert, symNodeDelete
+ * @see        insertSymNode, symNodeDelete
  * 
  * @return     Pointer to a new root of a rotated subtree.
  */

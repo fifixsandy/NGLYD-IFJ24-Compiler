@@ -65,7 +65,8 @@ void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
 symNode*   createSymNode (char *key, symData data);
-symNode*   insertSymNode (symNode *rootPtr, char *key, symData data, symtable *tb);
+void       insertSymNode(symtable *tb, char *key, symData data);
+symNode*   insertSymNodeRec (symNode *rootPtr, char *key, symData data, symtable *tb);
 symNode*   deleteSymNode (symNode *rootPtr,  char *key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, char *key);
 void       freeSymNodes  (symNode *node);
