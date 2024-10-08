@@ -558,8 +558,22 @@ void printNode(FILE *file, symNode *node){
         return;
     }
 
-    fprintf(file, "%s [label=\"%s\"];\n", node->key, node->key);
-    
+    fprintf(file, "%s [label=\"ID: %s\n", node->key, node->key);
+    if(node->data.varOrFun){
+        fprintf(file,"FUN\n");
+    }
+    else{
+        fprintf(file,"VAR\n");
+    }
+    if(node->data.isConst){
+        fprintf(file,"CONST = false\n");
+    }
+    else{
+        fprintf(file,"CONST = true\n");
+    }
+
+    fprintf(file, "\"];\n");
+
     if(node->l != NULL){
         fprintf(file, "%s -> %s [style=dashed];\n", node->key, node->l->key);
         printNode(file, node->l);
