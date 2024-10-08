@@ -12,7 +12,7 @@
  * 
  * @todo   Error handling
  * @author xnovakf00
- * @date   04.10.2024
+ * @date   08.10.2024
 */
 
 #include "symtable.h"

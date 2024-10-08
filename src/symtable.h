@@ -13,7 +13,7 @@
  * 
  * @todo   complete symData struct to handle multiple types
  * @author xnovakf00
- * @date   04.10.2024
+ * @date   08.10.2024
 */
 
 #include <stdbool.h>
@@ -23,6 +23,7 @@
 
  typedef struct symData{
     // @todo add whether float/int/string...
+    bool varOrFun; // 0 if var, 1 if fun
     bool isConst;
     union{
         int   intData;
