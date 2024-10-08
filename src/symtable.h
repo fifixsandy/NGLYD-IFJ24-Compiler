@@ -13,16 +13,17 @@
  * 
  * @todo   complete symData struct to handle multiple types
  * @author xnovakf00
- * @date   04.10.2024
+ * @date   08.10.2024
 */
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 
  typedef struct symData{
     // @todo add whether float/int/string...
+    bool varOrFun; // 0 if var, 1 if fun
     bool isConst;
     union{
         int   intData;
@@ -33,7 +34,7 @@
  
  
  typedef struct symNode{
-    int key;
+    char *key;
     int height; // the maximum number of edges from the node to any of the leaves in its subtree
 
     symData data;
@@ -64,10 +65,11 @@ symtable*  createSymtable();
 void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
-symNode*   createSymNode (int key, symData data);
-symNode*   insertSymNode (symNode *rootPtr, int key, symData data, symtable *tb);
-symNode*   deleteSymNode (symNode *rootPtr, int key, symtable *tb);
-symNode*   findSymNode   (symNode *rootPtr, int key);
+symNode*   createSymNode (char *key, symData data);
+void       insertSymNode(symtable *tb, char *key, symData data);
+symNode*   insertSymNodeRec (symNode *rootPtr, char *key, symData data, symtable *tb);
+symNode*   deleteSymNode (symNode *rootPtr,  char *key, symtable *tb);
+symNode*   findSymNode   (symNode *rootPtr, char *key);
 void       freeSymNodes  (symNode *node);
 
 void       initStack     (stack *st);
@@ -78,7 +80,7 @@ stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
 bool       stackBottom   (stackElem *se);
 
-symNode*   findInStack   (stack *st, int key);
+symNode*   findInStack   (stack *st, char *key);
 
 
 /* Helper functions used in implementations of the above */

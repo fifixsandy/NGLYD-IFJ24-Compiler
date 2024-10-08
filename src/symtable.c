@@ -12,7 +12,7 @@
  * 
  * @todo   Error handling
  * @author xnovakf00
- * @date   04.10.2024
+ * @date   08.10.2024
 */
 
 #include "symtable.h"
@@ -56,7 +56,7 @@ void initSymtable(symtable *tb){
  * 
  * @return     Pointer to the created symNode.
  */
-symNode *createSymNode(int key, symData data){
+symNode *createSymNode(char *key, symData data){
     symNode *newNode = (symNode *)malloc(sizeof(symNode));
     if(newNode == NULL){
         // TODO HANDLE ERROR;
@@ -70,6 +70,22 @@ symNode *createSymNode(int key, symData data){
     newNode->r      = NULL;
 
     return newNode;
+}
+
+/**
+ * @brief      Insert new symbol into table of symbols.
+ * 
+ *             This function is a wrapper of insertSymNodeRec function.
+ * 
+ * @param tb   Pointer to a symtable.
+ * @param key  String key of a symbol to add.
+ * @param data Data for the new symbol to hold.
+ * 
+ * @see        insertSymNodeRec
+ * 
+ */
+void insertSymNode(symtable *tb, char *key, symData data){
+    tb->rootPtr = insertSymNodeRec(tb->rootPtr, key, data, tb);
 }
 
 /**
@@ -90,17 +106,17 @@ symNode *createSymNode(int key, symData data){
  * @return        The root of the updated tree (subtree) after insertion.
  * 
  */
-symNode *insertSymNode(symNode *rootPtr, int key, symData data, symtable *tb){
+symNode *insertSymNodeRec(symNode *rootPtr, char *key, symData data, symtable *tb){
     if(rootPtr == NULL){
         tb->nodeCnt++;
         return createSymNode(key, data);
     }
     else{
-        if(key < rootPtr->key){ // going left
-            rootPtr->l = insertSymNode(rootPtr->l, key, data, tb);
+        if(strcmp(key, rootPtr->key) < 0){ // going left
+            rootPtr->l = insertSymNodeRec(rootPtr->l, key, data, tb);
         }
-        else if(key > rootPtr->key){ // going right
-            rootPtr->r = insertSymNode(rootPtr->r, key, data, tb);
+        else if(strcmp(key, rootPtr->key) > 0){ // going right
+            rootPtr->r = insertSymNodeRec(rootPtr->r, key, data, tb);
         }
         else{ // keys are identical, data rewrite
             rootPtr->data = data;
@@ -128,16 +144,16 @@ symNode *insertSymNode(symNode *rootPtr, int key, symData data, symtable *tb){
  * 
  * @return        The new root of the balanced tree after deletion.
  */
-symNode *deleteSymNode(symNode *rootPtr, int key, symtable *tb){
+symNode *deleteSymNode(symNode *rootPtr, char *key, symtable *tb){
     if(rootPtr == NULL){
         return NULL;
     }
 
-    if(key < rootPtr->key){ // going left
+    if(strcmp(key, rootPtr->key) < 0){ // going left
         rootPtr->l = deleteSymNode(rootPtr->l, key, tb);
         return rootPtr;
     }
-    else if(key > rootPtr->key){ // going right
+    else if(strcmp(key, rootPtr->key) > 0){ // going right
         rootPtr->r = deleteSymNode(rootPtr->r, key, tb);
     }
     else{ // found
@@ -182,13 +198,13 @@ symNode *deleteSymNode(symNode *rootPtr, int key, symtable *tb){
  * 
  * @return        If the node is found, the pointer to it. If the node does not exist, NULL.
  */
-symNode *findSymNode(symNode *rootPtr, int key){
+symNode *findSymNode(symNode *rootPtr, char *key){
     if(rootPtr == NULL){
         return NULL;
     }
     else{
-        if(rootPtr->key != key){
-            if(rootPtr->key > key){
+        if(strcmp(key, rootPtr->key) != 0){
+            if(strcmp(key, rootPtr->key) < 0){
                 return(findSymNode(rootPtr->l, key));
             }
             else{
@@ -337,7 +353,7 @@ void freeStack(stack *st){
  * 
  * @return    Pointer to the symNode representing the symbol if found, NULL if not found in any of the parts of the stack. 
  */
-symNode *findInStack(stack *st, int key){
+symNode *findInStack(stack *st, char *key){
     symNode   *found = NULL;
     stackElem *se    = st->top;
     while(!stackBottom(se) && found == NULL){
@@ -379,7 +395,7 @@ symNode *minSymNode(symNode *rootPtr){
  * 
  * @param node Pointer to the critical node around which the rotation is performed.
  * 
- * @see        symNodeInsert, symNodeDelete
+ * @see        insertSymNode, symNodeDelete
  * 
  * @return     Pointer to a new root of a rotated subtree.
  */
@@ -402,7 +418,7 @@ symNode *rRotate(symNode *node){
  * 
  * @param node Pointer to the critical node around which the rotation is performed.
  * 
- * @see        symNodeInsert, symNodeDelete
+ * @see        insertSymNode, symNodeDelete
  * 
  * @return     Pointer to a new root of a rotated subtree.
  */
@@ -542,14 +558,28 @@ void printNode(FILE *file, symNode *node){
         return;
     }
 
-    fprintf(file, "%d [label=\"%d\"];\n", node->key, node->key);
-    
+    fprintf(file, "%s [label=\"ID: %s\n", node->key, node->key);
+    if(node->data.varOrFun){
+        fprintf(file,"FUN\n");
+    }
+    else{
+        fprintf(file,"VAR\n");
+    }
+    if(node->data.isConst){
+        fprintf(file,"CONST = false\n");
+    }
+    else{
+        fprintf(file,"CONST = true\n");
+    }
+
+    fprintf(file, "\"];\n");
+
     if(node->l != NULL){
-        fprintf(file, "%d -> %d [style=dashed];\n", node->key, node->l->key);
+        fprintf(file, "%s -> %s [style=dashed];\n", node->key, node->l->key);
         printNode(file, node->l);
     }
     if(node->r != NULL){
-        fprintf(file, "%d -> %d;\n", node->key, node->r->key);
+        fprintf(file, "%s -> %s;\n", node->key, node->r->key);
         printNode(file, node->r);
     }
 }
