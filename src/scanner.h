@@ -63,6 +63,8 @@ typedef struct {
 
 extern const char *keywords[NUM_OF_KEYWORDS];
 
+extern FILE *input_file;
+
 Token getToken();
 
 Token process_Number_Token(char firstchar, FILE *input_file);

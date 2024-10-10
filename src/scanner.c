@@ -279,8 +279,8 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         ungetc(nextchar, input_file);
     }
     current_token.value[index] = '\0';
-    printf("%s\n", current_token.value);
-    printf("%d\n", current_token.type);
+    //printf("%s\n", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;
 }
@@ -379,8 +379,8 @@ Token process_String_Token(char firstchar, FILE *input_file) {
         return current_token;
     }
     current_token.value[index] = '\0';
-    printf("%s\n", current_token.value);
-    printf("%d\n", current_token.type);
+    //printf("%s\n", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;
 }
@@ -427,8 +427,8 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     is_keyword(current_token.value, &current_token);
 
 
-    printf("%s\n", current_token.value);
-    printf("%d\n", current_token.type);
+    //printf("%s\n", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;
 }
@@ -469,7 +469,7 @@ Token process_Import(FILE *input_file) {
     }
     current_token.type = tokentype_import;
     
-    printf("%d\n", current_token.type);
+    //printf("%d\n", current_token.type);
     return current_token;
 }
 
