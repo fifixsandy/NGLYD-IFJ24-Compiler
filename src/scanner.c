@@ -1,5 +1,11 @@
 #include "scanner.h"
 
+
+const char *keywords[NUM_OF_KEYWORDS] = {
+    "const", "else", "fn", "if", "i32", "f64", "null", 
+    "pub", "return", "u8", "var", "void", "while"
+};
+
 FILE *input_file;
 
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1,token_types type2){
@@ -469,13 +475,13 @@ Token process_Import(FILE *input_file) {
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
-int main() {
+// int main() {
 
-    input_file = fopen("file.txt", "r");
+//     input_file = fopen("file.txt", "r");
     
-    for(int i = 0; i < 1000; i++) {
-        getToken();
-    }
+//     for(int i = 0; i < 1000; i++) {
+//         getToken();
+//     }
 
-    return 0;
-}
+//     return 0;
+// }

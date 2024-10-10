@@ -59,10 +59,9 @@ typedef struct {
     char* value;
 } Token;
 
-const char *keywords[NUM_OF_KEYWORDS] = {
-    "const", "else", "fn", "if", "i32", "f64", "null", 
-    "pub", "return", "u8", "var", "void", "while"
-};
+
+
+extern const char *keywords[NUM_OF_KEYWORDS];
 
 Token getToken();
 
