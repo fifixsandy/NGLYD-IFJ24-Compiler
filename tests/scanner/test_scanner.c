@@ -1,4 +1,4 @@
-#include "scanner.h"
+#include "../../src/scanner.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Open the input file for reading
-    FILE *input_file = fopen(argv[1], "r");
+    input_file = fopen(argv[1], "r");
     if (input_file == NULL) {
         fprintf(stderr, "Error: Could not open file %s\n", argv[1]);
         return 1; 
