@@ -61,14 +61,17 @@ typedef struct stack{
 }stack;
 
 /* Functions for working with symtable and stack of symtables (user) */
+
 symtable*  createSymtable();
 void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
 symNode*   createSymNode (char *key, symData data);
 void       insertSymNode(symtable *tb, char *key, symData data);
+void       deleteSymNode(symtable *tb, char *key);
+
 symNode*   insertSymNodeRec (symNode *rootPtr, char *key, symData data, symtable *tb);
-symNode*   deleteSymNode (symNode *rootPtr,  char *key, symtable *tb);
+symNode*   deleteSymNodeRec (symNode *rootPtr,  char *key, symtable *tb);
 symNode*   findSymNode   (symNode *rootPtr, char *key);
 void       freeSymNodes  (symNode *node);
 

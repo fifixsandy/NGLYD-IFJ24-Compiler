@@ -129,6 +129,20 @@ symNode *insertSymNodeRec(symNode *rootPtr, char *key, symData data, symtable *t
 }
 
 /**
+ * @brief      Delete symbol from table of symbols.
+ * 
+ *             This function is a wrapper of deleteSymNodeRec function.
+ * 
+ * @param tb   Pointer to a symtable.
+ * @param key  String key of a symbol to delete.
+ * 
+ * @see        deleteSymNodeRec
+ */
+void deleteSymNode(symtable *tb, char *key){
+    tb->rootPtr = deleteSymNodeRec(tb->rootPtr, key, tb);
+}
+
+/**
  * @brief         Deletes a node from the symtable (AVL tree).
  * 
  *                If a node with the specified key exists, it is removed from the tree 
@@ -144,17 +158,17 @@ symNode *insertSymNodeRec(symNode *rootPtr, char *key, symData data, symtable *t
  * 
  * @return        The new root of the balanced tree after deletion.
  */
-symNode *deleteSymNode(symNode *rootPtr, char *key, symtable *tb){
+symNode *deleteSymNodeRec(symNode *rootPtr, char *key, symtable *tb){
     if(rootPtr == NULL){
         return NULL;
     }
 
     if(strcmp(key, rootPtr->key) < 0){ // going left
-        rootPtr->l = deleteSymNode(rootPtr->l, key, tb);
+        rootPtr->l = deleteSymNodeRec(rootPtr->l, key, tb);
         return rootPtr;
     }
     else if(strcmp(key, rootPtr->key) > 0){ // going right
-        rootPtr->r = deleteSymNode(rootPtr->r, key, tb);
+        rootPtr->r = deleteSymNodeRec(rootPtr->r, key, tb);
     }
     else{ // found
         if(rootPtr->r == NULL && rootPtr->l == NULL){ // no children
@@ -166,7 +180,7 @@ symNode *deleteSymNode(symNode *rootPtr, char *key, symtable *tb){
             symNode *min  = minSymNode(rootPtr->r);
             rootPtr->key  = min->key;
             rootPtr->data = min->data;
-            rootPtr->r    = deleteSymNode(rootPtr->r, min->key, tb);
+            rootPtr->r    = deleteSymNodeRec(rootPtr->r, min->key, tb);
             return rootPtr;
         }
         else{ // only one child
@@ -375,7 +389,7 @@ symNode *findInStack(stack *st, char *key){
  * 
  * @param rootPtr Pointer to the root of the subtree.
  * 
- * @see           deleteSymNode
+ * @see           deleteSymNodeRec
  * 
  * @return        Leftenmost node.
  */
