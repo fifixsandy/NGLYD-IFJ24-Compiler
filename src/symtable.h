@@ -13,7 +13,7 @@
  * 
  * @todo   complete symData struct to handle multiple types
  * @author xnovakf00
- * @date   08.10.2024
+ * @date   12.10.2024
 */
 
 #include <stdbool.h>
@@ -21,17 +21,40 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_PARAM_NUM 300 // this can be changed
+
+
+
+typedef struct funData{
+   int       returnType;                  // @todo represent with enums
+   int       paramTypes[MAX_PARAM_NUM];   // @todo represent with enums
+   char     *paramNames[MAX_PARAM_NUM];
+   char     *intermediateCode;            // @todo change according to code generating
+   symtable *tbPtr;
+}funData;
+
+typedef struct varData{
+   int type; // @todo represent with enums
+   union{
+      float floatVal;
+      int   intVal;
+      char* stringVal;
+   }value;
+}varData;
+
  typedef struct symData{
-    // @todo add whether float/int/string...
+
     bool varOrFun; // 0 if var, 1 if fun
     bool isConst;
+    bool defined;
+    bool used;
+
     union{
-        int   intData;
-        float floatData;
-        char *stringData;
-    }value;
+      funData fData;
+      varData vData;
+    }data;
+
  }symData;
- 
  
  typedef struct symNode{
     char *key;
@@ -43,12 +66,10 @@
     struct symNode *l; // pointer to the right node (with lower key)
  }symNode; // structure representing the entry in the table of symbols (node of a tree)
  
- 
  typedef struct symtable{
     symNode *rootPtr;
     int      nodeCnt;
  }symtable;
-
 
 typedef struct stackElem{
    symtable         *tbPtr;
