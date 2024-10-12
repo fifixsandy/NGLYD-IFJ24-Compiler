@@ -343,6 +343,30 @@ symtable *pop(stack *st){
 }
 
 /**
+ * @brief    Function returns the lowest element in stack (first added).
+ * 
+ *           This function does not remove the first added element.
+ *           Might be useful when looking for the "global" scope.
+ * 
+ * @param st Pointer to the stack.
+ * 
+ * @return   Pointer to the symtable that is at the bottom of the stack.
+ */
+symtable *bottom(stack *st){
+    if(stackEmpty(st)){
+        return NULL;
+    }
+
+    stackElem* curr = st->top;
+
+    while(curr->next != NULL){
+        curr = curr->next;
+    }
+
+    return curr->tbPtr;
+}
+
+/**
  * @brief    Frees the entire stack and its elements.
  * 
  *           Pops all elements from the stack and deletes their associated symbol tables.
@@ -370,7 +394,7 @@ void freeStack(stack *st){
 symNode *findInStack(stack *st, char *key){
     symNode   *found = NULL;
     stackElem *se    = st->top;
-    while(!stackBottom(se) && found == NULL){
+    while(!isStackBottom(se) && found == NULL){
         found = findSymNode(se->tbPtr->rootPtr, key);
         se = se->next;
     }
@@ -526,7 +550,7 @@ symNode *rebalance(symNode *node){
  * 
  * @return   True if it is the bottom (NULL), false otherwise.
  */
-bool stackBottom(stackElem *se){
+bool isStackBottom(stackElem *se){
     return(se == NULL);
 }
 

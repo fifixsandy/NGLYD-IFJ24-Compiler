@@ -99,10 +99,11 @@ void       freeSymNodes  (symNode *node);
 void       initStack     (stack *st);
 void       push          (stack *st, symtable *tb);
 symtable*  pop           (stack *st);
+symtable*  bottom        (stack *st);
 bool       stackEmpty    (stack *st);
 stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
-bool       stackBottom   (stackElem *se);
+bool       isStackBottom   (stackElem *se);
 
 symNode*   findInStack   (stack *st, char *key);
 
