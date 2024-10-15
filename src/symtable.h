@@ -23,7 +23,9 @@
 
 #define MAX_PARAM_NUM 300 // this can be changed
 
-
+extern stack symtableStack; /* global variable, must be initialised in exactly one .c file, 
+                               accessed anywhere where symtable.h is included */ 
+                           
 
 typedef struct funData{
    int       returnType;                  // @todo represent with enums
@@ -63,7 +65,7 @@ typedef struct varData{
     symData data;
 
     struct symNode *r; // pointer to the right node (with greater key)
-    struct symNode *l; // pointer to the right node (with lower key)
+    struct symNode *l; // pointer to the left node (with lower key)
  }symNode; // structure representing the entry in the table of symbols (node of a tree)
  
  typedef struct symtable{
