@@ -15,17 +15,18 @@
  * @author xnovakf00
  * @date   12.10.2024
 */
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "error.h"
 
 #define MAX_PARAM_NUM 300 // this can be changed
 
-extern stack symtableStack; /* global variable, must be initialised in exactly one .c file, 
-                               accessed anywhere where symtable.h is included */ 
-                           
+typedef struct symtable symtable;
 
 typedef struct funData{
    int       returnType;                  // @todo represent with enums
@@ -68,10 +69,10 @@ typedef struct varData{
     struct symNode *l; // pointer to the left node (with lower key)
  }symNode; // structure representing the entry in the table of symbols (node of a tree)
  
- typedef struct symtable{
+ struct symtable{
     symNode *rootPtr;
     int      nodeCnt;
- }symtable;
+ };
 
 typedef struct stackElem{
    symtable         *tbPtr;
@@ -82,6 +83,11 @@ typedef struct stack{
    stackElem *top;
    int       elemCnt;
 }stack;
+
+
+extern stack symtableStack; /* global variable, must be initialised in exactly one .c file, 
+                               accessed anywhere where symtable.h is included */ 
+                           
 
 /* Functions for working with symtable and stack of symtables (user) */
 
@@ -122,4 +128,7 @@ int        max           (int a, int b);
 /* Functions for printing .dot file for debugging */
 void printSymtable(FILE *file, symtable *tb);
 void printNode(FILE *file, symNode *node);
+
+
+#endif //SYMTABLE_H
 /* EOF symtable.h */

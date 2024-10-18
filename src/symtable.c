@@ -17,6 +17,7 @@
 
 #include "symtable.h"
 
+stack symtableStack;
 
 /**
  * @brief  Creates an empty symtable.
@@ -621,6 +622,5 @@ void printNode(FILE *file, symNode *node){
         printNode(file, node->r);
     }
 }
-
 
 /* EOF symtable.c */
