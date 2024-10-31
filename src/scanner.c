@@ -1,6 +1,5 @@
 #include "scanner.h"
 
-
 const char *keywords[NUM_OF_KEYWORDS] = {
     "const", "else", "fn", "if", "i32", "f64", "null", 
     "pub", "return", "u8", "var", "void", "while"
@@ -177,7 +176,21 @@ Token getToken() {
             if(c >= '0' && c <= '9') {
                 current_token = process_Number_Token(c, input_file);
             }
+            else if (c == '_') {
+                nextchar = getc(input_file);
+                if(!isalnum(nextchar) && nextchar != '_') {
+                    current_token.type = tokentype_pseudovar;
+                    ungetc(nextchar, input_file);
 
+                    //printf("%d\n", current_token.type);
+
+                    return current_token;
+                }
+                else {
+                    ungetc(nextchar, input_file);
+                    current_token = process_ID_Token(c, input_file);
+                }
+            }
             else {
                 current_token = process_ID_Token(c, input_file);
             }    
@@ -399,12 +412,10 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
         return current_token;
     }
     
-    if(isalpha(firstchar)) {
+    if(isalpha(firstchar) || firstchar == '_') {
         current_token.type = tokentype_id;
     }
-    else if(firstchar == '_') {
-        current_token.type = tokentype_pseudovar; //TODO DOROB TOTO PLS 
-    }
+
     else {
         current_token.type = tokentype_invalid;
         return current_token;
@@ -446,7 +457,7 @@ Token process_Char_Arr(FILE *input_file) {
             }
         }
     }
-    printf("%d\n", current_token.type);
+    //printf("%d\n", current_token.type);
     return current_token;
 }
 
@@ -475,13 +486,13 @@ Token process_Import(FILE *input_file) {
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
-// int main() {
+ int main() {
 
-//     input_file = fopen("file.txt", "r");
+     input_file = fopen("file.txt", "r");
     
-//     for(int i = 0; i < 1000; i++) {
-//         getToken();
-//     }
+     for(int i = 0; i < 1000; i++) {
+         getToken();
+     }
 
-//     return 0;
-// }
+     return 0;
+ }
