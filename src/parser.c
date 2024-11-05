@@ -24,7 +24,7 @@ bool prolog(){
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if id==ifj
             GT
-            if(currentToken.type == tokentype_equal){
+            if(currentToken.type == tokentype_assign){
                 GT
                 if(currentToken.type == tokentype_import){
                     GT
@@ -42,7 +42,6 @@ bool prolog(){
         }
     }
 
-    GT
     return correct;
 }
 
@@ -54,7 +53,6 @@ bool code(){
         correct = def_func();
     }
 
-    GT
     return correct;
 }
 
@@ -65,10 +63,10 @@ bool next_code(){
         correct = code();
     }
     // RULE 5 <next_code> -> ε
-    else if(tokentype_EOF){
+    else if(currentToken.type == tokentype_EOF){
         correct = true;
     }
-    GT
+
     return correct;
 }
 
@@ -101,7 +99,7 @@ bool def_func(){
         }
 
     }
-    GT
+
     return correct;
 }
 
@@ -122,63 +120,130 @@ bool params(){
     else{
         correct = (currentToken.type == tokentype_rbracket);
     }
-    GT
+    
     return correct;
 }
 
 bool params_n(){
     bool correct = false;
-
-
-    GT
+    // RULE 9 <params_n> -> , <params>
+    if(currentToken.type == tokentype_comma){
+        GT
+        correct = params();
+    }
+    // RULE 10 <params_n> -> ε
+    else{
+        correct = (currentToken.type == tokentype_rbracket);
+    }
+    
     return correct;
 }
 
 bool def_variable(){
     bool correct = false;
-
-
-    GT
+    // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ; 
+    if(currentToken.type == tokentype_keyword){ // TODO check if const or var
+        GT
+        if(varorconst()){
+            GT
+            if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if redefining or sth
+                GT
+                if(type_var_def()){
+                    GT
+                    if(currentToken.type == tokentype_assign){
+                        if(expression()){ // TODO EXPRESSION
+                            GT
+                            correct = (currentToken.type == tokentype_semicolon);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     return correct;
 }
 
 bool varorconst(){
     bool correct = false;
-
-
-    GT
+    if(currentToken.type == tokentype_keyword){
+        // RULE 12 <varorconst> -> const
+        if(true){ // TODO check if keyword == const
+            correct == true;
+        }
+        // RULE 13 <varorconst> -> var
+        else if(true){ // TODO check if keyword == var
+            correct == true;
+        }
+    }
+    
     return correct;
 }
 
 bool unused_decl(){
     bool correct = false;
-
-
-    GT
+    // RULE 14 <unused_decl> -> _ = expression ;
+    if(currentToken.type == tokentype_underscore){
+        GT
+        if(currentToken.type == tokentype_assign){
+            GT
+            if(expression()){ // TODO EXPRESSION
+                GT
+                correct = (currentToken.type == tokentype_semicolon);
+            }
+        }
+    }
+    
     return correct;
 }
 
 bool type_normal(){
     bool correct = false;
+    // RULE 15 <type_normal> -> i32
+    // RULE 16 <type_normal> -> f64
+    if(currentToken.type == tokentype_keyword){ // TODO check if keyword == i32 or f64
+        correct = true;
+    }
+    // RULE 17 <type_normal> -> [ ] u8
+    else if(currentToken.type == tokentype_lsbracket){
+        GT
+        if(currentToken.type == tokentype_rsbracket)
+        {
+            GT
+            if(currentToken.type == tokentype_keyword){ // TODO check if keyword == u8
+                correct = true;
+            }
+        }
+    }
 
-
-    GT
     return correct;
 }
 
 bool type_null(){
     bool correct = false;
-
-
-    GT
+    // RULE 18 <type_null> -> ? <type_normal>
+    if(currentToken.type == tokentype_nullid){
+        GT
+        correct = type_normal();
+    }
+    
     return correct;
 }
 
 bool type(){
     bool correct = false;
-
-
-    GT
+    // RULE 19 <type> -> <type_normal>
+    if(currentToken.type == tokentype_keyword || 
+       currentToken.type == tokentype_lsbracket){ // TODO check if keyword == i32 or f64
+            GT
+            correct = type_normal();
+    }
+    // RULE 20 <type> -> <type_null>
+    else if(currentToken.type == tokentype_nullid){
+        GT
+        correct = type_null();
+    }
+    
     return correct;
 }
 
@@ -186,7 +251,7 @@ bool type_func_ret(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -194,7 +259,7 @@ bool type_var_def(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -202,7 +267,7 @@ bool st(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -210,15 +275,21 @@ bool body(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
 bool return_(){
     bool correct = false;
-
-
-    GT
+    // RULE 42 <return> -> return <exp_func_ret> ;
+    if(currentToken.type == tokentype_keyword){ // TODO check if keyword == return
+        GT
+        if(exp_func_ret()){
+            GT
+            correct = (currentToken.type == tokentype_semicolon);
+        }
+    } 
+    
     return correct;
 }
 
@@ -226,7 +297,7 @@ bool exp_func_ret(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -234,7 +305,7 @@ bool id_without_null(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -242,7 +313,7 @@ bool while_statement(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -250,7 +321,7 @@ bool if_statement(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -258,7 +329,7 @@ bool expr_params(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -266,7 +337,7 @@ bool expr_params_n(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
@@ -274,23 +345,35 @@ bool after_id(){
     bool correct = false;
 
 
-    GT
+    
     return correct;
 }
 
 bool assign_or_f_call(){
     bool correct = false;
-
-
-    GT
+    // RULE 31 <assign_or_f_call> -> id <after_id>
+    if(currentToken.type == tokentype_id){
+        GT
+        correct = after_id();
+    }
+    
     return correct;
 }
 
 bool builtin(){
     bool correct = false;
-
-
-    GT
+    // RULE 32 <builtin> -> . id
+    if(currentToken.type == tokentype_dot){
+        GT
+        if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
+            correct = true;
+        }
+    }
+    // RULE 33 <builtin> -> ε
+    else{
+        correct = (currentToken.type == tokentype_lbracket);
+    }
+    
     return correct;
 }
 
