@@ -47,6 +47,10 @@ typedef enum {
     tokentype_exponentialnum,
     tokentype_nullid,
     tokentype_chararr,
+    tokentype_comma,
+    tokentype_underscore,
+    tokentype_lsbracket,
+    tokentype_rsbracket,
 
     tokentype_invalid,
 
