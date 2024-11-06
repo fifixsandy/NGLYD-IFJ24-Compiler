@@ -1,3 +1,18 @@
+/**
+ * @file   parser.c
+ * 
+ * @brief  Implementation of recursive parser for IFJ24
+ * 
+ *         Parser is based on LL1 grammar created for IFJ24 programming language, which is based on Zig.
+ *         Each rule has it's own function and returns false if there was an unexpected token.
+ * 
+ * @see    scanner.h parser.h
+ * 
+ * @author xnovakf00
+ * @date   06.11.2024
+*/
+
+
 #include "parser.h"
 
 #define GT currentToken = getToken(); // encapsulating the assignment
@@ -517,3 +532,4 @@ bool builtin(){
 }
 
 
+/* EOF parser.c */
