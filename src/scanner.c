@@ -70,18 +70,28 @@ Token getToken() {
     current_token.value = NULL;
     current_token.type = tokentype_invalid;
     
-    while((c = getc(input_file)) == ' ' || c == '\t') {
+    while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
         continue;
     }
-    if(c == '\n') {
-        current_token.type = tokentype_EOL;
-        return current_token;
-    }
-    else if(c == EOF) {
+    if(c == EOF) {
         current_token.type = tokentype_EOF;
         return current_token;
     }
     switch(c) {
+        case '/':
+            if((c = getc(input_file)) == '/') {
+                while(c != '\n') { 
+                    c = getc(input_file);
+                    continue;
+                }
+                c = getc(input_file);
+            }
+            else {
+                ungetc(c, input_file);
+                current_token.type = tokentype_divide;
+                break;
+            }
+                
         case '.':
             current_token.type = tokentype_dot;
             break;
@@ -112,11 +122,6 @@ Token getToken() {
         
         case '*':
             current_token.type = tokentype_multiply;
-            break;
-        
-        case '/':
-            expected_char = '/';
-            is_next_token(input_file, &current_token, expected_char, tokentype_divide, tokentype_comment);
             break;
         
         case '=':
@@ -169,7 +174,15 @@ Token getToken() {
             break;
 
         case '[':
-            current_token = process_Char_Arr(input_file);
+            current_token.type = tokentype_lsbracket;
+            break;
+
+        case ']':
+            current_token.type = tokentype_rsbracket;
+            break;
+        
+        case ',' :
+            current_token.type = tokentype_comma;
             break;
 
         default:
@@ -333,7 +346,7 @@ Token process_String_Token(char firstchar, FILE *input_file) {
     if(nextchar == '"') {
         current_token.value[index++] = nextchar;
     }
-    else if(nextchar == 92) {
+    /*else if(nextchar == 92) {
         current_token.value[index++] = nextchar;
             
         nextchar = getc(input_file);
@@ -385,7 +398,7 @@ Token process_String_Token(char firstchar, FILE *input_file) {
             current_token.type = tokentype_invalid;
             return current_token;
         }
-    }
+    }*/
     else {
         fprintf(stderr, "String incomplete\n");
         current_token.type = tokentype_invalid;
@@ -444,7 +457,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     return current_token;
 }
 
-Token process_Char_Arr(FILE *input_file) {
+/*Token process_Char_Arr(FILE *input_file) {
 
     Token current_token;
     char nextchar;
@@ -459,7 +472,7 @@ Token process_Char_Arr(FILE *input_file) {
     }
     //printf("%d\n", current_token.type);
     return current_token;
-}
+}*/
 
 Token process_Import(FILE *input_file) {
     

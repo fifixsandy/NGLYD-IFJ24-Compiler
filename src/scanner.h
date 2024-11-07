@@ -10,7 +10,6 @@
 #define NUM_OF_KEYWORDS 13
 
 typedef enum {
-    tokentype_EOL,
     tokentype_EOF,
 
     tokentype_vbar,
