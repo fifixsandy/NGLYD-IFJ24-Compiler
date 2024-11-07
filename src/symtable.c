@@ -564,6 +564,8 @@ int max(int a, int b){
                                          SECTION Debug print
                        These functions print out .dot representation of symtable.
           They should SOLELY be used when debugging and should not be used in final product!
+    Implementations of these functions were inspired by printing .dot format of BDDs from BuDDy library.
+                       https://github.com/SSoelvsten/buddy/blob/main/src/bddio.c
 *************************************************************************************************************/
 
 /**
@@ -598,18 +600,6 @@ void printNode(FILE *file, symNode *node){
     }
 
     fprintf(file, "%s [label=\"ID: %s\n", node->key, node->key);
-    if(node->data.varOrFun){
-        fprintf(file,"FUN\n");
-    }
-    else{
-        fprintf(file,"VAR\n");
-    }
-    if(node->data.isConst){
-        fprintf(file,"CONST = false\n");
-    }
-    else{
-        fprintf(file,"CONST = true\n");
-    }
 
     fprintf(file, "\"];\n");
 
