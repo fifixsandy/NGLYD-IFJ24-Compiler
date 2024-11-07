@@ -1,6 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "scanner.h"
+#include "symtable.h"
 
 bool prog();
 bool prolog();
@@ -10,14 +11,14 @@ bool def_func();
 bool params();
 bool params_n();
 bool def_variable();
-bool varorconst();
+bool varorconst(bool *isConst);
 bool unused_decl();
-bool type_normal();
-bool type_null();
-bool type();
-bool type_null();
-bool type_func_ret();
-bool type_var_def();
+bool type_normal(dataType *datatype);
+bool type_null(dataType *datatype);
+bool type(bool *nullable, dataType *datatype);
+bool type_null(dataType *datatype);
+bool type_func_ret(bool *nullable, dataType *datatype);
+bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType);
 bool st();
 bool body();
 bool return_();

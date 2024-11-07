@@ -18,7 +18,7 @@
 #include "symtable.h"
 
 stack symtableStack;
-
+symtable *funSymtable;
 /**
  * @brief  Creates an empty symtable.
  * 

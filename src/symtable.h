@@ -28,23 +28,27 @@
 
 typedef struct symtable symtable;
 
+typedef enum {
+   u8,
+   i32,
+   f64
+} dataType;
+
 typedef struct funData{
    bool      defined;
-   int       returnType;                  // @todo represent with enums
-   int       paramTypes[MAX_PARAM_NUM];   // @todo represent with enums
+   dataType  returnType;                  
+   bool      nullableRType;               // 1 if nullable, 0 if not
+   dataType  paramTypes[MAX_PARAM_NUM];   
    char     *paramNames[MAX_PARAM_NUM];
    char     *intermediateCode;            // @todo change according to code generating
    symtable *tbPtr;
 }funData;
 
 typedef struct varData{
-   int type; // @todo represent with enums
-   bool isConst;
-   union{
-      float floatVal;
-      int   intVal;
-      char* stringVal;
-   }value;
+   dataType type;
+   bool isConst; // 1 if const 0 if var
+   bool isNullable; // 1 if nullable 0 if not
+   bool inheritedType; // 1 if needs to be inherited from expression, 0 if set
 }varData;
 
  typedef struct symData{
@@ -102,13 +106,13 @@ void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
 symNode*   createSymNode (char *key, symData data);
-void       insertSymNode(symtable *tb, char *key, symData data);
-void       deleteSymNode(symtable *tb, char *key);
+void       insertSymNode (symtable *tb, char *key, symData data);
+void       deleteSymNode (symtable *tb, char *key);
 
 symNode*   insertSymNodeRec (symNode *rootPtr, char *key, symData data, symtable *tb);
 symNode*   deleteSymNodeRec (symNode *rootPtr,  char *key, symtable *tb);
-symNode*   findSymNode   (symNode *rootPtr, char *key);
-void       freeSymNodes  (symNode *node);
+symNode*   findSymNode      (symNode *rootPtr, char *key);
+void       freeSymNodes     (symNode *node);
 
 void       initStack     (stack *st);
 void       push          (stack *st, symtable *tb);
@@ -117,7 +121,7 @@ symtable*  bottom        (stack *st);
 bool       stackEmpty    (stack *st);
 stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
-bool       isStackBottom   (stackElem *se);
+bool       isStackBottom (stackElem *se);
 
 symNode*   findInStack   (stack *st, char *key);
 
