@@ -29,6 +29,7 @@
 typedef struct symtable symtable;
 
 typedef struct funData{
+   bool      defined;
    int       returnType;                  // @todo represent with enums
    int       paramTypes[MAX_PARAM_NUM];   // @todo represent with enums
    char     *paramNames[MAX_PARAM_NUM];
@@ -38,6 +39,7 @@ typedef struct funData{
 
 typedef struct varData{
    int type; // @todo represent with enums
+   bool isConst;
    union{
       float floatVal;
       int   intVal;
@@ -48,8 +50,6 @@ typedef struct varData{
  typedef struct symData{
 
     bool varOrFun; // 0 if var, 1 if fun
-    bool isConst;
-    bool defined;
     bool used;
 
     union{
@@ -84,9 +84,15 @@ typedef struct stack{
    int       elemCnt;
 }stack;
 
+/* global variable, must be initialised in exactly one .c file, 
+   accessed anywhere where symtable.h is included */
+extern stack symtableStack; 
 
-extern stack symtableStack; /* global variable, must be initialised in exactly one .c file, 
-                               accessed anywhere where symtable.h is included */ 
+/* global variable of symtable for functions, 
+   function createSymtable() should be called on it
+   in exactly one file, accessible everywhere where
+   symtable.h is included */
+extern symtable* funSymtable;  
                            
 
 /* Functions for working with symtable and stack of symtables (user) */
