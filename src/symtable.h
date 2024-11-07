@@ -28,28 +28,32 @@
 
 typedef struct symtable symtable;
 
+typedef enum {
+   u8,
+   i32,
+   f64
+} dataType;
+
 typedef struct funData{
-   int       returnType;                  // @todo represent with enums
-   int       paramTypes[MAX_PARAM_NUM];   // @todo represent with enums
+   bool      defined;
+   dataType  returnType;                  
+   bool      nullableRType;               // 1 if nullable, 0 if not
+   dataType  paramTypes[MAX_PARAM_NUM];   
    char     *paramNames[MAX_PARAM_NUM];
    char     *intermediateCode;            // @todo change according to code generating
    symtable *tbPtr;
 }funData;
 
 typedef struct varData{
-   int type; // @todo represent with enums
-   union{
-      float floatVal;
-      int   intVal;
-      char* stringVal;
-   }value;
+   dataType type;
+   bool isConst; // 1 if const 0 if var
+   bool isNullable; // 1 if nullable 0 if not
+   bool inheritedType; // 1 if needs to be inherited from expression, 0 if set
 }varData;
 
  typedef struct symData{
 
     bool varOrFun; // 0 if var, 1 if fun
-    bool isConst;
-    bool defined;
     bool used;
 
     union{
@@ -84,9 +88,15 @@ typedef struct stack{
    int       elemCnt;
 }stack;
 
+/* global variable, must be initialised in exactly one .c file, 
+   accessed anywhere where symtable.h is included */
+extern stack symtableStack; 
 
-extern stack symtableStack; /* global variable, must be initialised in exactly one .c file, 
-                               accessed anywhere where symtable.h is included */ 
+/* global variable of symtable for functions, 
+   function createSymtable() should be called on it
+   in exactly one file, accessible everywhere where
+   symtable.h is included */
+extern symtable* funSymtable;  
                            
 
 /* Functions for working with symtable and stack of symtables (user) */
@@ -96,13 +106,13 @@ void       initSymtable  (symtable *tb);
 void       deleteSymtable(symtable *tb);
 
 symNode*   createSymNode (char *key, symData data);
-void       insertSymNode(symtable *tb, char *key, symData data);
-void       deleteSymNode(symtable *tb, char *key);
+void       insertSymNode (symtable *tb, char *key, symData data);
+void       deleteSymNode (symtable *tb, char *key);
 
 symNode*   insertSymNodeRec (symNode *rootPtr, char *key, symData data, symtable *tb);
 symNode*   deleteSymNodeRec (symNode *rootPtr,  char *key, symtable *tb);
-symNode*   findSymNode   (symNode *rootPtr, char *key);
-void       freeSymNodes  (symNode *node);
+symNode*   findSymNode      (symNode *rootPtr, char *key);
+void       freeSymNodes     (symNode *node);
 
 void       initStack     (stack *st);
 void       push          (stack *st, symtable *tb);
@@ -111,7 +121,7 @@ symtable*  bottom        (stack *st);
 bool       stackEmpty    (stack *st);
 stackElem* createStElem  (symtable *tb);
 void       freeStack     (stack *st);
-bool       isStackBottom   (stackElem *se);
+bool       isStackBottom (stackElem *se);
 
 symNode*   findInStack   (stack *st, char *key);
 
