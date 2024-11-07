@@ -565,10 +565,10 @@ bool expression(){
     return true;
 }
 
-int main(){
-    input_file = fopen("file.txt", "r");
-    GT
-    DEBPRINT("%d\n", prog());
-}
+// int main(){
+//     input_file = fopen("file.txt", "r");
+//     GT
+//     DEBPRINT("%d\n", prog());
+// }
 
 /* EOF parser.c */
