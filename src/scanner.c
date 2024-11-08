@@ -70,6 +70,7 @@ Token getToken() {
     current_token.value = NULL;
     current_token.type = tokentype_invalid;
     
+    here:
     while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
         continue;
     }
@@ -77,6 +78,7 @@ Token getToken() {
         current_token.type = tokentype_EOF;
         return current_token;
     }
+    
     switch(c) {
         case '/':
             if((c = getc(input_file)) == '/') {
@@ -84,7 +86,7 @@ Token getToken() {
                     c = getc(input_file);
                     continue;
                 }
-                c = getc(input_file);
+                goto here;
             }
             else {
                 ungetc(c, input_file);
@@ -445,6 +447,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
         }
         current_token.value[index++] = nextchar;
     }
+    current_token.value[index] = '\0';
 
     ungetc(nextchar, input_file);
 
@@ -499,13 +502,13 @@ Token process_Import(FILE *input_file) {
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
- int main() {
+//  int main() {
 
-     input_file = fopen("file.txt", "r");
+//      input_file = fopen("file.txt", "r");
     
-     for(int i = 0; i < 1000; i++) {
-         getToken();
-     }
+//      for(int i = 0; i < 1000; i++) {
+//          getToken();
+//      }
 
-     return 0;
- }
+//      return 0;
+//  }
