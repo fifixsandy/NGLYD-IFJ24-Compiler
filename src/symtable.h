@@ -31,7 +31,8 @@ typedef struct symtable symtable;
 typedef enum {
    u8,
    i32,
-   f64
+   f64,
+   void_
 } dataType;
 
 typedef struct funData{
