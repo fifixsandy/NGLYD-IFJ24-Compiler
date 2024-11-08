@@ -237,6 +237,12 @@ astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, 
     return new;
 }
 
+astNode *createRootNode(){
+    astNode *new = createAstNode();
+    new->type = AST_NODE_ROOT;
+    new->next = NULL;
+    return new;
+}
 
 void addNext(astNode *prev, astNode *next){
     prev->next = next;

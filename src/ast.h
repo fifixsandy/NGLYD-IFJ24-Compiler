@@ -34,6 +34,8 @@ typedef enum {
     AST_NODE_DEFFUNC,
     AST_NODE_RETURN,
 
+    AST_NODE_ROOT, // only contains next node, everything else is invalid 
+
     AST_INVALID
 
 }astNodeType;
@@ -135,12 +137,6 @@ typedef struct astReturn {
 }astReturn;
 
 
-typedef struct AST { 
-
-    astNode *root;
-
-}AST;
-
 typedef struct astExpr {
 
     dataType dataT;
@@ -184,6 +180,11 @@ typedef struct astDefVar {
     symNode *symtableEntry;  
 } astDefVar;
 
+typedef struct AST { 
+
+    astNode *root;
+
+}AST;
 
 astNode *createWhileNode(bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
 astNode *createIfElseNode(astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
