@@ -17,7 +17,7 @@
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %d: ",  __LINE__); \
@@ -31,11 +31,17 @@ Token currentToken;
 
 bool prog(){
     bool correct = false;
+    DEBPRINT("prog curr %d\n", currentToken.type);
     // RULE 1 <prog> -> <prolog> <code> <next_code> // EOF MBY
     if(currentToken.type == tokentype_keyword){ // TODO check if const
-        correct = prolog();
-        correct = correct && code();
-        correct = correct && next_code();
+        if(prolog()){
+            if(code()){
+                DEBPRINT("BEFORE NEXT_cODE %d\n", currentToken.type);
+                if(next_code()){
+                    correct = true;
+                }
+            }
+        }
         // TODO Check eof idk how rn
     }
     DEBPRINT("prog %d\n", correct);
@@ -78,12 +84,13 @@ bool code(){
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         correct = def_func();
     }
-    DEBPRINT("code %d\n", correct);
+    DEBPRINT("LEAVING code %d %d\n", correct, currentToken.type);
     return correct;
 }
 
 bool next_code(){
     bool correct = false;
+    DEBPRINT("ENTERING NEXT_CODE %d\n", currentToken.type);
     // RULE 4 <next_code> -> <code>
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         correct = code();
@@ -98,11 +105,14 @@ bool next_code(){
 
 bool def_func(){
     bool correct = false;
+    DEBPRINT("def_func curr %d \n",currentToken.type);
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         GT
+        DEBPRINT("def_func curr %d %s \n",currentToken.type, currentToken.value);
         if(currentToken.type == tokentype_keyword){ // TODO check if fn
         GT
+        DEBPRINT("def_func curr %d %s\n",currentToken.type, currentToken.value);
         if(currentToken.type == tokentype_id){
         
         // check for redefining already defined function
@@ -144,13 +154,15 @@ bool params(){
     bool correct = false;
     // RULE 7 <params> -> id : <type> <params_n>
     if(currentToken.type == tokentype_id){
-        GT
+        
+        DEBPRINT("params currtokentvalue %s type %d\n", currentToken.value, currentToken.type);
         symNode *entry = findInStack(&symtableStack, currentToken.value);
         if(entry != NULL){} // TODO SEMANTIC ERROR 5
         varData entryVarData = {.inheritedType = 0, .isConst = 1};
         symData entryData = {.data.vData = entryVarData, .varOrFun = 0};
         char *paramName = currentToken.value;
 
+        GT
         if(currentToken.type == tokentype_colon){
             GT
             if(type(&entryVarData.isNullable, &entryVarData.type)){
@@ -194,7 +206,7 @@ bool def_variable(){
     if(currentToken.type == tokentype_keyword){ // TODO check if const or var
         bool isConst;
         if(varorconst(&isConst)){
-            DEBPRINT("dadsanjk curr %d\n", currentToken.type);
+            DEBPRINT("def_variable_after_varorconst curr %d %s\n", currentToken.type, currentToken.value);
             if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if redefining or sth
 
                 symNode *varEntry = findInStack(&symtableStack, currentToken.value);
@@ -333,6 +345,7 @@ DEBPRINT("type func ret %d\n", correct);
 bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
     bool correct = false;
     // RULE 23 <type_var_def> -> : <type>
+    DEBPRINT("type_Var_def curr token %d\n", currentToken.type);
     if(currentToken.type == tokentype_colon){
         GT
         if(currentToken.type == tokentype_keyword 
@@ -399,7 +412,7 @@ bool body(){
         }
     }
 
-    DEBPRINT("body %d\n", correct);
+    DEBPRINT("leaving body %d %d\n", correct, currentToken.type);
     return correct;
 }
 
@@ -616,7 +629,7 @@ bool expression(){
 int main(){
     initStack(&symtableStack);
     funSymtable = createSymtable();
-    input_file = fopen("file.txt", "r");
+    input_file = fopen("file2.txt", "r");
     GT
     DEBPRINT("%d\n", prog());
 }
