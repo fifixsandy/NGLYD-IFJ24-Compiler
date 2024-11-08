@@ -18,13 +18,6 @@
 #define MAX_PARAM_NUMBER 256 // change
 
 typedef enum {
-   u8,
-   i32,
-   f64
-} dataType; // DELETE FROM HERE
-
-
-typedef enum {
     AST_NODE_WHILE,
     AST_NODE_IFELSE,
     AST_NODE_IF,
