@@ -135,11 +135,11 @@ typedef struct astReturn {
 }astReturn;
 
 
-typedef struct astTree { 
+typedef struct AST { 
 
     astNode *root;
 
-}astTree;
+}AST;
 
 typedef struct astExpr {
 

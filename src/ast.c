@@ -242,6 +242,24 @@ void addNext(astNode *prev, astNode *next){
     prev->next = next;
 }
 
+/**
+ * @brief           Connects node to the end of (sub)block.
+ * 
+ * @param toAdd     Pointer to the node to connect.
+ * @param blockRoot Root of the block to be connected to.
+ * 
+ */
+void connectToBlock(astNode *toAdd, astNode *blockRoot){
+    
+    astNode *currBottom = blockRoot;
+
+    while(currBottom->next != NULL){ // find where to connect
+        currBottom = currBottom->next;
+    }
+
+    currBottom->next = toAdd;
+
+}
 
 void freeASTNode(astNode *node){
     if(node == NULL){return;}
