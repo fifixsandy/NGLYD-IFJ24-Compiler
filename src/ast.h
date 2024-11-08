@@ -9,8 +9,17 @@
 #define MAX_PARAM_NUMBER 256 // change
 
 typedef enum {
+   u8,
+   i32,
+   f64
+} dataType; // DELETE FROM HERE
+
+
+typedef enum {
     AST_NODE_WHILE,
     AST_NODE_IFELSE,
+    AST_NODE_IF,
+    AST_NODE_ELSE,
 
     AST_NODE_ASSIGN,
     AST_NODE_EXPR,
@@ -18,9 +27,12 @@ typedef enum {
     AST_NODE_FUNC_CALL,
     AST_NODE_LITERAL,
     AST_NODE_VAR,
+    AST_NODE_DEFVAR,
 
     AST_NODE_DEFFUNC,
     AST_NODE_RETURN,
+
+    AST_INVALID
 
 }astNodeType;
 
@@ -41,14 +53,17 @@ typedef struct astNode {
 
         astWhile    whileNode;
         astIfElse   ifElseNode;
+        astIf       ifNode;
+        astElse     elseNode;
         astAssign   assignNode;
         astExpr     exprNode;
 
         astBinOp    binOpNode;
-        astLiteral  literalNodel;
+        astLiteral  literalNode;
         astVar      varNode;
         astFuncCall funcCallNode;
-        
+        astDefVar   defVarNode;
+
         astDefFunc  defFuncNode;
         astReturn   returnNode;
         
@@ -58,16 +73,16 @@ typedef struct astNode {
 
 typedef struct astWhile {
     
-    bool withNull;
-    char *id_without_null;
+    bool      withNull;
+    char     *id_without_null;
     astNode  *condition;
     astNode  *body;
+    symtable *symtableWhile;
 
 }astWhile;
 
 typedef struct astIfElse {
     bool withNull;
-    char *id_without_null;
 
     astNode *condition;
     astNode *ifPart;
@@ -75,12 +90,24 @@ typedef struct astIfElse {
 
 }astIfElse;
 
+typedef struct astIf {
+    
+    char *id_without_null;
+    symtable *symtableIf;
+    astNode  *body;
+
+}astIf;
+
+typedef struct astElse {
+    
+    symtable *symtableIf;
+    astNode  *body;
+}astElse;
 
 typedef struct astAssign {
 
     char *id;
-    // type
-    bool definiton;
+    dataType dataT;
     astNode *expression;
 
 }astAssign;
@@ -89,9 +116,9 @@ typedef struct astDefFunc {
 
     char *id;
     int paramNum;
-    // type paramTypes[MAX_PARAM_NUM];
+    dataType paramTypes[MAX_PARAM_NUM];
     char *paramNames[MAX_PARAM_NUM];
-    // type returnType;
+    dataType returnType;
     symtable *symtableFun;
     astNode *body;
 
@@ -100,7 +127,7 @@ typedef struct astDefFunc {
 typedef struct astReturn {
 
     astNode *returnExp;
-    //type returnType;
+    dataType returnType;
 
 }astReturn;
 
@@ -113,7 +140,7 @@ typedef struct astTree {
 
 typedef struct astExpr {
 
-    // type type;
+    dataType dataT;
     astNode *exprTree;
 
 }astExpr;
@@ -123,11 +150,12 @@ typedef struct astBinOp {
     binOpType op;
     astNode *left;
     astNode *right;
+    dataType dataT;
 
 }astBinOp;
 
 typedef struct astLiteral {
-    // type
+    dataType dataT;
     union{
         float floatData;
         int   intData;
@@ -136,16 +164,22 @@ typedef struct astLiteral {
 }astLiteral;
 
 typedef struct astVar {
-    // type
+    dataType dataT;
     char    *id;
     symNode *symtableEntry;
 }astVar;
 
 typedef struct astFuncCall {
-    // ret type
+    dataType retType;
     char *id;
     symNode *symtableEntry;
 }astFuncCall;
+
+typedef struct astDefVar {
+    char    *id;             
+    astNode *initExpr;       
+    symNode *symtableEntry;  
+} astDefVar;
 
 
 #endif
