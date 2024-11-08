@@ -1,6 +1,15 @@
+/**
+ * @file   ast.h
+ * 
+ * @brief  Header file for abstract syntactic tree representation.
+ * 
+ * 
+ * @author xnovakf00
+ * @date   08.11.2024
+*/
+
 #ifndef AST_H
 #define AST_H
-
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -46,8 +55,8 @@ typedef enum {
 typedef struct astNode {
 
     astNodeType     type;
-    struct astNode *parent;
-    struct astNode *next;
+    struct astNode *parent;  // in which block it is
+    struct astNode *next;   // next in block of code
 
     union{
 
@@ -67,7 +76,7 @@ typedef struct astNode {
         astDefFunc  defFuncNode;
         astReturn   returnNode;
         
-    }nodeRep;
+    }nodeRep;// exact representaion of the current node
 
 }astNode;
 
@@ -92,7 +101,7 @@ typedef struct astIfElse {
 
 typedef struct astIf {
     
-    char *id_without_null;
+    char     *id_without_null;
     symtable *symtableIf;
     astNode  *body;
 
@@ -102,11 +111,12 @@ typedef struct astElse {
     
     symtable *symtableIf;
     astNode  *body;
+
 }astElse;
 
 typedef struct astAssign {
 
-    char *id;
+    char    *id;
     dataType dataT;
     astNode *expression;
 
@@ -114,13 +124,13 @@ typedef struct astAssign {
 
 typedef struct astDefFunc {
 
-    char *id;
-    int paramNum;
-    dataType paramTypes[MAX_PARAM_NUM];
-    char *paramNames[MAX_PARAM_NUM];
-    dataType returnType;
+    char     *id;
+    int       paramNum;
+    dataType  paramTypes[MAX_PARAM_NUM];
+    char     *paramNames[MAX_PARAM_NUM];
+    dataType  returnType;
     symtable *symtableFun;
-    astNode *body;
+    astNode  *body;
 
 }astDefFunc;
 
@@ -148,9 +158,9 @@ typedef struct astExpr {
 typedef struct astBinOp {
     
     binOpType op;
-    astNode *left;
-    astNode *right;
-    dataType dataT;
+    astNode  *left;
+    astNode  *right;
+    dataType  dataT;
 
 }astBinOp;
 
@@ -171,7 +181,7 @@ typedef struct astVar {
 
 typedef struct astFuncCall {
     dataType retType;
-    char *id;
+    char    *id;
     symNode *symtableEntry;
 }astFuncCall;
 
@@ -182,4 +192,25 @@ typedef struct astDefVar {
 } astDefVar;
 
 
+astNode *createWhileNode(bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
+astNode *createIfElseNode(astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
+astNode *createIfNode(char *id_without_null, symtable *symtable, astNode *body, astNode *parent);
+astNode *createElseNode(symtable *symtableIf, astNode *body, astNode *parent);
+astNode *createAssignNode(char *id, astNode *expression, astNode *parent, dataType dataT);
+astNode *createDefVarNode(char *id, astNode *initExpr, symtable *symtableEntry, astNode *parent);
+astNode *createDefFuncNode(char *id, int paramNum, dataType *paramTypes, char **paramNames, dataType returnType, symtable *symtableFun, astNode *body, astNode *parent);
+astNode *createReturnNode(astNode *returnExp, dataType returnType, astNode *parent);
+astNode *createBinOpNode(binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
+astNode *createLiteralNode(dataType dataT, void *value, astNode *parent);
+astNode *createVarNode(char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
+astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, astNode *parent);
+
+void addNext(astNode *prev, astNode *next);
+void freeASTNode(astNode *node);
+
+astNode *createAstNode();
+
+
 #endif
+
+/* EOF ast.h */
