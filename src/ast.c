@@ -220,7 +220,71 @@ astNode *createVarNode(char *id, dataType dataT, symNode *symtableEntry, astNode
     return new;
 }
 
+astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, astNode *parent) {
+    astNode *new = createAstNode();
+
+    astFuncCall newFuncCall = {
+        .retType = retType,
+        .id = id,
+        .symtableEntry = symtableEntry
+    };
+
+    new->next = NULL;
+    new->type = AST_NODE_FUNC_CALL;
+    new->parent = parent;
+    new->nodeRep.funcCallNode = newFuncCall;
+
+    return new;
+}
+
 
 void addNext(astNode *prev, astNode *next){
     prev->next = next;
+}
+
+
+void freeASTNode(astNode *node){
+    if(node == NULL){return;}
+    switch(node->type){
+        case AST_NODE_WHILE:
+
+            freeASTNode(node->nodeRep.whileNode.condition);
+            freeASTNode(node->nodeRep.whileNode.body);
+            break;
+        case AST_NODE_IFELSE:
+            freeASTNode(node->nodeRep.ifElseNode.condition);
+            freeASTNode(node->nodeRep.ifElseNode.ifPart);
+            freeASTNode(node->nodeRep.ifElseNode.elsePart);
+            break;
+        case AST_NODE_IF:
+            freeASTNode(node->nodeRep.ifNode.body);
+            break;
+        case AST_NODE_ELSE:
+            freeASTNode(node->nodeRep.elseNode.body);
+            break;
+        case AST_NODE_ASSIGN:
+            freeASTNode(node->nodeRep.assignNode.expression);
+            break;
+        case AST_NODE_DEFFUNC:
+            freeASTNode(node->nodeRep.defFuncNode.body);
+            break;
+        case AST_NODE_RETURN:
+            freeASTNode(node->nodeRep.returnNode.returnExp);
+            break;
+        case AST_NODE_EXPR:
+            freeASTNode(node->nodeRep.exprNode.exprTree);
+            break;
+        case AST_NODE_BINOP:
+            freeASTNode(node->nodeRep.binOpNode.left);
+            freeASTNode(node->nodeRep.binOpNode.right);
+            break;
+        case AST_NODE_DEFVAR:
+            freeASTNode(node->nodeRep.defVarNode.initExpr);
+            break;
+        default:
+            break;
+    }
+
+    freeASTNode(node->next);
+    free(node);
 }
