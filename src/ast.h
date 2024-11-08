@@ -10,12 +10,18 @@
 
 typedef enum {
     AST_NODE_WHILE,
-    AST_NODE_BINOP,
-    AST_NODE_ASSIGN,
     AST_NODE_IFELSE,
-    AST_NODE_ROOT,
+
+    AST_NODE_ASSIGN,
+    AST_NODE_EXPR,
+    AST_NODE_BINOP,
+    AST_NODE_FUNC_CALL,
+    AST_NODE_LITERAL,
+    AST_NODE_VAR,
+
     AST_NODE_DEFFUNC,
-    AST_NODE_EXPR
+    AST_NODE_RETURN,
+
 }astNodeType;
 
 typedef enum {
@@ -32,10 +38,20 @@ typedef struct astNode {
     struct astNode *next;
 
     union{
-        astWhile  whileNode;
-        astIfElse ifElseNode;
-        astAssign assignNode;
-        astRoot  rootNode;
+
+        astWhile    whileNode;
+        astIfElse   ifElseNode;
+        astAssign   assignNode;
+        astExpr     exprNode;
+
+        astBinOp    binOpNode;
+        astLiteral  literalNodel;
+        astVar      varNode;
+        astFuncCall funcCallNode;
+        
+        astDefFunc  defFuncNode;
+        astReturn   returnNode;
+        
     }nodeRep;
 
 }astNode;
@@ -59,12 +75,6 @@ typedef struct astIfElse {
 
 }astIfElse;
 
-typedef struct astRoot {
-
-    symtable *symtable;
-    astNode  *bodyFirst;
-
-}astRoot;
 
 typedef struct astAssign {
 
@@ -78,12 +88,21 @@ typedef struct astAssign {
 typedef struct astDefFunc {
 
     char *id;
+    int paramNum;
     // type paramTypes[MAX_PARAM_NUM];
     char *paramNames[MAX_PARAM_NUM];
     // type returnType;
-    astNode *block;
+    symtable *symtableFun;
+    astNode *body;
 
 }astDefFunc;
+
+typedef struct astReturn {
+
+    astNode *returnExp;
+    //type returnType;
+
+}astReturn;
 
 
 typedef struct astTree { 
@@ -92,6 +111,12 @@ typedef struct astTree {
 
 }astTree;
 
+typedef struct astExpr {
+
+    // type type;
+    astNode *exprTree;
+
+}astExpr;
 
 typedef struct astBinOp {
     
@@ -101,23 +126,25 @@ typedef struct astBinOp {
 
 }astBinOp;
 
-typedef struct astConst {
+typedef struct astLiteral {
     // type
     union{
         float floatData;
         int   intData;
         char *charData;
     }value;
-}astConst;
+}astLiteral;
 
 typedef struct astVar {
     // type
-    char *id;
+    char    *id;
+    symNode *symtableEntry;
 }astVar;
 
 typedef struct astFuncCall {
     // ret type
     char *id;
+    symNode *symtableEntry;
 }astFuncCall;
 
 
