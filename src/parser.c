@@ -487,19 +487,27 @@ bool body(dataType returnType, astNode *block){
 
 bool return_(dataType expReturnType, astNode *block){
     bool correct = false;
+
+    astNode *exprNode   = createAstNode(); // allocate empty node
+    astNode *returnNode = createAstNode(); 
+
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_keyword){ // TODO check if keyword == return
         GT
-        if(exp_func_ret(expReturnType)){
+        if(exp_func_ret(expReturnType, exprNode)){
             correct = (currentToken.type == tokentype_semicolon);
             GT
         }
-    } 
+    }
+
+    createReturnNode(returnNode, exprNode, expReturnType, block);
+    connectToBlock(returnNode, block);
+    
     DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool exp_func_ret(dataType expRetType){
+bool exp_func_ret(dataType expRetType, astNode *exprNode){
     bool correct = false;
     // RULE 43 <exp_func_ret> -> ε
     if(currentToken.type == tokentype_semicolon){
