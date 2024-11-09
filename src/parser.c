@@ -115,8 +115,8 @@ bool def_func(){
     char    *funID;
     funData  entryData;
     symData  entrySymData;
-    dataType paramTypes[MAX_PARAM_NUM];
-    char    *paramNames[MAX_PARAM_NUM];
+    dataType *paramTypes = malloc(sizeof(dataType)*MAX_PARAM_NUM);
+    char    **paramNames = malloc(sizeof(char *)*MAX_PARAM_NUM);
     int      paramNum = 0;
     dataType returnType;
     bool     nullable;
@@ -153,17 +153,25 @@ bool def_func(){
         if(type_func_ret(&nullable, &returnType)){
         if(currentToken.type == tokentype_lcbracket){
         GT
-        if(body(returnType)){
+        if(body(returnType, funcAstNode)){
         correct = (currentToken.type == tokentype_rcbracket);
         GT
         }}}}}}}}
     }
 
+    symtable *symtableFun = pop(&symtableStack); 
+    entryData.defined       = true;
+    entryData.paramNames    = paramNames;
+    entryData.paramTypes    = paramTypes;
+    entryData.tbPtr         = symtableFun;
+    entryData.nullableRType = nullable;
+    entryData.returnType    = returnType;
+
     entrySymData.data.fData = entryData;
     insertSymNode(funSymtable, funID, entrySymData);
-    symtable *symtableFun = pop(&symtableStack); 
+   
 
-    createDefFuncNode(funcAstNode,funID, symtableFun, bodyNode, ASTree.root);
+    createDefFuncNode(funcAstNode ,funID, symtableFun, bodyNode, ASTree.root);
     
     connectToBlock(funcAstNode, ASTree.root);
 
@@ -197,8 +205,8 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
             if(type(&nullable, &paramType)){
           
                 // all information are known, set them accordingly
-                *paramNames[*paramNum]  = paramID;
-                *paramTypes[*paramNum]  = paramType;
+                (*paramNames)[*paramNum]  = paramID;
+                (*paramTypes)[*paramNum]  = paramType;
                 entryVarData.type       = paramType;
                 entryVarData.isNullable = nullable;
                 (*paramNum)++;
@@ -234,7 +242,7 @@ bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
     return correct;
 }
 
-bool def_variable(){
+bool def_variable(astNode *block){
     bool correct = false;
 
     // prepare information about defined variable
@@ -287,7 +295,7 @@ bool def_variable(){
                 varEntry = findInStack(&symtableStack, varName);
                 astNode *node;
                 createDefVarNode(varAstNode ,varName, initExpr, varEntry, node);
-                connectToBlock(varAstNode, ASTree.root); // TODO CHANGE 
+                connectToBlock(varAstNode, block);
 
                 }}}}
     DEBPRINT(" %d\n", correct);
@@ -424,38 +432,38 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool st(dataType expReturnType){
+bool st(dataType expReturnType, astNode *block){
     bool correct = false;
     // RULE 34 <st> -> <def_variable>
     if(currentToken.type == tokentype_keyword){ // TODO check if const/var
-        correct = def_variable();
+        correct = def_variable(block);
     }
     // RULE 35 <st> -> <assign_or_f_call>
     else if(currentToken.type == tokentype_id){
-        correct = assign_or_f_call();
+        correct = assign_or_f_call(block);
     }
     // RULE 36 <st> -> <unused_decl>
     else if(currentToken.type == tokentype_pseudovar){
-        correct = unused_decl();
+        correct = unused_decl(block);
     }
     // <st> RULE 37 -> <while_statement>
     else if(currentToken.type == tokentype_keyword){ // TODO check if while
-        correct = while_statement(expReturnType);
+        correct = while_statement(expReturnType, block);
     }
     // <st> RULE 38 -> <if_statement>
     else if(currentToken.type == tokentype_keyword){ // TODO check if if
-        correct = if_statement(expReturnType);
+        correct = if_statement(expReturnType, block);
     }
     // <st> RULE 39 -> <return>
     else if(currentToken.type == tokentype_keyword){ // TODO check if return
-        correct = return_(expReturnType);
+        correct = return_(expReturnType, block);
     }
 
 
     return correct;
 }
 
-bool body(dataType returnType){
+bool body(dataType returnType, astNode *block){
     bool correct = false;
     // RULE 40 <body> -> ε
     DEBPRINT("   %d \n", currentToken.type);
@@ -467,8 +475,8 @@ bool body(dataType returnType){
             currentToken.type == tokentype_id ||
             currentToken.type == tokentype_pseudovar){
         
-        if(st(returnType)){
-            correct = body(returnType);
+        if(st(returnType, block)){
+            correct = body(returnType, block);
         }
     }
 
@@ -476,7 +484,7 @@ bool body(dataType returnType){
     return correct;
 }
 
-bool return_(dataType expReturnType){
+bool return_(dataType expReturnType, astNode *block){
     bool correct = false;
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_keyword){ // TODO check if keyword == return
@@ -532,8 +540,10 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool while_statement(dataType expRetType){
+bool while_statement(dataType expRetType, astNode *block){
     bool correct = false;
+    astNode *whileAstNode = createAstNode(); 
+
     // RULE 47 <while_statement> -> while ( expression ) <id_without_null> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if == while
         GT
@@ -545,7 +555,7 @@ bool while_statement(dataType expRetType){
                     if(id_without_null()){
                         if(currentToken.type == tokentype_lcbracket){
                             GT
-                            if(body(expRetType)){
+                            if(body(expRetType, whileAstNode)){
                                 correct = (currentToken.type == tokentype_rcbracket);
                                 GT
                             }
@@ -559,8 +569,10 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool if_statement(dataType expRetType){
+bool if_statement(dataType expRetType, astNode *block){
     bool correct = false;
+    astNode *ifNode   = createAstNode();
+    astNode *elseNode = createAstNode();
 
     // create new scope for if
     symtable *symtableForIf = createSymtable();
@@ -577,7 +589,7 @@ bool if_statement(dataType expRetType){
         if(id_without_null()){
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType)){
+        if(body(expRetType, ifNode)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_keyword){ // TODO check if else
@@ -591,7 +603,7 @@ bool if_statement(dataType expRetType){
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType)){
+        if(body(expRetType, elseNode)){
         correct = (currentToken.type == tokentype_rcbracket);
             GT
         }}}}}}}}}}
