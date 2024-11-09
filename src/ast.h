@@ -15,7 +15,6 @@
 #include <stdbool.h>
 #include "symtable.h"
 
-#define MAX_PARAM_NUMBER 256 // change
 
 typedef enum {
     AST_NODE_WHILE,
@@ -120,10 +119,6 @@ typedef struct astAssign {
 typedef struct astDefFunc {
 
     char     *id;
-    int       paramNum;
-    dataType  paramTypes[MAX_PARAM_NUM];
-    char     *paramNames[MAX_PARAM_NUM];
-    dataType  returnType;
     symtable *symtableFun;
     astNode  *body;
 
@@ -192,13 +187,14 @@ astNode *createIfNode(char *id_without_null, symtable *symtable, astNode *body, 
 astNode *createElseNode(symtable *symtableIf, astNode *body, astNode *parent);
 astNode *createAssignNode(char *id, astNode *expression, astNode *parent, dataType dataT);
 astNode *createDefVarNode(char *id, astNode *initExpr, symtable *symtableEntry, astNode *parent);
-astNode *createDefFuncNode(char *id, int paramNum, dataType *paramTypes, char **paramNames, dataType returnType, symtable *symtableFun, astNode *body, astNode *parent);
+astNode *createDefFuncNode(char *id, symtable *symtableFun, astNode *body, astNode *parent);
 astNode *createReturnNode(astNode *returnExp, dataType returnType, astNode *parent);
 astNode *createBinOpNode(binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 astNode *createLiteralNode(dataType dataT, void *value, astNode *parent);
 astNode *createVarNode(char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, astNode *parent);
 
+void connectToBlock(astNode *toAdd, astNode *blockRoot);
 void addNext(astNode *prev, astNode *next);
 void freeASTNode(astNode *node);
 

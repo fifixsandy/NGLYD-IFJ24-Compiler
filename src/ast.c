@@ -121,21 +121,15 @@ astNode *createDefVarNode(char *id, astNode *initExpr, symtable *symtableEntry, 
     return new;
 }
 
-astNode *createDefFuncNode(char *id, int paramNum, dataType *paramTypes, char **paramNames, dataType returnType, symtable *symtableFun, astNode *body, astNode *parent) {
+astNode *createDefFuncNode(char *id, symtable *symtableFun, astNode *body, astNode *parent) {
     astNode *new = createAstNode();
 
     astDefFunc newDefFunc = {
         .id = id,
-        .paramNum = paramNum,
-        .returnType = returnType,
         .symtableFun = symtableFun,
         .body = body
     };
 
-    for(int i = 0; i < paramNum; i++) {
-        newDefFunc.paramNames[i] = paramNames[i];
-        newDefFunc.paramTypes[i] = paramTypes[i];
-    }
 
     new->next = NULL;
     new->type = AST_NODE_DEFFUNC;
