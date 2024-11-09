@@ -28,6 +28,7 @@
 
 Token   currentToken;
 AST     ASTree; 
+astNode currentBlock;
 
 bool prog(){
     bool correct = false;
@@ -110,7 +111,8 @@ bool def_func(){
     bool correct = false;
     DEBPRINT("%d \n",currentToken.type);
 
-    char *   funID;
+    // preparing information about defined function
+    char    *funID;
     funData  entryData;
     symData  entrySymData;
     dataType paramTypes[MAX_PARAM_NUM];
@@ -159,7 +161,7 @@ bool def_func(){
     insertSymNode(funSymtable, funID, entrySymData);
     symtable *symtableFun = pop(&symtableStack); 
 
-    astNode *funcAstNode = createDefFuncNode(funID, symtableFun, bodyNode, ASTree.root);
+    astNode *funcAstNode  = createDefFuncNode(funID, symtableFun, bodyNode, ASTree.root);
     
     connectToBlock(funcAstNode, ASTree.root);
 
@@ -205,6 +207,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
             }
         }
     }
+
     // RULE 8 <params> -> ε
     else{
         correct = (currentToken.type == tokentype_rbracket);   
@@ -225,32 +228,48 @@ bool params_n(int *paramNum, dataType **paramTypes, char **paramNames){
     else{
         correct = (currentToken.type == tokentype_rbracket);
     }
-    DEBPRINT(" %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
 bool def_variable(){
     bool correct = false;
+
+    // prepare information about defined variable
+    char    *varName;
+    dataType varType;
+    bool     nullable;
+    bool     isConst;
+    bool     inheritedType;
+
+    varData  variData;
+    symData  entryData;
+    astNode *initExpr;
+    
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
-            
     if(currentToken.type == tokentype_keyword){ // TODO check if const or var
-        bool isConst;
+        
         if(varorconst(&isConst)){
-            DEBPRINT("  %d %s\n", currentToken.type, currentToken.value);
-            if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if redefining or sth
+            DEBPRINT(" %d %s\n", currentToken.type, currentToken.value);
+            if(currentToken.type == tokentype_id){
 
-                symNode *varEntry = findInStack(&symtableStack, currentToken.value);
+                varName = currentToken.value;
+                symNode *varEntry = findInStack(&symtableStack, varName);
                 if(varEntry != NULL){} // TODO SEMANTIC error 5 redefinition
-                // TODO get info from other parts
 
-                varData variData  = {.isConst = isConst};
-                symData entryData = {.data.vData = variData, .used = false, .varOrFun = 0};
-                char   *entryName = currentToken.value;
+                variData.isConst = isConst;
+                entryData.used = false;
+                entryData.varOrFun = 0;
+        
                 GT
 
-                if(type_var_def(&variData.isNullable, &variData.type, &variData.inheritedType)){
-                    DEBPRINT("   %d \n", currentToken.type); 
-                
+                if(type_var_def(&nullable, &varType, &inheritedType)){
+                    DEBPRINT("%d \n", currentToken.type); 
+
+                    variData.inheritedType = inheritedType;
+                    variData.isNullable    = nullable;
+                    variData.type          = varType;
+
                 if(currentToken.type == tokentype_assign){
                     GT
                     if(expression()){ // TODO EXPRESSION
@@ -258,7 +277,12 @@ bool def_variable(){
                         GT
                     }
                 }
-                insertSymNode(symtableStack.top->tbPtr, entryName, entryData);
+
+                entryData.data.vData = variData;
+                insertSymNode(symtableStack.top->tbPtr, varName, entryData);
+                varEntry = findInStack(&symtableStack, varName);
+                astNode *varAstNode = createDefVarNode(varName, initExpr, varEntry);
+
                 }}}}
     DEBPRINT(" %d\n", correct);
     return correct;
