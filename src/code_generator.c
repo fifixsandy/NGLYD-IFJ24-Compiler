@@ -9,9 +9,11 @@
 #include "code_generator.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "code_buffer.c"
+#include "code_buffer.h"
 
 #define BUFFER buf
+
+Buffer *BUFFER;
 
 // Add code to buffer with error handling
 #define add_code(val) \
@@ -37,7 +39,7 @@
         } \
     } while (0)
 
-typedef enum {INT, FLOAT, STRING} Types;
+
 
 // Declare buffer as a global variable
 Buffer *BUFFER;
@@ -45,21 +47,25 @@ Buffer *BUFFER;
 bool add_param(char *param){
     space();
     add_code(param);    
+    return true;
 }
 
 bool add_int(int val){
     add_code("int@");
     if(!buf_push_int(buf, val)) return false;
+    return true;
 }
 
 bool add_float(int val){
     add_code("float@");
     if(!buf_push_float(buf, val)) return false;
+    return true;
 }
 
 bool add_string(char *str){
     add_code("string@");
     if(!buf_push_string(buf, str)) return false;
+    return true;
 }
 
 bool add_read(char *var, Types type){
@@ -132,7 +138,9 @@ bool add_chr(char *var, char *symb){
 
 bool generate_build_in_functions(){
     add_code(SUBSTRING);
+    endl();
     add_code(STRCMP);
+    endl();
     add_code(ORD);
     return true;
 }

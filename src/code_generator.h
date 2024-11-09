@@ -10,7 +10,14 @@
 #ifndef CODE_GENERATOR_H
 #define CODE_GENERATOR_H
 
-#include "code_buffer.c"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include "code_buffer.h"
+
+
+typedef enum {INT, FLOAT, STRING} Types;
 
 /**
  * @brief The header section of the code generation
