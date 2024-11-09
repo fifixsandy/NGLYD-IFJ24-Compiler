@@ -120,8 +120,9 @@ bool def_func(){
     int       paramNum = 0;
     dataType  returnType;
     bool      nullable;
-    astNode  *funcAstNode = createAstNode();
-    astNode  *bodyAstRoot = createRootNode();
+
+    astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
+    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
 
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
@@ -159,20 +160,19 @@ bool def_func(){
         }}}}}}}}
     }
 
-    symtable *symtableFun = pop(&symtableStack); 
+    // information is now known, set it
+    symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
+    entryData.tbPtr         = symtableFun;
     entryData.defined       = true;
     entryData.paramNames    = paramNames;
     entryData.paramTypes    = paramTypes;
-    entryData.tbPtr         = symtableFun;
     entryData.nullableRType = nullable;
     entryData.returnType    = returnType;
 
     entrySymData.data.fData = entryData;
     insertSymNode(funSymtable, funID, entrySymData);
-   
 
-    createDefFuncNode(funcAstNode ,funID, symtableFun, bodyAstRoot, ASTree.root);
-    
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root); // add correct data to astnode previously created
     connectToBlock(funcAstNode, ASTree.root);
 
     DEBPRINT("%d\n", correct);
@@ -256,7 +256,7 @@ bool def_variable(astNode *block){
     symData  entryData;
     astNode *initExpr;
 
-    astNode *varAstNode = createAstNode();
+    astNode *varAstNode = createAstNode(); // allocate new ast node with no representation yet
     
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
     if(currentToken.type == tokentype_keyword){ // TODO check if const or var
@@ -292,10 +292,11 @@ bool def_variable(astNode *block){
 
                 entryData.data.vData = variData;
                 insertSymNode(symtableStack.top->tbPtr, varName, entryData);
-                varEntry = findInStack(&symtableStack, varName);
-                astNode *node;
-                createDefVarNode(varAstNode ,varName, initExpr, varEntry, node);
-                connectToBlock(varAstNode, block);
+
+                varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
+
+                createDefVarNode(varAstNode ,varName, initExpr, varEntry, block); // create the correct representation
+                connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
 
                 }}}}
     DEBPRINT(" %d\n", correct);
