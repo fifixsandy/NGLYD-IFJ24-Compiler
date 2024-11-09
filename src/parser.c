@@ -158,6 +158,7 @@ bool def_func(){
         }}}}}}}}
     }
 
+    entrySymData.data.fData = entryData;
     insertSymNode(funSymtable, funID, entrySymData);
     symtable *symtableFun = pop(&symtableStack); 
 
@@ -217,7 +218,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
 }
 
 // TODO CHECK THIS WHOLE FUNCTION
-bool params_n(int *paramNum, dataType **paramTypes, char **paramNames){
+bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
     bool correct = false;
     // RULE 9 <params_n> -> , <params>
     if(currentToken.type == tokentype_comma){
@@ -281,7 +282,9 @@ bool def_variable(){
                 entryData.data.vData = variData;
                 insertSymNode(symtableStack.top->tbPtr, varName, entryData);
                 varEntry = findInStack(&symtableStack, varName);
-                astNode *varAstNode = createDefVarNode(varName, initExpr, varEntry);
+                astNode *node;
+                astNode *varAstNode = createDefVarNode(varName, initExpr, varEntry, node);
+                connectToBlock(varAstNode, ASTree.root); // TODO CHANGE 
 
                 }}}}
     DEBPRINT(" %d\n", correct);
@@ -694,6 +697,8 @@ int main(){
     input_file = fopen("file.txt", "r");
     GT
     DEBPRINT("%d\n", prog());
+    astNode *node = ASTree.root->next;
+    DEBPRINT("this is the type %d, %s, %d\n", node->type, node->nodeRep.defVarNode.id, node->nodeRep.defVarNode.symtableEntry->data.used);
 }
 
 /* EOF parser.c */

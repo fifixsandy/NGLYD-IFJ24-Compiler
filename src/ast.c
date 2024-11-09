@@ -104,7 +104,7 @@ astNode *createAssignNode(char *id, astNode *expression, astNode *parent, dataTy
     return new;
 }
 
-astNode *createDefVarNode(char *id, astNode *initExpr, symtable *symtableEntry, astNode *parent) {
+astNode *createDefVarNode(char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent) {
     astNode *new = createAstNode();
 
     astDefVar newDefVar = {
