@@ -121,6 +121,7 @@ bool def_func(){
     dataType returnType;
     bool     nullable;
     astNode *bodyNode;
+    astNode *funcAstNode = createAstNode();
 
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
@@ -162,7 +163,7 @@ bool def_func(){
     insertSymNode(funSymtable, funID, entrySymData);
     symtable *symtableFun = pop(&symtableStack); 
 
-    astNode *funcAstNode  = createDefFuncNode(funID, symtableFun, bodyNode, ASTree.root);
+    createDefFuncNode(funcAstNode,funID, symtableFun, bodyNode, ASTree.root);
     
     connectToBlock(funcAstNode, ASTree.root);
 
@@ -246,6 +247,8 @@ bool def_variable(){
     varData  variData;
     symData  entryData;
     astNode *initExpr;
+
+    astNode *varAstNode = createAstNode();
     
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
     if(currentToken.type == tokentype_keyword){ // TODO check if const or var
@@ -283,7 +286,7 @@ bool def_variable(){
                 insertSymNode(symtableStack.top->tbPtr, varName, entryData);
                 varEntry = findInStack(&symtableStack, varName);
                 astNode *node;
-                astNode *varAstNode = createDefVarNode(varName, initExpr, varEntry, node);
+                createDefVarNode(varAstNode ,varName, initExpr, varEntry, node);
                 connectToBlock(varAstNode, ASTree.root); // TODO CHANGE 
 
                 }}}}

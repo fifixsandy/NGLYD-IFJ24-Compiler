@@ -186,18 +186,18 @@ typedef struct astNode {
 
 
 
-astNode *createWhileNode(bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
-astNode *createIfElseNode(astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
-astNode *createIfNode(char *id_without_null, symtable *symtable, astNode *body, astNode *parent);
-astNode *createElseNode(symtable *symtableIf, astNode *body, astNode *parent);
-astNode *createAssignNode(char *id, astNode *expression, astNode *parent, dataType dataT);
-astNode *createDefVarNode(char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
-astNode *createDefFuncNode(char *id, symtable *symtableFun, astNode *body, astNode *parent);
-astNode *createReturnNode(astNode *returnExp, dataType returnType, astNode *parent);
-astNode *createBinOpNode(binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
-astNode *createLiteralNode(dataType dataT, void *value, astNode *parent);
-astNode *createVarNode(char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
-astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, astNode *parent);
+void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
+void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
+void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body, astNode *parent);
+void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent);
+void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT);
+void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent);
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
+void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
+void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
+void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
+void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent);
 astNode *createRootNode();
 
 void connectToBlock(astNode *toAdd, astNode *blockRoot);
