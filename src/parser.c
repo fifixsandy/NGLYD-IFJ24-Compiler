@@ -17,7 +17,7 @@
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
@@ -112,16 +112,16 @@ bool def_func(){
     DEBPRINT("%d \n",currentToken.type);
 
     // preparing information about defined function
-    char    *funID;
-    funData  entryData;
-    symData  entrySymData;
+    char     *funID;
+    funData   entryData;
+    symData   entrySymData;
     dataType *paramTypes = malloc(sizeof(dataType)*MAX_PARAM_NUM);
     char    **paramNames = malloc(sizeof(char *)*MAX_PARAM_NUM);
-    int      paramNum = 0;
-    dataType returnType;
-    bool     nullable;
-    astNode *bodyNode;
-    astNode *funcAstNode = createAstNode();
+    int       paramNum = 0;
+    dataType  returnType;
+    bool      nullable;
+    astNode  *funcAstNode = createAstNode();
+    astNode  *bodyAstRoot = createRootNode();
 
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
@@ -153,7 +153,7 @@ bool def_func(){
         if(type_func_ret(&nullable, &returnType)){
         if(currentToken.type == tokentype_lcbracket){
         GT
-        if(body(returnType, funcAstNode)){
+        if(body(returnType, bodyAstRoot)){
         correct = (currentToken.type == tokentype_rcbracket);
         GT
         }}}}}}}}
@@ -171,7 +171,7 @@ bool def_func(){
     insertSymNode(funSymtable, funID, entrySymData);
    
 
-    createDefFuncNode(funcAstNode ,funID, symtableFun, bodyNode, ASTree.root);
+    createDefFuncNode(funcAstNode ,funID, symtableFun, bodyAstRoot, ASTree.root);
     
     connectToBlock(funcAstNode, ASTree.root);
 
@@ -712,8 +712,6 @@ int main(){
     input_file = fopen("file.txt", "r");
     GT
     DEBPRINT("%d\n", prog());
-    astNode *node = ASTree.root->next;
-    DEBPRINT("this is the type %d, %s, %d\n", node->type, node->nodeRep.defVarNode.id, node->nodeRep.defVarNode.symtableEntry->data.used);
 }
 
 /* EOF parser.c */
