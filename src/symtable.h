@@ -39,8 +39,8 @@ typedef struct funData{
    bool      defined;
    dataType  returnType;                  
    bool      nullableRType;               // 1 if nullable, 0 if not
-   dataType  paramTypes[MAX_PARAM_NUM];   
-   char     *paramNames[MAX_PARAM_NUM];
+   dataType *paramTypes;
+   char     **paramNames;
    char     *intermediateCode;            // @todo change according to code generating
    symtable *tbPtr;
 }funData;

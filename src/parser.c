@@ -17,26 +17,30 @@
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
-        fprintf(stderr, "D: %d: ",  __LINE__); \
+        fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
         fprintf(stderr, __VA_ARGS__);
 #else
     #define DEBPRINT(...) 
 #endif
 
-Token currentToken;
-
+Token   currentToken;
+AST     ASTree; 
+astNode currentBlock;
 
 bool prog(){
     bool correct = false;
-    DEBPRINT("prog curr %d\n", currentToken.type);
+    DEBPRINT("%d\n", currentToken.type);
+
+    ASTree.root = createRootNode(); // initialize ASTree
+
     // RULE 1 <prog> -> <prolog> <code> <next_code> // EOF MBY
     if(currentToken.type == tokentype_keyword){ // TODO check if const
         if(prolog()){
             if(code()){
-                DEBPRINT("BEFORE NEXT_cODE %d\n", currentToken.type);
+                DEBPRINT("%d\n", currentToken.type);
                 if(next_code()){
                     correct = true;
                 }
@@ -44,7 +48,7 @@ bool prog(){
         }
         // TODO Check eof idk how rn
     }
-    DEBPRINT("prog %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
@@ -73,24 +77,24 @@ bool prolog(){
             }
         }
     }
-    DEBPRINT("prolog %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
 bool code(){
     bool correct = false;
-    DEBPRINT("current in code %d\n",currentToken.type);
+    DEBPRINT("%d\n",currentToken.type);
     // RULE 3 <code> -> <def_func>
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         correct = def_func();
     }
-    DEBPRINT("LEAVING code %d %d\n", correct, currentToken.type);
+    DEBPRINT("%d %d\n", correct, currentToken.type);
     return correct;
 }
 
 bool next_code(){
     bool correct = false;
-    DEBPRINT("ENTERING NEXT_CODE %d\n", currentToken.type);
+    DEBPRINT("%d\n", currentToken.type);
     // RULE 4 <next_code> -> <code>
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         correct = code();
@@ -99,128 +103,185 @@ bool next_code(){
     else if(currentToken.type == tokentype_EOF){
         correct = true;
     }
-    DEBPRINT("next_code %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
 bool def_func(){
     bool correct = false;
-    DEBPRINT("def_func curr %d \n",currentToken.type);
+    DEBPRINT("%d \n",currentToken.type);
+
+    // preparing information about defined function
+    char     *funID;
+    funData   entryData;
+    symData   entrySymData;
+    dataType *paramTypes = malloc(sizeof(dataType)*MAX_PARAM_NUM);
+    char    **paramNames = malloc(sizeof(char *)*MAX_PARAM_NUM);
+    int       paramNum = 0;
+    dataType  returnType;
+    bool      nullable;
+
+    astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
+    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
+
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if pub
         GT
-        DEBPRINT("def_func curr %d %s \n",currentToken.type, currentToken.value);
+        DEBPRINT("%d %s \n",currentToken.type, currentToken.value);
         if(currentToken.type == tokentype_keyword){ // TODO check if fn
         GT
-        DEBPRINT("def_func curr %d %s\n",currentToken.type, currentToken.value);
+        DEBPRINT("%d %s\n",currentToken.type, currentToken.value);
         if(currentToken.type == tokentype_id){
         
+        funID = currentToken.value;
         // check for redefining already defined function
-        symNode *functionEntry = findSymNode(funSymtable->rootPtr, currentToken.value);
+        symNode *functionEntry = findSymNode(funSymtable->rootPtr, funID);
         if(functionEntry != NULL){
             if(functionEntry->data.data.fData.defined){}
-        } // TODO SEMANTIC error 5 redefinition
+        } // TODO SEMANTIC error 5 redefinition and recheck of parameters and return type
         
+
         // create new scope and push it
         symtable *symtableNewF = createSymtable();
         push(&symtableStack, symtableNewF);
 
-        // TODO get info from other parts
-        funData entryData;
-        symData entrySymData = {.varOrFun = 1, .data.fData = entryData};
-        char   *entryFunName = currentToken.value;
-        insertSymNode(funSymtable, entryFunName, entrySymData); // PUT SOMEWHERE ELSE
-
         GT
         if(currentToken.type == tokentype_lbracket){
         GT
-        if(params()){
+        if(params(&paramNum, &paramTypes, &paramNames)){
         if(currentToken.type == tokentype_rbracket){
         GT
-        if(type_func_ret(&entryData.nullableRType, &entryData.returnType)){
+        if(type_func_ret(&nullable, &returnType)){
         if(currentToken.type == tokentype_lcbracket){
         GT
-        if(body()){
+        if(body(returnType, bodyAstRoot)){
         correct = (currentToken.type == tokentype_rcbracket);
         GT
         }}}}}}}}
     }
-    pop(&symtableStack); // TODO pop symtable into function node
-    DEBPRINT("deffunc %d\n", correct);
+
+    // information is now known, set it
+    symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
+    entryData.tbPtr         = symtableFun;
+    entryData.defined       = true;
+    entryData.paramNames    = paramNames;
+    entryData.paramTypes    = paramTypes;
+    entryData.nullableRType = nullable;
+    entryData.returnType    = returnType;
+
+    entrySymData.data.fData = entryData;
+    insertSymNode(funSymtable, funID, entrySymData);
+
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root); // add correct data to astnode previously created
+    connectToBlock(funcAstNode, ASTree.root);
+
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
-bool params(){
+bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
     bool correct = false;
+
+    // preparing information about parameter
+    char    *paramID;
+    dataType paramType;
+    bool     nullable;
+    varData  entryVarData = {.inheritedType = 0, .isConst = 1}; // parameter has to be const and can't have inherited type
+    symData  entryData    = {.varOrFun = 0};
+
     // RULE 7 <params> -> id : <type> <params_n>
     if(currentToken.type == tokentype_id){
-        
-        DEBPRINT("params currtokentvalue %s type %d\n", currentToken.value, currentToken.type);
-        symNode *entry = findInStack(&symtableStack, currentToken.value);
-        if(entry != NULL){} // TODO SEMANTIC ERROR 5
-        varData entryVarData = {.inheritedType = 0, .isConst = 1};
-        symData entryData = {.data.vData = entryVarData, .varOrFun = 0};
-        char *paramName = currentToken.value;
+        DEBPRINT("%s  %d\n", currentToken.value, currentToken.type);
 
+        // check if redefining existing (two params with same name)
+        paramID = currentToken.value;
+        symNode *entry = findInStack(&symtableStack, paramID);
+        if(entry != NULL){} // TODO SEMANTIC ERROR 5
+        
         GT
         if(currentToken.type == tokentype_colon){
             GT
-            if(type(&entryVarData.isNullable, &entryVarData.type)){
-                
-                insertSymNode(symtableStack.top->tbPtr, paramName, entryData);
 
-                correct = params_n();
+            if(type(&nullable, &paramType)){
+          
+                // all information are known, set them accordingly
+                (*paramNames)[*paramNum]  = paramID;
+                (*paramTypes)[*paramNum]  = paramType;
+                entryVarData.type       = paramType;
+                entryVarData.isNullable = nullable;
+                (*paramNum)++;
+                entryData.data.vData    = entryVarData,
+                insertSymNode(symtableStack.top->tbPtr, paramID, entryData);
+
+                correct = params_n(paramNum, paramTypes, paramNames);
             }
         }
     }
+
     // RULE 8 <params> -> ε
     else{
-        correct = (currentToken.type == tokentype_rbracket);
-        
+        correct = (currentToken.type == tokentype_rbracket);   
     }
-    DEBPRINT("params %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
 // TODO CHECK THIS WHOLE FUNCTION
-bool params_n(){
+bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
     bool correct = false;
     // RULE 9 <params_n> -> , <params>
     if(currentToken.type == tokentype_comma){
         GT
-        correct = params();
+        correct = params(paramNum, paramTypes, paramNames);
     }
     // RULE 10 <params_n> -> ε
     else{
         correct = (currentToken.type == tokentype_rbracket);
-        
     }
-    DEBPRINT("params_n %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
-bool def_variable(){
+bool def_variable(astNode *block){
     bool correct = false;
+
+    // prepare information about defined variable
+    char    *varName;
+    dataType varType;
+    bool     nullable;
+    bool     isConst;
+    bool     inheritedType;
+
+    varData  variData;
+    symData  entryData;
+    astNode *initExpr;
+
+    astNode *varAstNode = createAstNode(); // allocate new ast node with no representation yet
+    
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
-            
     if(currentToken.type == tokentype_keyword){ // TODO check if const or var
-        bool isConst;
+        
         if(varorconst(&isConst)){
-            DEBPRINT("def_variable_after_varorconst curr %d %s\n", currentToken.type, currentToken.value);
-            if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if redefining or sth
+            DEBPRINT(" %d %s\n", currentToken.type, currentToken.value);
+            if(currentToken.type == tokentype_id){
 
-                symNode *varEntry = findInStack(&symtableStack, currentToken.value);
+                varName = currentToken.value;
+                symNode *varEntry = findInStack(&symtableStack, varName);
                 if(varEntry != NULL){} // TODO SEMANTIC error 5 redefinition
-                // TODO get info from other parts
 
-                varData variData  = {.isConst = isConst};
-                symData entryData = {.data.vData = variData, .used = false, .varOrFun = 0};
-                char   *entryName = currentToken.value;
+                variData.isConst = isConst;
+                entryData.used = false;
+                entryData.varOrFun = 0;
+        
                 GT
 
-                if(type_var_def(&variData.isNullable, &variData.type, &variData.inheritedType)){
-                    DEBPRINT("current in defvar %d \n", currentToken.type); 
-                
+                if(type_var_def(&nullable, &varType, &inheritedType)){
+                    DEBPRINT("%d \n", currentToken.type); 
+
+                    variData.inheritedType = inheritedType;
+                    variData.isNullable    = nullable;
+                    variData.type          = varType;
+
                 if(currentToken.type == tokentype_assign){
                     GT
                     if(expression()){ // TODO EXPRESSION
@@ -228,15 +289,23 @@ bool def_variable(){
                         GT
                     }
                 }
-                insertSymNode(symtableStack.top->tbPtr, entryName, entryData);
+
+                entryData.data.vData = variData;
+                insertSymNode(symtableStack.top->tbPtr, varName, entryData);
+
+                varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
+
+                createDefVarNode(varAstNode ,varName, initExpr, varEntry, block); // create the correct representation
+                connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
+
                 }}}}
-    DEBPRINT("def_var %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
 bool varorconst(bool *isConst){
     bool correct = false;
-    DEBPRINT("current in varorconst %d\n", currentToken.type);
+    DEBPRINT("   %d\n", currentToken.type);
     if(currentToken.type == tokentype_keyword){
         // RULE 12 <varorconst> -> const
        if(true){ // TODO check if keyword == const
@@ -251,7 +320,7 @@ bool varorconst(bool *isConst){
             GT
         }
     }
-    DEBPRINT("varorconst %d %s\n", correct, currentToken.value);
+    DEBPRINT(" %d %s\n", correct, currentToken.value);
     return correct;
 }
 
@@ -268,7 +337,7 @@ bool unused_decl(){
             }
         }
     }
-    DEBPRINT("unuseddecl %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -276,7 +345,7 @@ bool type_normal(dataType *datatype){
     bool correct = false;
     // RULE 15 <type_normal> -> i32
     // RULE 16 <type_normal> -> f64
-    DEBPRINT("type_normal current %d\n", currentToken.type);
+    DEBPRINT("  %d\n", currentToken.type);
     if(currentToken.type == tokentype_keyword){ // TODO check if keyword == i32 or f64
         // *datatype = typ TODO
         correct = true;
@@ -295,7 +364,7 @@ bool type_normal(dataType *datatype){
             }
         }
     }
-DEBPRINT("typenormal %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -306,7 +375,7 @@ bool type_null(dataType *datatype){
         GT
         correct = type_normal(datatype);
     }
-    DEBPRINT("typenull %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -322,14 +391,14 @@ bool type(bool *nullable, dataType *datatype){
         *nullable = true;
         correct = type_null(datatype);
     }
-    DEBPRINT("type %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
 bool type_func_ret(bool *nullable, dataType *datatype){
     bool correct = false;
     // RULE 21 <type_func_ret> -> <type>
-    DEBPRINT("current in type func rec %d\n", currentToken.type);
+    DEBPRINT(" %d\n", currentToken.type);
     if(currentToken.type == tokentype_keyword){ // TODO add check i32 f64 [ ?
         correct = type(nullable , datatype);
     }
@@ -338,14 +407,14 @@ bool type_func_ret(bool *nullable, dataType *datatype){
         correct = true;
         GT
     }
-DEBPRINT("type func ret %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
 bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
     bool correct = false;
     // RULE 23 <type_var_def> -> : <type>
-    DEBPRINT("type_Var_def curr token %d\n", currentToken.type);
+    DEBPRINT(" %d\n", currentToken.type);
     if(currentToken.type == tokentype_colon){
         GT
         if(currentToken.type == tokentype_keyword 
@@ -360,45 +429,45 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
         *inheritedDType = true;
         
     }
-DEBPRINT("type var def %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool st(){
+bool st(dataType expReturnType, astNode *block){
     bool correct = false;
     // RULE 34 <st> -> <def_variable>
     if(currentToken.type == tokentype_keyword){ // TODO check if const/var
-        correct = def_variable();
+        correct = def_variable(block);
     }
     // RULE 35 <st> -> <assign_or_f_call>
     else if(currentToken.type == tokentype_id){
-        correct = assign_or_f_call();
+        correct = assign_or_f_call(block);
     }
     // RULE 36 <st> -> <unused_decl>
     else if(currentToken.type == tokentype_pseudovar){
-        correct = unused_decl();
+        correct = unused_decl(block);
     }
     // <st> RULE 37 -> <while_statement>
     else if(currentToken.type == tokentype_keyword){ // TODO check if while
-        correct = while_statement();
+        correct = while_statement(expReturnType, block);
     }
     // <st> RULE 38 -> <if_statement>
     else if(currentToken.type == tokentype_keyword){ // TODO check if if
-        correct = if_statement();
+        correct = if_statement(expReturnType, block);
     }
     // <st> RULE 39 -> <return>
     else if(currentToken.type == tokentype_keyword){ // TODO check if return
-        correct = return_();
+        correct = return_(expReturnType, block);
     }
 
 
     return correct;
 }
 
-bool body(){
+bool body(dataType returnType, astNode *block){
     bool correct = false;
     // RULE 40 <body> -> ε
-    DEBPRINT("current in body %d \n", currentToken.type);
+    DEBPRINT("   %d \n", currentToken.type);
     if(currentToken.type == tokentype_rcbracket){
         correct = true;
     }
@@ -407,41 +476,49 @@ bool body(){
             currentToken.type == tokentype_id ||
             currentToken.type == tokentype_pseudovar){
         
-        if(st()){
-            correct = body();
+        if(st(returnType, block)){
+            correct = body(returnType, block);
         }
     }
 
-    DEBPRINT("leaving body %d %d\n", correct, currentToken.type);
+    DEBPRINT("  %d %d\n", correct, currentToken.type);
     return correct;
 }
 
-bool return_(){
+bool return_(dataType expReturnType, astNode *block){
     bool correct = false;
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_keyword){ // TODO check if keyword == return
         GT
-        if(exp_func_ret()){
+        if(exp_func_ret(expReturnType)){
             correct = (currentToken.type == tokentype_semicolon);
             GT
         }
     } 
-    DEBPRINT("ret %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool exp_func_ret(){
+bool exp_func_ret(dataType expRetType){
     bool correct = false;
     // RULE 43 <exp_func_ret> -> ε
     if(currentToken.type == tokentype_semicolon){
-        correct = true;
+        if(expRetType == void_){
+            correct = true;
+        }
+        else{
+            // TODO ERROR UNEXPECTED RETURN TYPE
+        }
     }
     // RULE 44 <exp_func_ret> -> expression
     else{
-        
+        dataType returnedDataType;
         correct = expression(); // TODO EXPRESSION
+        if(returnedDataType != expRetType){
+            // TODO ERROR UNEXPECTED RETURN TYPE
+        }
     }
-    DEBPRINT("exp func ret %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -460,12 +537,14 @@ bool id_without_null(){
     else if(currentToken.type == tokentype_lcbracket){
         correct = true;
     }
-DEBPRINT("id without null %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool while_statement(){
+bool while_statement(dataType expRetType, astNode *block){
     bool correct = false;
+    astNode *whileAstNode = createAstNode(); 
+
     // RULE 47 <while_statement> -> while ( expression ) <id_without_null> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if == while
         GT
@@ -477,7 +556,7 @@ bool while_statement(){
                     if(id_without_null()){
                         if(currentToken.type == tokentype_lcbracket){
                             GT
-                            if(body()){
+                            if(body(expRetType, whileAstNode)){
                                 correct = (currentToken.type == tokentype_rcbracket);
                                 GT
                             }
@@ -487,12 +566,14 @@ bool while_statement(){
             }
         }
     }
-DEBPRINT("while %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool if_statement(){
+bool if_statement(dataType expRetType, astNode *block){
     bool correct = false;
+    astNode *ifNode   = createAstNode();
+    astNode *elseNode = createAstNode();
 
     // create new scope for if
     symtable *symtableForIf = createSymtable();
@@ -509,7 +590,7 @@ bool if_statement(){
         if(id_without_null()){
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body()){
+        if(body(expRetType, ifNode)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_keyword){ // TODO check if else
@@ -523,13 +604,13 @@ bool if_statement(){
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body()){
+        if(body(expRetType, elseNode)){
         correct = (currentToken.type == tokentype_rcbracket);
             GT
         }}}}}}}}}}
         pop(&symtableStack); // TODO pop the symtable into else node 
     }
-    DEBPRINT("if %d\n", correct);
+    DEBPRINT("%d\n", correct);
     return correct;
 }
 
@@ -543,7 +624,7 @@ bool expr_params(){
     if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
-DEBPRINT("expr params %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -558,7 +639,7 @@ bool expr_params_n(){
     else if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
-    DEBPRINT("expr params n %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -587,7 +668,7 @@ bool after_id(){
             }
         }
     }
-DEBPRINT("afterid %d\n", correct);
+DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -598,7 +679,7 @@ bool assign_or_f_call(){
         GT
         correct = after_id();
     }
-    DEBPRINT("ass or f call %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -616,7 +697,7 @@ bool builtin(){
     else{
         correct = (currentToken.type == tokentype_lbracket);
     }
-    DEBPRINT("builtin %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -629,7 +710,7 @@ bool expression(){
 int main(){
     initStack(&symtableStack);
     funSymtable = createSymtable();
-    input_file = fopen("file2.txt", "r");
+    input_file = fopen("file.txt", "r");
     GT
     DEBPRINT("%d\n", prog());
 }

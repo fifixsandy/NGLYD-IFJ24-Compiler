@@ -15,9 +15,7 @@ astNode *createAstNode(){
     return new;
 }
 
-astNode *createWhileNode(bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent){
-
-    astNode *new = createAstNode();
+void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent){
 
     astWhile newWhile = {
         .body = body,
@@ -27,17 +25,15 @@ astNode *createWhileNode(bool withNull, char *id_without_null, astNode *cond, as
         .symtableWhile = symtableW
     };
 
-    new->type = AST_NODE_WHILE;
-    new->nodeRep.whileNode =  newWhile;
-    new->parent = parent;
-    new->next = NULL;
+    dest->type = AST_NODE_WHILE;
+    dest->nodeRep.whileNode =  newWhile;
+    dest->parent = parent;
+    dest->next = NULL;
 
-    return new;
+    return;
 }
 
-astNode *createIfElseNode(astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent){
-    astNode *new = createAstNode();
-
+void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent){
     astIfElse newIfElse = {
         .condition = cond,
         .ifPart = ifPart,
@@ -45,125 +41,89 @@ astNode *createIfElseNode(astNode *cond, astNode *ifPart, astNode *elsePart, boo
         .withNull = withNull
     };
 
-    new->parent = parent;
-    new->type = AST_NODE_IFELSE;
-    new->next = NULL;
-    new->nodeRep.ifElseNode = newIfElse;
-
-    return new;
+    dest->type = AST_NODE_IFELSE;
+    dest->nodeRep.ifElseNode = newIfElse;
+    dest->parent = parent;
+    dest->next = NULL;
 }
 
-astNode *createIfNode(char *id_without_null, symtable *symtable, astNode *body, astNode *parent){
-    astNode *new = createAstNode();
-
+void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body, astNode *parent){
     astIf newIf = {
         .body = body,
         .id_without_null = id_without_null,
         .symtableIf = symtable
-        
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_IF;
-    new->parent = parent;
-    new->nodeRep.ifNode = newIf;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_IF;
+    dest->parent = parent;
+    dest->nodeRep.ifNode = newIf;
 }
 
-astNode *createElseNode(symtable *symtableIf, astNode *body, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent) {
     astElse newElse = {
         .symtableIf = symtableIf,
         .body = body
     };
 
-    new->parent = parent;
-    new->type = AST_NODE_ELSE;
-    new->next = NULL;
-    new->nodeRep.elseNode = newElse;
-
-    return new;
+    dest->parent = parent;
+    dest->type = AST_NODE_ELSE;
+    dest->next = NULL;
+    dest->nodeRep.elseNode = newElse;
 }
 
-astNode *createAssignNode(char *id, astNode *expression, astNode *parent, dataType dataT) {
-    astNode *new = createAstNode();
-
+void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT) {
     astAssign newAssign = {
         .id = id,
         .expression = expression,
         .dataT = dataT
     };
 
-    new->parent = parent;
-    new->type = AST_NODE_ASSIGN;
-    new->next = NULL;
-    new->nodeRep.assignNode = newAssign;
-
-    return new;
+    dest->parent = parent;
+    dest->type = AST_NODE_ASSIGN;
+    dest->next = NULL;
+    dest->nodeRep.assignNode = newAssign;
 }
 
-astNode *createDefVarNode(char *id, astNode *initExpr, symtable *symtableEntry, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent) {
     astDefVar newDefVar = {
         .id = id,
         .initExpr = initExpr,
         .symtableEntry = symtableEntry
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_DEFVAR;
-    new->parent = parent;
-    new->nodeRep.defVarNode = newDefVar;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_DEFVAR;
+    dest->parent = parent;
+    dest->nodeRep.defVarNode = newDefVar;
 }
 
-astNode *createDefFuncNode(char *id, int paramNum, dataType *paramTypes, char **paramNames, dataType returnType, symtable *symtableFun, astNode *body, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent) {
     astDefFunc newDefFunc = {
         .id = id,
-        .paramNum = paramNum,
-        .returnType = returnType,
         .symtableFun = symtableFun,
         .body = body
     };
 
-    for(int i = 0; i < paramNum; i++) {
-        newDefFunc.paramNames[i] = paramNames[i];
-        newDefFunc.paramTypes[i] = paramTypes[i];
-    }
-
-    new->next = NULL;
-    new->type = AST_NODE_DEFFUNC;
-    new->parent = parent;
-    new->nodeRep.defFuncNode = newDefFunc;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_DEFFUNC;
+    dest->parent = parent;
+    dest->nodeRep.defFuncNode = newDefFunc;
 }
 
-astNode *createReturnNode(astNode *returnExp, dataType returnType, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent) {
     astReturn newReturn = {
         .returnExp = returnExp,
         .returnType = returnType
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_RETURN;
-    new->parent = parent;
-    new->nodeRep.returnNode = newReturn;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_RETURN;
+    dest->parent = parent;
+    dest->nodeRep.returnNode = newReturn;
 }
 
-astNode *createBinOpNode(binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
     astBinOp newBinOp = {
         .op = op,
         .left = left,
@@ -171,17 +131,13 @@ astNode *createBinOpNode(binOpType op, astNode *left, astNode *right, dataType d
         .dataT = dataT
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_BINOP;
-    new->parent = parent;
-    new->nodeRep.binOpNode = newBinOp;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_BINOP;
+    dest->parent = parent;
+    dest->nodeRep.binOpNode = newBinOp;
 }
 
-astNode *createLiteralNode(dataType dataT, void *value, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent) {
     astLiteral newLiteral = {
         .dataT = dataT
     };
@@ -194,54 +150,67 @@ astNode *createLiteralNode(dataType dataT, void *value, astNode *parent) {
         newLiteral.value.charData = (char *)value;
     }
 
-    new->next = NULL;
-    new->type = AST_NODE_LITERAL;
-    new->parent = parent;
-    new->nodeRep.literalNode = newLiteral;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_LITERAL;
+    dest->parent = parent;
+    dest->nodeRep.literalNode = newLiteral;
 }
 
-
-astNode *createVarNode(char *id, dataType dataT, symNode *symtableEntry, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent) {
     astVar newVar = {
         .dataT = dataT,
         .id = id,
         .symtableEntry = symtableEntry
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_VAR;
-    new->parent = parent;
-    new->nodeRep.varNode = newVar;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_VAR;
+    dest->parent = parent;
+    dest->nodeRep.varNode = newVar;
 }
 
-astNode *createFuncCallNode(char *id, dataType retType, symNode *symtableEntry, astNode *parent) {
-    astNode *new = createAstNode();
-
+void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent) {
     astFuncCall newFuncCall = {
         .retType = retType,
         .id = id,
         .symtableEntry = symtableEntry
     };
 
-    new->next = NULL;
-    new->type = AST_NODE_FUNC_CALL;
-    new->parent = parent;
-    new->nodeRep.funcCallNode = newFuncCall;
-
-    return new;
+    dest->next = NULL;
+    dest->type = AST_NODE_FUNC_CALL;
+    dest->parent = parent;
+    dest->nodeRep.funcCallNode = newFuncCall;
 }
 
+astNode *createRootNode(){
+    astNode *new = createAstNode();
+    new->type = AST_NODE_ROOT;
+    new->next = NULL;
+    return new;
+}
 
 void addNext(astNode *prev, astNode *next){
     prev->next = next;
 }
 
+/**
+ * @brief           Connects node to the end of (sub)block.
+ * 
+ * @param toAdd     Pointer to the node to connect.
+ * @param blockRoot Root of the block to be connected to.
+ * 
+ */
+void connectToBlock(astNode *toAdd, astNode *blockRoot){
+    
+    astNode *currBottom = blockRoot;
+
+    while(currBottom->next != NULL){ // find where to connect
+        currBottom = currBottom->next;
+    }
+
+    currBottom->next = toAdd;
+
+}
 
 void freeASTNode(astNode *node){
     if(node == NULL){return;}
