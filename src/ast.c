@@ -183,14 +183,15 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symt
 }
 
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
-    
+
     astUnused newUnused = {
         .expr = expr
     };
 
-    dest->next   = NULL;
-    dest->type   = AST_UNUSED;
-    dest->parent = parent;
+    dest->next               = NULL;
+    dest->type               = AST_UNUSED;
+    dest->parent             = parent;
+    dest->nodeRep.unusedNode = newUnused;
 
 }
 

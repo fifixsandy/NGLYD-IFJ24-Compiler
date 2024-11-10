@@ -540,12 +540,14 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
     return correct;
 }
 
-bool id_without_null(){
+bool id_without_null(bool *withNull, char **id_wout_null){
     bool correct = false;
     // RULE 45 <id_without_null> -> | id |
     if(currentToken.type == tokentype_vbar){
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC and add to symtable of while/if
+            *withNull     = true;
+            *id_wout_null = currentToken.value; 
             GT
             correct = (currentToken.type == tokentype_vbar);
             GT
@@ -553,7 +555,9 @@ bool id_without_null(){
     }
     // RULE 46 <id_without_null> -> ε
     else if(currentToken.type == tokentype_lcbracket){
-        correct = true;
+        *withNull     = false;
+        *id_wout_null = NULL;
+        correct       = true;
     }
 DEBPRINT(" %d\n", correct);
     return correct;
@@ -561,7 +565,19 @@ DEBPRINT(" %d\n", correct);
 
 bool while_statement(dataType expRetType, astNode *block){
     bool correct = false;
-    astNode *whileAstNode = createAstNode(); 
+
+    // prepare empty nodes
+    astNode *whileAstNode    = createAstNode(); 
+    astNode *condExprAstNode = createAstNode();
+    astNode *bodyAstNode     = createAstNode();
+
+    // prepare info needed for correct construction of ast node while
+    bool withNull;
+    char *id_wout_null;
+
+    // create new symtable for while and push it
+    symtable *whileSymTable = createSymtable();
+    push(&symtableStack, whileSymTable);
 
     // RULE 47 <while_statement> -> while ( expression ) <id_without_null> { <body> }
     if(currentToken.type == tokentype_keyword){ // TODO check if == while
@@ -571,10 +587,10 @@ bool while_statement(dataType expRetType, astNode *block){
             if(expression()){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_rcbracket){
                     GT
-                    if(id_without_null()){
+                    if(id_without_null(&withNull, &id_wout_null)){
                         if(currentToken.type == tokentype_lcbracket){
                             GT
-                            if(body(expRetType, whileAstNode)){
+                            if(body(expRetType, bodyAstNode)){
                                 correct = (currentToken.type == tokentype_rcbracket);
                                 GT
                             }
@@ -584,18 +600,38 @@ bool while_statement(dataType expRetType, astNode *block){
             }
         }
     }
+
+
+    // create node with correct info and connect it to block
+    pop(&symtableStack); // pop, so scopes are not disturbed
+    createWhileNode(whileAstNode, withNull, id_wout_null, condExprAstNode, bodyAstNode, whileSymTable, block);
+    connectToBlock(whileAstNode, block);
+
 DEBPRINT(" %d\n", correct);
     return correct;
 }
 
 bool if_statement(dataType expRetType, astNode *block){
     bool correct = false;
-    astNode *ifNode   = createAstNode();
-    astNode *elseNode = createAstNode();
+    
+    // prepare empty nodes
+    astNode *ifElseNode   = createAstNode();
+    astNode *ifNode       = createAstNode();
+    astNode *elseNode     = createAstNode();
+    astNode *bodyIfNode   = createAstNode();
+    astNode *bodyElseNode = createAstNode(); 
+    astNode *condExrpNode = createAstNode();
+
+    // prepare information
+    bool withNull;
+    char *id_wout_null;
 
     // create new scope for if
     symtable *symtableForIf = createSymtable();
     push(&symtableStack, symtableForIf);
+
+    // create new scope for else, don't push it yet, will be pushed after IF is processed
+    symtable *symtableForElse = createSymtable();
 
     // RULE 48 <if_statement> -> if ( expression ) <id_without_null> { <body> } else { <body> } 
     if(currentToken.type == tokentype_keyword){ // TODO check if if
@@ -605,29 +641,33 @@ bool if_statement(dataType expRetType, astNode *block){
         if(expression()){ // TODO EXPRESSION
         if(currentToken.type == tokentype_rbracket){
             GT
-        if(id_without_null()){
+        if(id_without_null(&withNull, &id_wout_null)){
         if(currentToken.type == tokentype_lcbracket){
             GT
         if(body(expRetType, ifNode)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_keyword){ // TODO check if else
-            
-            pop(&symtableStack); // TODO pop the symtable into while node 
-            
-            // create scope for else
-            symtable *symtableForElse = createSymtable();
-            push(&symtableStack, symtableForElse);
-            
+            pop(&symtableStack); // TODO pop the symtable for if so scopes are not disturbed
+            push(&symtableStack, symtableForElse); // push the symtable for else 
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
         if(body(expRetType, elseNode)){
         correct = (currentToken.type == tokentype_rcbracket);
             GT
-        }}}}}}}}}}
-        pop(&symtableStack); // TODO pop the symtable into else node 
+        }}}}}}}}}} 
     }
+    pop(&symtableStack); // pop the else stack so scopes are not disturbed
+
+
+    // create nodes with correct information and connect it to block
+    createIfNode(ifNode, id_wout_null, symtableForIf, bodyIfNode, block);
+    createElseNode(elseNode, symtableForElse, bodyElseNode, block);
+    createIfElseNode(ifElseNode, condExrpNode, ifNode, elseNode, withNull, block);
+
+    connectToBlock(ifElseNode, block);
+
     DEBPRINT("%d\n", correct);
     return correct;
 }
