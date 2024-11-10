@@ -324,8 +324,13 @@ bool varorconst(bool *isConst){
     return correct;
 }
 
-bool unused_decl(){
+bool unused_decl(astNode *block){
     bool correct = false;
+
+    // prepare empty nodes
+    astNode *newUnused = createAstNode();
+    astNode *expr      = createAstNode();
+
     // RULE 14 <unused_decl> -> _ = expression ;
     if(currentToken.type == tokentype_pseudovar){
         GT
@@ -337,6 +342,11 @@ bool unused_decl(){
             }
         }
     }
+
+    // create node with correct data and connect it into block
+    createUnusedNode(newUnused, expr, block);
+    connectToBlock(newUnused, block);
+
     DEBPRINT(" %d\n", correct);
     return correct;
 }

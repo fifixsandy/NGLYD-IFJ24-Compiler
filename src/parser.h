@@ -13,7 +13,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames);
 bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames);
 bool def_variable(astNode *block);
 bool varorconst(bool *isConst);
-bool unused_decl();
+bool unused_decl(astNode *block);
 bool type_normal(dataType *datatype);
 bool type_null(dataType *datatype);
 bool type(bool *nullable, dataType *datatype);
