@@ -21,9 +21,8 @@
 
 #include "parser.h"
 
-#define GT currentToken = getToken(); // encapsulating the assignment
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
@@ -32,9 +31,9 @@
     #define DEBPRINT(...) 
 #endif
 
-Token   currentToken;
 AST     ASTree; 
 astNode currentBlock;
+Token currentToken;
 
 bool prog(){
     bool correct = false;
@@ -65,7 +64,8 @@ bool prolog(){
         GT
         if(currentToken.type == tokentype_id){
             if(strcmp(currentToken.value, "ifj") != 0){
-                // TODO SEMANTIC/SYNTACTIC ERROR incorrect ifj
+                ERROR(5, "L: %d C: %d \nWrong ID in prologue section.\nExpected: \"ifj\"\nGot: %s\n",
+                      currentToken.line, currentToken.column, currentToken.value);
             }
             GT
             if(currentToken.type == tokentype_assign){
@@ -825,6 +825,7 @@ int main(){
     funSymtable = createSymtable();
     input_file = fopen("file.txt", "r");
     GT
+    prog();
     DEBPRINT("%d\n", prog());
     DEBPRINT("\n\n");
 
