@@ -4,6 +4,9 @@
 #include "symtable.h"
 #include "ast.h"
 
+
+
+
 bool prog();
 bool prolog();
 bool code();
@@ -37,5 +40,6 @@ bool expression();
 
 bool mainDefined();
 void allUsed(symNode *root);
+bool wasDefined(char *ID);
 
 #endif

@@ -891,4 +891,25 @@ void allUsed(symNode *root){
 
 }
 
+
+/**
+ * @brief           Function checks whether variable was defined in scope or before current scope.
+ * 
+ * @param ID        Name of the function or variable.
+ * 
+ * @return          True if was defined, false if not.
+ */
+bool wasDefined(char *ID){
+
+    symNode *entry = findInStack(&symtableStack, ID);
+
+    if(entry != NULL){
+        entry->data.used = true; // is used, set the flag for semantic check later in allUsed()
+        return true;
+    }  
+    else{
+        return false;
+    }
+}
+
 /* EOF parser.c */
