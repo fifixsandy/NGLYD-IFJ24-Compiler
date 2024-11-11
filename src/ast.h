@@ -43,10 +43,14 @@ typedef enum {
 }astNodeType;
 
 typedef enum {
+    BO_MUL,
+    BO_DIV,
     BO_PLUS,
     BO_MINUS,
-    BO_MUL,
-    BO_DIV
+    BO_EQL,
+    BO_NOT_EQL,
+    BO_LWR,
+    BO_GRT
 }binOpType;
 
 typedef struct astWhile {
