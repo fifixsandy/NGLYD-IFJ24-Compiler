@@ -457,8 +457,8 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     is_keyword(current_token.value, &current_token);
 
 
-    printf("%s\n", current_token.value);
-    printf("%d\n", current_token.type);
+    //printf("%s\n", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;
 }
@@ -567,13 +567,13 @@ Token process_Multiline_String_Token(FILE *input_file) {
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
-  int main() {
+//  int main() {
 
-      input_file = fopen("file.txt", "r");
+//      input_file = fopen("file.txt", "r");
     
-      for(int i = 0; i < 1000; i++) {
-          getToken();
-      }
+//      for(int i = 0; i < 1000; i++) {
+//          getToken();
+//      }
 
-      return 0;
-  }
+//      return 0;
+//  }
