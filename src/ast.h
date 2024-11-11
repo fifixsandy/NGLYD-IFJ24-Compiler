@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "symtable.h"
+#include "expression_stack.h"
 
 
 typedef struct astNode astNode;
@@ -120,7 +121,7 @@ typedef struct astExpr {
 
 typedef struct astBinOp {
     
-    binOpType op;
+    symbol_number op;
     astNode  *left;
     astNode  *right;
     dataType  dataT;

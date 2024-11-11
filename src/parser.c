@@ -925,15 +925,17 @@ void allUsed(symNode *root){
  * 
  * @return          True if was defined, false if not.
  */
-bool wasDefined(char *ID){
+bool wasDefined(char *ID, symNode **node){
 
     symNode *entry = findInStack(&symtableStack, ID);
 
     if(entry != NULL){
         entry->data.used = true; // is used, set the flag for semantic check later in allUsed()
+        *node = entry;
         return true;
     }  
     else{
+        *node = NULL;
         return false;
     }
 }
