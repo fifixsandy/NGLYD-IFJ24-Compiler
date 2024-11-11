@@ -35,5 +35,6 @@ bool builtin();
 
 bool expression();
 
+bool mainDefined();
 
 #endif

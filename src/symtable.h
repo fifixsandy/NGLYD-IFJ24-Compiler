@@ -40,7 +40,8 @@ typedef struct funData{
    dataType  returnType;                  
    bool      nullableRType;               // 1 if nullable, 0 if not
    dataType *paramTypes;
-   char     **paramNames;
+   char    **paramNames;
+   int       paramNum;
    char     *intermediateCode;            // @todo change according to code generating
    symtable *tbPtr;
 }funData;

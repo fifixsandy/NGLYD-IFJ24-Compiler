@@ -104,7 +104,7 @@ bool next_code(){
     }
     // RULE 5 <next_code> -> ε
     else if(currentToken.type == tokentype_EOF){
-        correct = true;
+        correct = mainDefined(); // check if main function is defined and has correct data
     }
     DEBPRINT("%d\n", correct);
     return correct;
@@ -171,6 +171,7 @@ bool def_func(){
     entryData.paramTypes    = paramTypes;
     entryData.nullableRType = nullable;
     entryData.returnType    = returnType;
+    entryData.paramNum      = paramNum;
 
     entrySymData.data.fData = entryData;
     insertSymNode(funSymtable, funID, entrySymData);
@@ -805,4 +806,28 @@ int main(){
 
 
 /* HELPER SEMANTIC FUNCTIONS */
+
+bool mainDefined(){
+    bool correct = true;
+    symNode *found = findSymNode(funSymtable->rootPtr, "main");
+    if(found == NULL){
+        correct = false;
+        // TODO ERROR 3 NO MAIN
+    }
+
+    funData data = found->data.data.fData;
+
+    if(data.returnType != void_){
+        // TODO ERROR WRONG RETURN VALUE
+        correct = false;
+    }
+
+    if(data.paramNum != 0){
+        // TODO PARAMS IN
+        correct = false;
+    }
+
+    return correct;
+}
+
 /* EOF parser.c */
