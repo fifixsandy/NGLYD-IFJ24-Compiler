@@ -59,36 +59,49 @@ bool prog(){
 
 bool prolog(){
     bool correct = false;
-    // RULE 2 <prolog> -> const id = @import ( expression ) ; 
-    if(currentToken.type == tokentype_kw_const){ 
-        GT
-        if(currentToken.type == tokentype_id){
-            if(strcmp(currentToken.value, "ifj") != 0){
-                ERROR(5, "L: %d C: %d \nWrong ID in prologue section.\nExpected: \"ifj\"\nGot: %s\n",
-                      currentToken.line, currentToken.column, currentToken.value);
-            }
-            GT
-            if(currentToken.type == tokentype_assign){
-                GT
-                if(currentToken.type == tokentype_import){
-                    GT
-                    if(currentToken.type == tokentype_lbracket){
-                        GT
-                        if(expression()){ // EXPRESSION TODO
-                            if(currentToken.type == tokentype_rbracket){
-                                GT
-                                correct = (currentToken.type == tokentype_semicolon);
-                                GT
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
+    // RULE 2 <prolog> -> const id = @import ( expression ) ;
+    if (currentToken.type != tokentype_kw_const) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"const\".\n", currentToken.line, currentToken.column);
     }
+    GT
+    if (currentToken.type != tokentype_id) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: identifier \"ifj\" .\n", currentToken.line, currentToken.column);
+    }
+    if (strcmp(currentToken.value, "ifj") != 0) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nWrong ID in prologue section.\nExpected: \"ifj\"\nGot: \"%s\"\n",
+              currentToken.line, currentToken.column, currentToken.value);
+    }
+    GT
+    if (currentToken.type != tokentype_assign) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"=\" .\n", currentToken.line, currentToken.column);
+    }
+    GT
+    if (currentToken.type != tokentype_import) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"@import\" .\n", currentToken.line, currentToken.column);
+    }
+    GT
+    if (currentToken.type != tokentype_lbracket) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"(\" .\n", currentToken.line, currentToken.column);
+    }
+    GT
+    if (!expression()) {
+        correct = false;
+    }
+    if (currentToken.type != tokentype_rbracket) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \")\" .\n", currentToken.line, currentToken.column);
+    }
+    GT
+    if (currentToken.type != tokentype_semicolon) {
+        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \";\" .\n", currentToken.line, currentToken.column);
+    }
+    GT
+
+    correct = true;
     DEBPRINT("%d\n", correct);
     return correct;
 }
+
 
 bool code(){
     bool correct = false;

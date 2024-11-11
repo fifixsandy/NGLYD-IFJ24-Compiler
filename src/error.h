@@ -17,6 +17,11 @@
 
 #define ERR_INTERNAL      99
 
+/** this is and example error message you put into ERROR after errNum
+ * "L: %d C: %d \nWrong ID in prologue section.\nExpected: \"ifj\"\nGot: %s\n", 
+ *  currentToken.line, currentToken.column, currentToken.value
+ */
+
 // ADD CLEANUP
 #define ERROR(errNum, ...) do { \
     fprintf(stderr, "ERROR NUMBER %d: ", errNum); \
