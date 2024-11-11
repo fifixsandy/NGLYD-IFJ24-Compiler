@@ -163,8 +163,12 @@ bool def_func(){
         }}}}}}}}
     }
 
+
     // information is now known, set it
     symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
+    allUsed(symtableFun->rootPtr); // perform semantic check of used variables
+
+
     entryData.tbPtr         = symtableFun;
     entryData.defined       = true;
     entryData.paramNames    = paramNames;
@@ -632,6 +636,8 @@ bool while_statement(dataType expRetType, astNode *block){
     }
 
 
+    
+    allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block while
     // create node with correct info and connect it to block
     pop(&symtableStack); // pop, so scopes are not disturbed
     createWhileNode(whileAstNode, withNull, id_wout_null, condExprAstNode, bodyAstNode, whileSymTable, block);
@@ -678,6 +684,7 @@ bool if_statement(dataType expRetType, astNode *block){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_kw_else){ 
+            allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block if
             pop(&symtableStack); // pop the symtable for if so scopes are not disturbed
             push(&symtableStack, symtableForElse); // push the symtable for else 
             GT
@@ -688,6 +695,7 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         }}}}}}}}}} 
     }
+    allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block else
     pop(&symtableStack); // pop the else stack so scopes are not disturbed
 
 
@@ -807,11 +815,24 @@ int main(){
 
 /* HELPER SEMANTIC FUNCTIONS */
 
+
+/**
+ * @brief  Function validates that a function main was defined correctly.
+ * 
+ *         funSymtable is searched by findSymNode for a fuction with id "main".
+ *         When no such entry is found, function triggers error. Similary,
+ *         when the return type is not void or there are defined parameters of a
+ *         function.
+ * 
+ * @see findSymNode
+ * 
+ * @return True if all correct, false if an error occurs.
+ */
 bool mainDefined(){
-    bool correct = true;
+
     symNode *found = findSymNode(funSymtable->rootPtr, "main");
     if(found == NULL){
-        correct = false;
+        return false;
         // TODO ERROR 3 NO MAIN
     }
 
@@ -819,15 +840,39 @@ bool mainDefined(){
 
     if(data.returnType != void_){
         // TODO ERROR WRONG RETURN VALUE
-        correct = false;
+        return false;
     }
 
     if(data.paramNum != 0){
         // TODO PARAMS IN
-        correct = false;
+        return false;
     }
 
-    return correct;
+    return true;
+}
+
+/**
+ * @brief        Validates that all variables that were defined are also used in scope.
+ * 
+ *               Function uses resursive preorder traversal to go through the BST.
+ *               When a entry of a variable which used flag is false is found, function
+ *               triggers error.
+ * 
+ * @see          symData
+ * 
+ * @param root   Root of a (sub)tree to traverse through.
+ * 
+ */
+void allUsed(symNode *root){
+
+    if(root != NULL){
+        if(!root->data.used){
+            // TODO ERROR not used in scope
+        }
+        allUsed(root->l);
+        allUsed(root->r);
+    }
+
 }
 
 /* EOF parser.c */
