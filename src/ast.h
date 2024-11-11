@@ -31,6 +31,7 @@ typedef enum {
     AST_NODE_LITERAL,
     AST_NODE_VAR,
     AST_NODE_DEFVAR,
+    AST_UNUSED,
 
     AST_NODE_DEFFUNC,
     AST_NODE_RETURN,
@@ -149,6 +150,13 @@ typedef struct astDefVar {
     symNode *symtableEntry;  
 } astDefVar;
 
+typedef struct astUnused {
+
+    astNode *expr;
+    
+}astUnused;
+
+
 typedef struct AST { 
 
     astNode *root;
@@ -176,6 +184,7 @@ typedef struct astNode {
         astVar      varNode;
         astFuncCall funcCallNode;
         astDefVar   defVarNode;
+        astUnused   unusedNode;
 
         astDefFunc  defFuncNode;
         astReturn   returnNode;
@@ -198,6 +207,7 @@ void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right,
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent);
+void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
 astNode *createRootNode();
 
 void connectToBlock(astNode *toAdd, astNode *blockRoot);
