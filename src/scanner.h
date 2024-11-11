@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define NUM_OF_KEYWORDS 13
+#define FIRST_KEYWORD 36
 
 typedef enum {
     tokentype_EOF,
@@ -52,6 +53,20 @@ typedef enum {
 
     tokentype_invalid,
 
+    tokentype_kw_const,
+    tokentype_kw_else,
+    tokentype_kw_fn,
+    tokentype_kw_if,
+    tokentype_kw_i32,
+    tokentype_kw_f64,
+    tokentype_kw_null,
+    tokentype_kw_pub,
+    tokentype_kw_return,
+    tokentype_kw_u8,
+    tokentype_kw_var,
+    tokentype_kw_void,
+    tokentype_kw_while
+    
 }token_types;
 
 typedef struct {
