@@ -3,9 +3,9 @@
 #include "scanner.h"
 #include "symtable.h"
 #include "ast.h"
+#include "error.h"
 
-
-
+extern Token currentToken;
 
 bool prog();
 bool prolog();
