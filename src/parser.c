@@ -17,7 +17,7 @@
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
@@ -545,9 +545,17 @@ bool id_without_null(bool *withNull, char **id_wout_null){
     // RULE 45 <id_without_null> -> | id |
     if(currentToken.type == tokentype_vbar){
         GT
-        if(currentToken.type == tokentype_id){ // TODO SEMANTIC and add to symtable of while/if
+        if(currentToken.type == tokentype_id){
             *withNull     = true;
-            *id_wout_null = currentToken.value; 
+            *id_wout_null = currentToken.value;
+            symNode *symEntry = findInStack(&symtableStack, currentToken.value);
+            if(symEntry != NULL){}// TODO ERROR 5 redefinition
+
+            // add the ID_WITHOUT_NULL to symtable for if/while
+            varData variData = {.inheritedType = true, .isConst = false, .isNullable = false}; // TODO CHECK THIS
+            symData data = {.varOrFun = 0, .used = false, .data.vData = variData};
+            insertSymNode(symtableStack.top->tbPtr, currentToken.value, data);
+
             GT
             correct = (currentToken.type == tokentype_vbar);
             GT
@@ -648,7 +656,7 @@ bool if_statement(dataType expRetType, astNode *block){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_keyword){ // TODO check if else
-            pop(&symtableStack); // TODO pop the symtable for if so scopes are not disturbed
+            pop(&symtableStack); // pop the symtable for if so scopes are not disturbed
             push(&symtableStack, symtableForElse); // push the symtable for else 
             GT
         if(currentToken.type == tokentype_lcbracket){
