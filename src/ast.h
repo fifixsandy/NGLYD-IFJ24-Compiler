@@ -14,10 +14,30 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "symtable.h"
-#include "expression_stack.h"
 
 
 typedef struct astNode astNode;
+
+typedef enum{
+    MULTYPLICATION,         // 0
+    DIVISION,                // 1
+    ADDITION,               // 2
+    SUBSTRACTION,           // 3
+    EQUAL,                  // 4
+    NOT_EQUAL,              // 5
+    LOWER,                  // 6
+    GREATER,                // 7
+    LOWER_OR_EQUAL,         // 8
+    GREATER_OR_EQUAL,       // 9
+    LBR,                    // 10
+    RBR,                    // 11
+
+    ID,                     // 12
+    STOP,                   // 13
+    NO_TERMINAL,            // 14 - neterminálny symbol, pri vyhodnocovaní skip
+    ERROR                   // 15
+} symbol_number;
+
 
 typedef enum {
     AST_NODE_WHILE,
@@ -208,7 +228,7 @@ void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *par
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
 void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent);
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
-void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
+void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent);
