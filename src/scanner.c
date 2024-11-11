@@ -207,8 +207,6 @@ Token getToken() {
                     ungetc(nextchar, input_file);
 
                     //printf("%d\n", current_token.type);
-
-                    return current_token;
                 }
                 else {
                     ungetc(nextchar, input_file);
@@ -219,6 +217,7 @@ Token getToken() {
                 current_token = process_ID_Token(c, input_file);
             }    
     }
+    current_token.line = Line_Number;
     return current_token;
 }   
 
@@ -345,7 +344,7 @@ Token process_String_Token(char firstchar, FILE *input_file) {
         }
         current_token.value[index++] = nextchar;
         if(nextchar == '\n' || nextchar == EOF) {
-            if(nextchar = '\n') {
+            if(nextchar == '\n') {
                 Line_Number++;
             }
             fprintf(stderr, "String incorrect\n");
