@@ -35,5 +35,7 @@ bool builtin();
 
 bool expression();
 
+bool mainDefined();
+void allUsed(symNode *root);
 
 #endif
