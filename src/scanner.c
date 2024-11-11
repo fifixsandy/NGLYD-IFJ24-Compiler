@@ -186,6 +186,10 @@ Token getToken() {
         case ',' :
             current_token.type = tokentype_comma;
             break;
+        
+        case '\\':
+            current_token = process_Multiline_String_Token(input_file);
+            break;
 
         default:
             if(c >= '0' && c <= '9') {
@@ -337,7 +341,6 @@ Token process_String_Token(char firstchar, FILE *input_file) {
             }
         }
         current_token.value[index++] = nextchar;
-
         if(nextchar == '\n' || nextchar == EOF) {
             fprintf(stderr, "String incorrect\n");
             current_token.type = tokentype_invalid;
@@ -497,6 +500,68 @@ Token process_Import(FILE *input_file) {
     current_token.type = tokentype_import;
     
     //printf("%d\n", current_token.type);
+    return current_token;
+}
+
+Token process_Multiline_String_Token(FILE *input_file) {
+    char nextchar;
+    Token current_token;
+    int index = 0;
+    int buffer_size = 2;
+
+    if(init_value(&current_token.value, buffer_size) == -1) {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+    
+    if((nextchar = getc(input_file)) == '\\') {
+        current_token.type = tokentype_string;
+        
+        while(1) {
+                
+            if (index >= buffer_size - 1) {
+                if (realloc_value(&current_token.value, &buffer_size) == -1) {
+                    current_token.type = tokentype_invalid;
+                    return current_token;
+                }
+            }
+            nextchar = getc(input_file);
+            
+            if(nextchar == EOF) {
+                break;
+            }
+            if(nextchar == '\n') {
+
+                char tempchar;
+                while((tempchar = getc(input_file)) != EOF && isspace(tempchar)) {
+                    if(tempchar == '\n') {
+                        break;
+                    }
+                }
+                if(tempchar == '\\' && (nextchar = getc(input_file)) == '\\') {
+                    current_token.value[index++] = '\n';
+                    continue;
+                }
+                else {
+                    ungetc(tempchar, input_file);
+                    ungetc(nextchar, input_file);
+                    break;
+                }
+            }
+            else {
+                current_token.value[index++] = nextchar;
+            }
+        }
+        current_token.value[index] = '\0';
+    }
+    else {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+
+    //printf("%s", current_token.value);
+    //printf("%d\n", current_token.type);
+
     return current_token;
 }
 
