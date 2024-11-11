@@ -62,38 +62,37 @@ bool prolog(){
 
     // RULE 2 <prolog> -> const id = @import ( expression ) ;
     if (currentToken.type != tokentype_kw_const) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"const\".\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \"const\".\n");
     }
     GT
     if (currentToken.type != tokentype_id) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: identifier \"ifj\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: identifier \"ifj\" .\n");
     }
     if (strcmp(currentToken.value, "ifj") != 0) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nWrong ID in prologue section.\nExpected: \"ifj\"\nGot: \"%s\"\n",
-              currentToken.line, currentToken.column, currentToken.value);
+        ERROR(ERR_SYNTAX, "Wrong ID in prologue section.\nExpected: \"ifj\"\nGot: \"%s\"\n",currentToken.value);
     }
     GT
     if (currentToken.type != tokentype_assign) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"=\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \"=\" .\n");
     }
     GT
     if (currentToken.type != tokentype_import) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"@import\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \"@import\" .\n");
     }
     GT
     if (currentToken.type != tokentype_lbracket) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \"(\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
     }
     GT
     if (!expression()) {
         correct = false;
     }
     if (currentToken.type != tokentype_rbracket) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \")\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \")\" .\n");
     }
     GT
     if (currentToken.type != tokentype_semicolon) {
-        ERROR(ERR_SYNTAX, "L: %d C: %d \nExpected: \";\" .\n", currentToken.line, currentToken.column);
+        ERROR(ERR_SYNTAX, "Expected: \";\" .\n");
     }
     GT
 
@@ -109,6 +108,9 @@ bool code(){
     // RULE 3 <code> -> <def_func>
     if(currentToken.type == tokentype_kw_pub){
         correct = def_func();
+    }
+    else{
+        ERROR(ERR_SYNTAX, "Expected : \"pub\"\n");
     }
     DEBPRINT("%d %d\n", correct, currentToken.type);
     return correct;
@@ -126,6 +128,7 @@ bool next_code(){
         correct = mainDefined(); // check if main function is defined and has correct data
         allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     }
+    else{ERROR(ERR_SYNTAX, "Expected : \"pub\" or EOF\n");}
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -160,7 +163,7 @@ bool def_func(){
         // check for redefining already defined function
         symNode *functionEntry = findSymNode(funSymtable->rootPtr, funID);
         if(functionEntry != NULL){
-            if(functionEntry->data.data.fData.defined){}
+            if(functionEntry->data.data.fData.defined){ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);}
         } // TODO SEMANTIC error 5 redefinition and recheck of parameters and return type
         
 
@@ -234,7 +237,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
         // check if redefining existing (two params with same name)
         paramID = currentToken.value;
         symNode *entry = findInStack(&symtableStack, paramID);
-        if(entry != NULL){} // TODO SEMANTIC ERROR 5
+        if(entry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",paramID);} // TODO SEMANTIC ERROR 5
         
         GT
         if(currentToken.type == tokentype_colon){
@@ -305,7 +308,7 @@ bool def_variable(astNode *block){
 
                 varName = currentToken.value;
                 symNode *varEntry = findInStack(&symtableStack, varName);
-                if(varEntry != NULL){} // TODO SEMANTIC error 5 redefinition
+                if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);} // TODO SEMANTIC error 5 redefinition
 
                 variData.isConst = isConst;
                 entryData.used = false;
@@ -581,8 +584,9 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
             correct = true;
         }
         else{
-            // TODO ERROR UNEXPECTED RETURN TYPE
+            ERROR(ERR_SEM_RETURN, "Missing return value in non-void function.\n");
         }
+        
     }
     // RULE 44 <exp_func_ret> -> expression
     else{
@@ -605,7 +609,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             *withNull     = true;
             *id_wout_null = currentToken.value;
             symNode *symEntry = findInStack(&symtableStack, currentToken.value);
-            if(symEntry != NULL){}// TODO ERROR 5 redefinition
+            if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}// TODO ERROR 5 redefinition
 
             // add the ID_WITHOUT_NULL to symtable for if/while
             varData variData = {.inheritedType = true, .isConst = false, .isNullable = false}; // TODO CHECK THIS
@@ -769,7 +773,7 @@ bool expr_params_n(){
     return correct;
 }
 
-bool after_id(){
+bool after_id(char *id){
     bool correct = false;
     // RULE 29 <after_id> -> = expression ;
     if(currentToken.type == tokentype_assign){
@@ -779,9 +783,9 @@ bool after_id(){
             GT
         }
     }
-    // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ;
-    else if(currentToken.type == tokentype_dot){
-        if(builtin()){
+    // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; // TODO CHECK THIS VERY MUCH
+    else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
+        if(builtin(id)){
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params()){
@@ -802,17 +806,21 @@ bool assign_or_f_call(){
     bool correct = false;
     // RULE 31 <assign_or_f_call> -> id <after_id>
     if(currentToken.type == tokentype_id){
+        char *id = currentToken.value;
         GT
-        correct = after_id();
+        correct = after_id(id);
     }
     DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool builtin(){
+bool builtin(char *id){
     bool correct = false;
     // RULE 32 <builtin> -> . id
     if(currentToken.type == tokentype_dot){
+        if(strcmp(id, "ifj") != 0){
+            ERROR(ERR_SYNTAX, "Expected: identifier \"ifj\" for builtin functions. Got: \"%s\" .\n", id);
+        }
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
             correct = true;
@@ -867,18 +875,18 @@ bool mainDefined(){
     symNode *found = findSymNode(funSymtable->rootPtr, "main");
     if(found == NULL){
         return false;
-        // TODO ERROR 3 NO MAIN
+        ERROR(ERR_SEM_UNDEF, "Definition for function \"main\" was not found.\n");
     }
 
     funData data = found->data.data.fData;
 
     if(data.returnType != void_){
-        // TODO ERROR WRONG RETURN VALUE
+        ERROR(ERR_SEM_FUN, "Function \"main\" must have return type \"void\".\n");
         return false;
     }
 
     if(data.paramNum != 0){
-        // TODO PARAMS IN
+        ERROR(ERR_SEM_FUN, "Function \"main\" must not have any parameters.\n");
         return false;
     }
 
@@ -901,7 +909,7 @@ void allUsed(symNode *root){
 
     if(root != NULL){
         if(!root->data.used){
-            // TODO ERROR not used in scope
+            ERROR(ERR_SEM_UNUSED, "Variable \"%s\" defined but not used within block.\n", root->key);
         }
         allUsed(root->l);
         allUsed(root->r);

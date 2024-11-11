@@ -6,6 +6,7 @@ const char *keywords[NUM_OF_KEYWORDS] = {
 };
 
 FILE *input_file;
+int Line_Number = 1;
 
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1,token_types type2){
     char nextchar = getc(file);
@@ -72,7 +73,9 @@ Token getToken() {
     
     here:
     while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
-        continue;
+        if(c == '\n') {
+            Line_Number++;;
+        }
     }
     if(c == EOF) {
         current_token.type = tokentype_EOF;
@@ -86,6 +89,7 @@ Token getToken() {
                     c = getc(input_file);
                     continue;
                 }
+                Line_Number++;
                 goto here;
             }
             else {
@@ -167,6 +171,7 @@ Token getToken() {
                 current_token.type = tokentype_notequal;
             }
             else {
+                ungetc(nextchar, input_file);
                 current_token.type = tokentype_invalid;
             }
             break;
@@ -235,7 +240,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         if(isdigit(nextchar = getc(input_file))) {
             current_token.type = tokentype_invalid;
             fprintf(stderr, "A whole number cannot start with 0\n");
-            //ungetc(nextchar, input_file); DO OR DONT?
+            ungetc(nextchar, input_file);
             return current_token;
         }
         current_token.type = tokentype_zeroint;
@@ -271,7 +276,6 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         }
     }
     if(nextchar == 'e' || nextchar == 'E') {
-            
         if(current_token.type == tokentype_zeroint) {
             fprintf(stderr, "Number zero cannot have an exponent\n");
             current_token.type = tokentype_invalid;
@@ -313,7 +317,6 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     current_token.value[index] = '\0';
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
-
     return current_token;
 }
 
@@ -342,6 +345,9 @@ Token process_String_Token(char firstchar, FILE *input_file) {
         }
         current_token.value[index++] = nextchar;
         if(nextchar == '\n' || nextchar == EOF) {
+            if(nextchar = '\n') {
+                Line_Number++;
+            }
             fprintf(stderr, "String incorrect\n");
             current_token.type = tokentype_invalid;
             return current_token;
@@ -531,7 +537,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
                 break;
             }
             if(nextchar == '\n') {
-
+                Line_Number++;
                 char tempchar;
                 while((tempchar = getc(input_file)) != EOF && isspace(tempchar)) {
                     if(tempchar == '\n') {
@@ -543,6 +549,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
                     continue;
                 }
                 else {
+                    Line_Number--;
                     ungetc(tempchar, input_file);
                     ungetc(nextchar, input_file);
                     break;
@@ -571,7 +578,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
 
 //      input_file = fopen("file.txt", "r");
     
-//      for(int i = 0; i < 1000; i++) {
+//      for(int i = 0; i < 10; i++) {
 //          getToken();
 //      }
 

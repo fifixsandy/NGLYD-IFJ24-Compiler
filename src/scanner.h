@@ -10,6 +10,8 @@
 #define NUM_OF_KEYWORDS 13
 #define FIRST_KEYWORD 36
 
+extern int Line_Number;
+
 typedef enum {
     tokentype_EOF,
 
