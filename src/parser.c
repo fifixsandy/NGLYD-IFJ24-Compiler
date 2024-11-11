@@ -57,7 +57,10 @@ bool prolog(){
     // RULE 2 <prolog> -> const id = @import ( expression ) ; 
     if(currentToken.type == tokentype_kw_const){ 
         GT
-        if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if id==ifj
+        if(currentToken.type == tokentype_id){
+            if(strcmp(currentToken.value, "ifj") != 0){
+                // TODO SEMANTIC/SYNTACTIC ERROR incorrect ifj
+            }
             GT
             if(currentToken.type == tokentype_assign){
                 GT
@@ -799,4 +802,7 @@ int main(){
     DEBPRINT("%d\n", prog());
 }
 
+
+
+/* HELPER SEMANTIC FUNCTIONS */
 /* EOF parser.c */
