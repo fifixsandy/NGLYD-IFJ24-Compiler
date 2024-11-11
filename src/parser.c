@@ -5,13 +5,19 @@
  * 
  *         Parser is based on LL1 grammar created for IFJ24 programming language, which is based on Zig.
  *         Each rule has it's own function and returns false if there was an unexpected token.
+ *         
+ *         Functionalities: 
+ *                          - checking correct order of tokens created from input by scanner
+ *                          - building abstract semantic tree described in ast.h for code generator
+ *                          - performing semantic checks (such as undefined variable, correctness of main function...)
  * 
- * @see    scanner.h parser.h
+ *         When an expression is encountered, control is given to expression parser.
+ *         
+ * @see    scanner.h ast.h
  * 
  * @author xnovakf00
- * @date   06.11.2024
+ * @date   11.11.2024
 */
-
 
 #include "parser.h"
 
@@ -105,6 +111,7 @@ bool next_code(){
     // RULE 5 <next_code> -> ε
     else if(currentToken.type == tokentype_EOF){
         correct = mainDefined(); // check if main function is defined and has correct data
+        allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     }
     DEBPRINT("%d\n", correct);
     return correct;
@@ -178,6 +185,16 @@ bool def_func(){
     entryData.paramNum      = paramNum;
 
     entrySymData.data.fData = entryData;
+    entrySymData.varOrFun   = 1;
+
+    // to avoid error raised by allUsed() that main was not used
+    if(strcmp(funID, "main") == 0){
+        entrySymData.used = true;
+    }
+    else{
+        entrySymData.used = false;
+    }
+
     insertSymNode(funSymtable, funID, entrySymData);
 
     createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root); // add correct data to astnode previously created
@@ -815,12 +832,11 @@ int main(){
 
 /* HELPER SEMANTIC FUNCTIONS */
 
-
 /**
  * @brief  Function validates that a function main was defined correctly.
  * 
  *         funSymtable is searched by findSymNode for a fuction with id "main".
- *         When no such entry is found, function triggers error. Similary,
+ *         When no such entry is found, function triggers error. Similarly,
  *         when the return type is not void or there are defined parameters of a
  *         function.
  * 
