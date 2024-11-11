@@ -41,5 +41,7 @@ bool expression();
 bool mainDefined();
 void allUsed(symNode *root);
 bool wasDefined(char *ID);
+dataType getReturnType(char *ID);
+dataType getVarType(char *ID);
 
 #endif
