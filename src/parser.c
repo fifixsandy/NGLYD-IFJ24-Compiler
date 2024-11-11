@@ -105,6 +105,7 @@ bool next_code(){
     // RULE 5 <next_code> -> ε
     else if(currentToken.type == tokentype_EOF){
         correct = mainDefined(); // check if main function is defined and has correct data
+        allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     }
     DEBPRINT("%d\n", correct);
     return correct;
@@ -178,6 +179,16 @@ bool def_func(){
     entryData.paramNum      = paramNum;
 
     entrySymData.data.fData = entryData;
+    entrySymData.varOrFun   = 1;
+
+    // to avoid error raised by allUsed() that main was not used
+    if(strcmp(funID, "main") == 0){
+        entrySymData.used = true;
+    }
+    else{
+        entrySymData.used = false;
+    }
+    
     insertSymNode(funSymtable, funID, entrySymData);
 
     createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root); // add correct data to astnode previously created
