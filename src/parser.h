@@ -5,6 +5,7 @@
 #include "ast.h"
 #include "error.h"
 
+#define GT currentToken = getToken(); // encapsulating the assignment
 extern Token currentToken;
 
 bool prog();
