@@ -32,7 +32,8 @@ typedef enum {
    u8,
    i32,
    f64,
-   void_
+   void_,
+   unknown
 } dataType;
 
 typedef struct funData{

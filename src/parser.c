@@ -826,6 +826,10 @@ int main(){
     input_file = fopen("file.txt", "r");
     GT
     DEBPRINT("%d\n", prog());
+    DEBPRINT("\n\n");
+
+    astNode * rootTree = ASTree.root;
+
 }
 
 
@@ -910,6 +914,37 @@ bool wasDefined(char *ID){
     else{
         return false;
     }
+}
+
+
+/**
+ * @brief    Returns return type of needed function.
+ * 
+ * @param ID Id of the function.
+ * 
+ * @warning  Must be called on a function you are sure exists in funSymtable.
+ * 
+ * @return   dataType
+ */
+dataType getReturnType(char *ID){
+    symNode *entry = findSymNode(funSymtable->rootPtr, ID);
+
+    return entry->data.data.fData.returnType;
+}
+
+/**
+ * @brief    Returns return type of needed variable.
+ * 
+ * @param ID Id of the variable.
+ * 
+ * @warning  Must be called on a function you are sure exists in symtable in current stack.
+ * 
+ * @return   dataType
+ */
+dataType getVarType(char *ID){
+    symNode *entry = findInStack(&symtableStack, ID);
+
+    return entry->data.data.vData.type;
 }
 
 /* EOF parser.c */
