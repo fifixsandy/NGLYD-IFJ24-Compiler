@@ -351,6 +351,7 @@ void reduce(exp_stack *stack){
 
 
 dataType what_type(astNode *elemnt_node){
+    DEBPRINT("ELEMENT IS NULL %d at %d\n", elemnt_node == NULL, currentToken.type);
     switch(elemnt_node->type){
         case AST_NODE_VAR :
             return elemnt_node->nodeRep.varNode.dataT;

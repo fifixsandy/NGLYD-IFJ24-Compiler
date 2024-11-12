@@ -17,6 +17,7 @@
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 extern Token currentToken;
+extern AST   ASTree;
 
 bool prog();
 bool prolog();

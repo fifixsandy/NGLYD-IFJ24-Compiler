@@ -22,10 +22,6 @@
 #include "parser.h"
 
 
-AST     ASTree; 
-astNode currentBlock;
-Token currentToken;
-
 bool prog(){
     bool correct = false;
     DEBPRINT("%d\n", currentToken.type);
@@ -883,18 +879,18 @@ bool builtin(char *id){
     return correct;
 }
 
-int main(){
-    initStack(&symtableStack);
-    funSymtable = createSymtable();
-    input_file = fopen("file.txt", "r");
-    GT
-    //prog();
-    DEBPRINT("%d\n", prog());
-    DEBPRINT("\n\n");
+// int main(){
+//     initStack(&symtableStack);
+//     funSymtable = createSymtable();
+//     input_file = fopen("file.txt", "r");
+//     GT
+//     //prog();
+//     DEBPRINT("%d\n", prog());
+//     DEBPRINT("\n\n");
 
-    astNode * rootTree = ASTree.root;
+//     astNode * rootTree = ASTree.root;
 
-}
+// }
 
 
 
