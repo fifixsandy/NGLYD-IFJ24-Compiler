@@ -201,6 +201,18 @@ void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
 
 }
 
+void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot){
+    astExpr newExpr = {
+        .dataT = type,
+        .exprTree = exprRoot
+    };
+
+    dest->next               = NULL;
+    dest->type               = AST_NODE_EXPR;
+    dest->parent             = NULL;
+    dest->nodeRep.exprNode   = newExpr;
+}
+
 astNode *createRootNode(){
     astNode *new = createAstNode();
     new->type = AST_NODE_ROOT;
