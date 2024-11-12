@@ -79,6 +79,7 @@ Token getToken() {
     }
     if(c == EOF) {
         current_token.type = tokentype_EOF;
+        current_token.line = Line_Number;
         return current_token;
     }
     
