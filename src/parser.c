@@ -566,7 +566,8 @@ bool body(dataType returnType, astNode *block){
         if(st(returnType, block)){
             correct = body(returnType, block);
         }
-    }else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
+    }else if(currentToken.type == tokentype_EOF){ERROR(ERR_SYNTAX, "Unexpected EOF, source code unfinished.\n");}
+    else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
 
     DEBPRINT("  %d %d\n", correct, currentToken.type);
     return correct;
