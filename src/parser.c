@@ -63,6 +63,7 @@ bool prog(){
 bool prolog(){
     bool correct = false;
 
+    astNode *expr = createAstNode();
     // RULE 2 <prolog> -> const id = @import ( expression ) ;
     if (currentToken.type != tokentype_kw_const) {
         ERROR(ERR_SYNTAX, "Expected: \"const\".\n");
@@ -87,7 +88,7 @@ bool prolog(){
         ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
     }
     GT
-    if (!expression()) {
+    if (!expression(expr)) {
         correct = false;
     }
     if (currentToken.type != tokentype_rbracket) {
@@ -312,6 +313,7 @@ bool def_variable(astNode *block){
     astNode *initExpr;
 
     astNode *varAstNode = createAstNode(); // allocate new ast node with no representation yet
+    astNode *exprNode   = createAstNode();
     
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
     if(currentToken.type == tokentype_kw_const || currentToken.type == tokentype_kw_var){ 
@@ -339,7 +341,7 @@ bool def_variable(astNode *block){
 
                 if(currentToken.type == tokentype_assign){
                     GT
-                    if(expression()){ // TODO EXPRESSION
+                    if(expression(exprNode)){ // TODO EXPRESSION
                         correct = (currentToken.type == tokentype_semicolon);
                         GT
                     }
@@ -392,7 +394,7 @@ bool unused_decl(astNode *block){
         GT
         if(currentToken.type == tokentype_assign){
             GT
-            if(expression()){ // TODO EXPRESSION
+            if(expression(expr)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_semicolon){
                     correct = true;
                 }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
@@ -600,6 +602,7 @@ bool return_(dataType expReturnType, astNode *block){
 
 bool exp_func_ret(dataType expRetType, astNode *exprNode){
     bool correct = false;
+    astNode *expr = createAstNode();
     // RULE 43 <exp_func_ret> -> ε
     DEBPRINT("expected %d\n", expRetType);
     if(currentToken.type == tokentype_semicolon){
@@ -614,7 +617,7 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
     // RULE 44 <exp_func_ret> -> expression
     else{
         dataType returnedDataType;
-        correct = expression(); // TODO EXPRESSION
+        correct = expression(expr); // TODO EXPRESSION
         if(returnedDataType != expRetType){
             // TODO ERROR UNEXPECTED RETURN TYPE
         }
@@ -677,7 +680,7 @@ bool while_statement(dataType expRetType, astNode *block){
         GT
         if(currentToken.type == tokentype_lbracket){
             GT
-            if(expression()){ // TODO EXPRESSION
+            if(expression(condExprAstNode)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_rbracket){
                     GT
                     if(id_without_null(&withNull, &id_wout_null)){
@@ -735,7 +738,7 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         if(currentToken.type == tokentype_lbracket){
             GT
-        if(expression()){ // TODO EXPRESSION
+        if(expression(condExrpNode)){ // TODO EXPRESSION
         if(currentToken.type == tokentype_rbracket){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
@@ -784,13 +787,13 @@ bool if_statement(dataType expRetType, astNode *block){
 
 bool expr_params(){
     bool correct = false;
-
+    astNode *expr = createAstNode();
     // RULE 26 <expr_params> -> ε
     if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
     // RULE 25 <expr_params> -> expression <expr_params_n>
-    else if(expression()){ // TODO EXPRESSION
+    else if(expression(expr)){ // TODO EXPRESSION
         correct = expr_params_n();
     }
 DEBPRINT(" %d\n", correct);
@@ -828,7 +831,7 @@ bool after_id(char *id, astNode *block){
         varDataType = entry->data.data.vData.type;
 
         GT
-        if(expression()){// TODO EXPRESSION
+        if(expression(newAssExpNode)){// TODO EXPRESSION
             correct = (currentToken.type == tokentype_semicolon);
             GT
         }
@@ -888,12 +891,6 @@ bool builtin(char *id){
     }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
-}
-
-// this function is placeholder for expression parsing
-bool expression(){
-    GT
-    return true;
 }
 
 int main(){
