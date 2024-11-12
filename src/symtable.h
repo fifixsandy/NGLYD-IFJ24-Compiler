@@ -139,6 +139,9 @@ int        heightVal     (symNode *node);
 int        balanceVal    (symNode *node);
 int        max           (int a, int b);
 
+
+void prepareBuiltinSymtable();
+
 /* Functions for printing .dot file for debugging */
 void printSymtable(FILE *file, symtable *tb);
 void printNode(FILE *file, symNode *node);

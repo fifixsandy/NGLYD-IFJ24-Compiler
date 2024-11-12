@@ -173,11 +173,12 @@ void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEnt
     dest->nodeRep.varNode = newVar;
 }
 
-void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent) {
+void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent) {
     astFuncCall newFuncCall = {
         .retType = retType,
         .id = id,
-        .symtableEntry = symtableEntry
+        .symtableEntry = symtableEntry,
+        .builtin = builtin
     };
 
     dest->next = NULL;

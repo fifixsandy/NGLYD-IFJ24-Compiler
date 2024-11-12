@@ -246,6 +246,11 @@ void freeSymNodes(symNode *node){
     if(node == NULL){
         return;
     }
+    
+    if(node->data.varOrFun){
+        free(node->data.data.fData.paramTypes);
+        free(node->data.data.fData.paramNames);
+    }
     freeSymNodes(node->r);
     freeSymNodes(node->l);
     free(node);
