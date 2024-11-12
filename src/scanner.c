@@ -334,87 +334,75 @@ Token process_String_Token(char firstchar, FILE *input_file) {
         current_token.type = tokentype_invalid;
         return current_token;
     }
-    current_token.value[index++] = firstchar;
         
-    while((nextchar = getc(input_file)) != '"' && nextchar != 92) {
+    while((nextchar = getc(input_file)) != '"' && nextchar != '\n') {
         if (index >= buffer_size - 1) {
             if (realloc_value(&current_token.value, &buffer_size) == -1) {
                 current_token.type = tokentype_invalid;
                 return current_token;
             }
         }
-        current_token.value[index++] = nextchar;
-        if(nextchar == '\n' || nextchar == EOF) {
-            if(nextchar == '\n') {
-                Line_Number++;
-            }
+        if(nextchar == EOF) {
             fprintf(stderr, "String incorrect\n");
             current_token.type = tokentype_invalid;
             return current_token;
         }
 
-    }
-    if(nextchar == '"') {
-        current_token.value[index++] = nextchar;
-    }
-    /*else if(nextchar == 92) {
-        current_token.value[index++] = nextchar;
+        if(nextchar == 92) {
             
-        nextchar = getc(input_file);
-        if((nextchar == 'n') || 
-            nextchar == 'r' || 
-            nextchar == 't' || 
-            nextchar == '"' || 
-            nextchar == 92) 
-        {
-            current_token.value[index++] = nextchar;
-                
             nextchar = getc(input_file);
-            if(nextchar == '"') {
-                current_token.value[index++] = nextchar;
+            if(nextchar == 'n') {
+                current_token.value[index++] = '\n';
             }
-            else{
+            else if(nextchar == 'r') {
+                current_token.value[index++] = '\r';
+            }  
+            else if(nextchar == 't') {
+                current_token.value[index++] = '\t';
+            }
+            else if(nextchar == '"') {
+                current_token.value[index++] = '"';
+            }
+            else if(nextchar == 92) {
+                current_token.value[index++] = '\\';   
+            }
+            
+            else if(nextchar == 'x') {
+                char hex_str[3] = {0};
+                
+                for(int i = 0; i < 2; i++) {
+                    if(((nextchar = getc(input_file)) >= '0' && nextchar <= '9') ||
+                        (nextchar >= 'a' && nextchar <= 'f') || 
+                        (nextchar >= 'A' && nextchar <= 'F'))    
+                    {
+                    hex_str[i] = nextchar;
+                    }
+                    else {
+                        fprintf(stderr, "Hexadecimal number incorrect\n");
+                        current_token.type = tokentype_invalid;
+                        return current_token;
+                    }
+                }
+                long dec_value = strtol(hex_str, NULL, 16);
+                sprintf(current_token.value + index, "%ld", dec_value);
+                index += strlen(current_token.value + index);
+            }
+            else {
                 fprintf(stderr, "Escape sequence incorrect\n");
                 current_token.type = tokentype_invalid;
                 return current_token;
             }
         }
-        else if(nextchar == 'x') {
-            current_token.value[index++] = nextchar;
-                
-            for(int i = 0; i < 2; i++) {
-                if(((nextchar = getc(input_file)) >= '0' && nextchar <= '9') ||
-                    (nextchar >= 'a' && nextchar <= 'f') || 
-                    (nextchar >= 'A' && nextchar <= 'F'))    
-                {
-                current_token.value[index++] = nextchar;
-                }
-                else {
-                    fprintf(stderr, "Hexadecimal number incorrect\n");
-                    current_token.type = tokentype_invalid;
-                    return current_token;
-                }
-            }
-            if((nextchar = getc(input_file)) == '"') {
-                current_token.value[index++] = nextchar;
-            }
-            else {
-                fprintf(stderr, "Hexadecimal number incorrect\n");
-                current_token.type = tokentype_invalid;
-                return current_token;
-            }
-        }
         else {
-            fprintf(stderr, "Escape sequence incorrect\n");
-            current_token.type = tokentype_invalid;
-            return current_token;
+            current_token.value[index++] = nextchar;
         }
-    }*/
-    else {
-        fprintf(stderr, "String incomplete\n");
+    }
+    if(nextchar == '\n') {
         current_token.type = tokentype_invalid;
+        Line_Number++;
         return current_token;
     }
+
     current_token.value[index] = '\0';
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
