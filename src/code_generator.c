@@ -342,7 +342,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
              //TODO LOWER_OR_EQUAL,         // 8
             //GREATER_OR_EQUAL,       // 9
             switch (type){
-            case MULTYPLICATION:
+            case MULTIPLICATION:
                 add_code("MULS"); endl();
                 break;
             case DIVISION:
@@ -475,3 +475,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
     return true;
 }
 
+bool generate_code(astNode *ast){
+    if(!buf_init(&BUFFER)) return false;
+    Defined_vars var_def;
+    inint_def_vars(&var_def);
+    if(!code_generator(ast, &var_def)) return false;
+    fprint_buffer(BUFFER, stdout);
+    return true;
+}
