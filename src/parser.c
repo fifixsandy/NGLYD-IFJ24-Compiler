@@ -22,16 +22,6 @@
 #include "parser.h"
 
 
-
-#define DEBUG
-#ifdef DEBUG
-    #define DEBPRINT(...) \
-        fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
-        fprintf(stderr, __VA_ARGS__);
-#else
-    #define DEBPRINT(...) 
-#endif
-
 AST     ASTree; 
 astNode currentBlock;
 Token currentToken;
@@ -88,11 +78,12 @@ bool prolog(){
         ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
     }
     GT
-    if (!expression(expr)) {
+    if (true) { // TODO CHECK THE EXPRESSION IN IMPORT
+        GT
         correct = false;
     }
     if (currentToken.type != tokentype_rbracket) {
-        ERROR(ERR_SYNTAX, "Expected: \")\" .\n");
+        ERROR(ERR_SYNTAX, "Expected: \")\"  .\n");
     }
     GT
     if (currentToken.type != tokentype_semicolon) {
@@ -339,7 +330,7 @@ bool def_variable(astNode *block){
                     variData.type          = varType;
 
                 if(currentToken.type == tokentype_assign){
-                    GT
+                    
                     if(expression(exprNode)){ // TODO EXPRESSION
                         correct = (currentToken.type == tokentype_semicolon);
                         GT
@@ -392,7 +383,7 @@ bool unused_decl(astNode *block){
     if(currentToken.type == tokentype_pseudovar){
         GT
         if(currentToken.type == tokentype_assign){
-            GT
+            
             if(expression(expr)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_semicolon){
                     correct = true;
@@ -677,7 +668,7 @@ bool while_statement(dataType expRetType, astNode *block){
     if(currentToken.type == tokentype_kw_while){ 
         GT
         if(currentToken.type == tokentype_lbracket){
-            GT
+            
             if(expression(condExprAstNode)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_rbracket){
                     GT
@@ -735,7 +726,7 @@ bool if_statement(dataType expRetType, astNode *block){
     if(currentToken.type == tokentype_kw_if){ 
             GT
         if(currentToken.type == tokentype_lbracket){
-            GT
+            
         if(expression(condExrpNode)){ // TODO EXPRESSION
         if(currentToken.type == tokentype_rbracket){
             GT
@@ -764,7 +755,7 @@ bool if_statement(dataType expRetType, astNode *block){
         }
         }else{ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");}
         }
-        }else{ERROR(ERR_SYNTAX, "Expected: \")\" .\n");}
+        }else{ERROR(ERR_SYNTAX, "Expected: \")\" %d.\n", currentToken.type);}
         }
         }else{ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");} 
     }else{ERROR(ERR_SYNTAX, "Expected: \"if\" .\n");}
@@ -828,7 +819,7 @@ bool after_id(char *id, astNode *block){
 
         varDataType = entry->data.data.vData.type;
 
-        GT
+        
         if(expression(newAssExpNode)){// TODO EXPRESSION
             correct = (currentToken.type == tokentype_semicolon);
             GT

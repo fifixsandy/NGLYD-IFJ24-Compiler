@@ -205,7 +205,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return ID;
 
         default:
-            free(node);
+            //free(node);
             return STOP;
         // no a tu sme pri probléééééme ktorý vyžaduje vyriešnie, počuješ budúci matúš, okay poriešil si to asi, si boss, diki, ja viem
 
@@ -243,23 +243,28 @@ bool expression(astNode *expr_node){
 }
 
 bool shift(exp_stack *estack){
+    GT
     astNode *curr_node = createAstNode();
     if(curr_node == NULL){
         return false; //TODO internal Error
     }
+    HERE:
     symbol_number top_term = exp_stack_top_term_symb(estack);
     if(top_term == ERROR){
         return false; // TODO WRONG INPUT error
     }
-    GT
-    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node);
     
+    DEBPRINT("currtokentype %d\n", currentToken.type);
+    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node);
+    DEBPRINT("SYMBOL NUM %d,,,,%d\n", curr_symb, top_term);
     precedence compare = precedence_table[top_term][curr_symb];
+    DEBPRINT("precedenc %d\n", compare);
     if(compare == LS){
         exp_stack_push(estack, curr_node, curr_symb);
     }
     else if(compare == GR || compare == EQ){
         reduce(estack);
+        goto HERE;
         exp_stack_push(estack, curr_node, curr_symb);
     }
     else{

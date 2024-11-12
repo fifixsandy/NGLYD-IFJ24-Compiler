@@ -6,6 +6,15 @@
 #include "error.h"
 #include "expression_stack.h"
 
+#define DEBUG
+#ifdef DEBUG
+    #define DEBPRINT(...) \
+        fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
+        fprintf(stderr, __VA_ARGS__);
+#else
+    #define DEBPRINT(...) 
+#endif
+
 #define GT currentToken = getToken(); // encapsulating the assignment
 extern Token currentToken;
 
