@@ -163,6 +163,7 @@ typedef struct astVar {
     dataType dataT;
     char    *id;
     symNode *symtableEntry;
+    bool isNullable;
 }astVar;
 
 typedef struct astFuncCall {
