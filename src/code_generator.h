@@ -15,9 +15,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include "code_buffer.h"
+#include "ast.h"
 
 
 typedef enum {INT, FLOAT, STRING} Types;
+
+typedef enum {WHILE_COND, WHILE_END, IF_COND, IF_ELSE, IF_END} LABEL_TYPES;
 
 typedef struct{
     char ** names;
@@ -43,29 +46,29 @@ typedef struct{
     "DEFVAR TF@char\n"                                  \
     "DEFVAR TF@len_str\n"                               \
     "DEFVAR TF@end_cond\n"                              \
-    "STRLEN TF@len_str LF@%%1\n"                        \
+    "STRLEN TF@len_str LF@%%0\n"                        \
                                                         \
+    "GT TF@end_cond LF@%%1 TF@len_str\n"                \
+    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
+    "EQ TF@end_cond LF@%%1 TF@len_str\n"                \
+    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
     "GT TF@end_cond LF@%%2 TF@len_str\n"                \
     "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
-    "EQ TF@end_cond LF@%%2 TF@len_str\n"                \
-    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
-    "GT TF@end_cond LF@%%3 TF@len_str\n"                \
-    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
                                                         \
+    "LT TF@end_cond LF@%%1 int@0\n"                     \
+    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
     "LT TF@end_cond LF@%%2 int@0\n"                     \
     "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
-    "LT TF@end_cond LF@%%3 int@0\n"                     \
-    "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
-    "GT TF@end_cond LF@%%2 LF@%%3\n"                    \
+    "GT TF@end_cond LF@%%1 LF@%%2\n"                    \
     "JUMPIFEQ $$substring-end TF@end_cond bool@true\n"  \
                                                         \
     "MOVE GF@retval string@\n"                          \
     "DEFVAR TF@i\n"                                     \
-    "MOVE TF@i LF@%%2\n"                                \
+    "MOVE TF@i LF@%%1\n"                                \
     "LABEL $$substring-while-start-1\n"                 \
-    "EQ TF@end_cond TF@i LF@%%3\n"                      \
-    "JUMPIFEQ $$substring-while-end-1 TF@i LF@%%3\n"    \
-    "GETCHAR TF@char LF@%%1 TF@i\n"                     \
+    "EQ TF@end_cond TF@i LF@%%2\n"                      \
+    "JUMPIFEQ $$substring-while-end-1 TF@i LF@%%2\n"    \
+    "GETCHAR TF@char LF@%%0 TF@i\n"                     \
     "CONCAT GF@retval GF@retval TF@char\n"              \
     "ADD TF@i TF@i int@1\n"                             \
     "JUMP $$substring-while-start-1\n"                  \
@@ -88,8 +91,8 @@ typedef struct{
                                                          \
     "MOVE GF@retval int@0\n"                             \
                                                          \
-    "STRLEN TF@len_str1 LF@%%1\n"                        \
-    "STRLEN TF@len_str2 LF@%%2\n"                        \
+    "STRLEN TF@len_str1 LF@%%0\n"                        \
+    "STRLEN TF@len_str2 LF@%%1\n"                        \
     "GT TF@bool_tmp TF@len_str1 TF@len_str2\n"           \
     "JUMPIFEQ $$strcmp-if-else-1 TF@bool_tmp bool@false\n"\
     "MOVE TF@min_len TF@len_str2\n"                      \
@@ -109,8 +112,8 @@ typedef struct{
     "LABEL $$strcmp-while-start-1\n"                     \
     "JUMPIFEQ $$strcmp-while-end-1 TF@min_len TF@i\n"    \
                                                          \
-    "STRI2INT TF@ascii1 LF@%%1 TF@i\n"                   \
-    "STRI2INT TF@ascii2 LF@%%2 TF@i\n"                   \
+    "STRI2INT TF@ascii1 LF@%%0 TF@i\n"                   \
+    "STRI2INT TF@ascii2 LF@%%1 TF@i\n"                   \
                                                          \
     "JUMPIFEQ $$strcmp-if-else-2 TF@ascii1 TF@ascii2\n"  \
                                                          \
@@ -156,16 +159,16 @@ typedef struct{
                                                          \
     "MOVE GF@retval int@0\n"                             \
                                                          \
-    "LT TF@bool_tmp LF@%%2 int@0\n"                      \
+    "LT TF@bool_tmp LF@%%1 int@0\n"                      \
     "JUMPIFEQ $$ord-end TF@bool_tmp bool@true\n"         \
-    "JUMPIFEQ $$ord-end LF@%%1 string@\n"                \
+    "JUMPIFEQ $$ord-end LF@%%0 string@\n"                \
                                                          \
-    "STRLEN TF@len_str LF@%%1\n"                         \
+    "STRLEN TF@len_str LF@%%0\n"                         \
     "SUB TF@len_str TF@len_str int@1\n"                  \
-    "GT TF@bool_tmp LF@%%2 TF@len_str\n"                 \
+    "GT TF@bool_tmp LF@%%1 TF@len_str\n"                 \
     "JUMPIFEQ $$ord-end TF@bool_tmp bool@true\n"         \
                                                          \
-    "STRI2INT GF@retval LF@%%1 LF@%%2\n"                 \
+    "STRI2INT GF@retval LF@%%0 LF@%%1\n"                 \
                                                          \
     "LABEL $$ord-end\n"                                  \
     "POPFRAME\n"                                         \
@@ -274,4 +277,6 @@ void inint_def_vars(Defined_vars *vars);
 bool add_to_def_vars(Defined_vars *vars, char *name);
 bool is_in_def_vars(Defined_vars *vars, char *name);
 void delete_def_vars(Defined_vars *vars);
+char *generate_label(LABEL_TYPES type, int number);
+bool code_generator(astNode *ast);
 #endif

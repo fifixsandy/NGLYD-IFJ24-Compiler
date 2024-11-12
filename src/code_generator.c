@@ -87,10 +87,53 @@ void delete_def_vars(Defined_vars *vars){
         } \
     } while (0)
 
+#define PARAM(int_val) \
+    do { \
+        if (!buf_add(BUFFER, "%%")) { \
+            return false; \
+        } \
+        if (!buf_add_int(BUFFER, int_val)) { \
+            return false; \
+        } \
+    } while (0)
+
+#define LF(val) \
+    do { \
+        if (!buf_add(BUFFER, "LF@_")) { \
+            return false; \
+        } \
+        if (!buf_add(BUFFER, val)) { \
+            return false; \
+        } \
+    } while (0)
+
+#define TF(val) \
+    do { \
+        if (!buf_add(BUFFER, "TF@_")) { \
+            return false; \
+        } \
+        if (!buf_add(BUFFER, val)) { \
+            return false; \
+        } \
+    } while (0)
+
+#define GF(val) \
+    do { \
+        if (!buf_add(BUFFER, "GF@retval")) { \
+            return false; \
+        } \
+    } while (0)
 // Add newline to buffer with error handling
 #define endl() \
     do { \
         if (!buf_add_push(BUFFER, "\n")) { \
+            return false; \
+        } \
+    } while (0)
+
+#define space() \
+    do { \
+        if (!buf_add(BUFFER, " ")) { \
             return false; \
         } \
     } while (0)
@@ -196,11 +239,38 @@ bool generate_header(){
     return true;
 }
 
+char *generate_label(LABEL_TYPES type, int number){
+    char* label = malloc(sizeof(char)*(51));
+    if(label == NULL){
+        return NULL;
+    }
+    char tmp[15];
+    switch(type){
+        case WHILE_COND:
+            strcpy(tmp, "while_cond");
+            break;
+        case WHILE_END:
+            strcpy(tmp, "while_end");
+            break;
+        case IF_COND:
+            strcpy(tmp, "if_cond");
+            break;
+        case IF_ELSE:
+            strcpy(tmp, "if_else");
+            break;
+        case IF_END:
+            strcpy(tmp, "if_end");
+            break;
+    }
+    sprintf(label, "&%s-%d", tmp, number);
+    return label;
+}
+
 bool code_generator(astNode *ast){
+    int static count = 0;
     if(ast == NULL) return true;
     switch (ast->type){
         case AST_NODE_WHILE:
-
             break;
         case AST_NODE_IFELSE:
             /* code */
@@ -250,10 +320,12 @@ bool code_generator(astNode *ast){
             add_code("PUSHFRAME"); endl();
             add_code("CREATEFRAME"); endl();
             
-            //TODO create loc variabiles from %1, %2, ....
-        /* for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
-                DEF
-            }*/
+            for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
+                char *name = ast->nodeRep.defFuncNode.paramNames[i];
+                add_code("DEFVAR "); TF(name); endl();
+
+                add_code("MOVE "); TF(name); space(); PARAM(i); endl();
+            }
             //ast->nodeRep.defFuncNode.paramNames;
             //create flag for var definition
             buf_add_flag(BUFFER);
@@ -281,5 +353,6 @@ bool code_generator(astNode *ast){
     }
     return true;
 }
+
 
 
