@@ -189,7 +189,7 @@ typedef struct AST {
 }AST;
 
 
-typedef struct astNode {
+struct astNode {
 
     astNodeType     type;
     struct astNode *parent;  // in which block it is
@@ -216,7 +216,7 @@ typedef struct astNode {
         
     }nodeRep;// exact representaion of the current node
 
-}astNode;
+};
 
 
 
