@@ -4,6 +4,7 @@
 #include "symtable.h"
 #include "ast.h"
 #include "error.h"
+#include "expression_stack.h"
 
 #define GT currentToken = getToken(); // encapsulating the assignment
 extern Token currentToken;
@@ -37,7 +38,7 @@ bool after_id();
 bool assign_or_f_call();
 bool builtin();
 
-bool expression();
+//bool expression();
 
 bool mainDefined();
 void allUsed(symNode *root);
