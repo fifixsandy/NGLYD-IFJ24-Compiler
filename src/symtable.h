@@ -28,7 +28,7 @@
 
 typedef struct symtable symtable;
 
-typedef enum {
+typedef enum dataType{
    u8,
    i32,
    f64,

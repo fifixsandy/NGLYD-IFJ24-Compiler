@@ -774,15 +774,31 @@ bool expr_params_n(){
     return correct;
 }
 
-bool after_id(char *id){
+bool after_id(char *id, astNode *block){
     bool correct = false;
     // RULE 29 <after_id> -> = expression ;
     if(currentToken.type == tokentype_assign){
+        astNode *newAssNode    = createAstNode();
+        astNode *newAssExpNode = createAstNode();
+        dataType varDataType   = unknown;
+        dataType expressionDT  = unknown;
+        symNode *entry         = findInStack(&symtableStack, id);
+
+        if(entry == NULL){ERROR(ERR_SEM_UNDEF, "Assigning to undefined variable \"%s\".\n",id);}
+        if(entry->data.data.vData.isConst){ERROR(ERR_SEM_REDEF, "Assigning to unmodifiable (const) variable \"%s\".\n", id);}
+
+        varDataType = entry->data.data.vData.type;
+
         GT
         if(expression()){// TODO EXPRESSION
             correct = (currentToken.type == tokentype_semicolon);
             GT
         }
+
+        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", id);}
+
+        createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
+        connectToBlock(newAssNode, block);
     }
     // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; // TODO CHECK THIS VERY MUCH
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
@@ -803,13 +819,13 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool assign_or_f_call(){
+bool assign_or_f_call(astNode *block){
     bool correct = false;
     // RULE 31 <assign_or_f_call> -> id <after_id>
     if(currentToken.type == tokentype_id){
         char *id = currentToken.value;
         GT
-        correct = after_id(id);
+        correct = after_id(id, block);
     }
     DEBPRINT(" %d\n", correct);
     return correct;

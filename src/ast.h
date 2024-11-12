@@ -20,7 +20,7 @@ typedef struct astNode astNode;
 
 typedef enum{
     MULTYPLICATION,         // 0
-    DIVISION,                // 1
+    DIVISION,               // 1
     ADDITION,               // 2
     SUBSTRACTION,           // 3
     EQUAL,                  // 4
