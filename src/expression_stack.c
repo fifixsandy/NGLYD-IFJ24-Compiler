@@ -135,6 +135,10 @@ bool exp_stack_find_lbr(exp_stack *estack){
 symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node){
     symNode *symnode;
     switch(token.type){
+        case tokentype_zeroint :
+            createLiteralNode(node, i32, token.value, NULL);
+            return ID;
+            
         case tokentype_multiply :
             
             return MULTIPLICATION;

@@ -332,6 +332,7 @@ bool def_variable(astNode *block){
                 if(currentToken.type == tokentype_assign){
                     
                     if(expression(exprNode)){ // TODO EXPRESSION
+                        DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
                         correct = (currentToken.type == tokentype_semicolon);
                         GT
                     }

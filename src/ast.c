@@ -142,17 +142,18 @@ void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *ri
     dest->nodeRep.binOpNode = newBinOp;
 }
 
-void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent) {
+void createLiteralNode(astNode *dest, dataType dataT, char *value, astNode *parent) {
     astLiteral newLiteral = {
         .dataT = dataT
     };
 
     if (dataT == i32) {
-        newLiteral.value.intData = *(int *)value;
+        if(*value == '0'){newLiteral.value.intData = 0;}
+        else{newLiteral.value.intData = atoi(value);}
     } else if (dataT == f64) {
-        newLiteral.value.floatData = *(float *)value;
+        newLiteral.value.floatData = atof(value);
     } else if (dataT == u8) {
-        newLiteral.value.charData = (char *)value;
+        newLiteral.value.charData = value;
     }
 
     dest->next = NULL;
