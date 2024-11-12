@@ -10,7 +10,7 @@ Token currentToken;
 int main(){
     initStack(&symtableStack);
     funSymtable = createSymtable();
-    input_file = fopen("file2.txt", "r");
+    input_file = fopen("file.txt", "r");
     GT
     //prog();
     DEBPRINT("%d\n", prog());

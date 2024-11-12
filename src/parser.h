@@ -6,7 +6,7 @@
 #include "error.h"
 #include "expression_stack.h"
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \

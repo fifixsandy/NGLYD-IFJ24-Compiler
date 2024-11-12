@@ -334,6 +334,16 @@ bool def_variable(astNode *block){
                     }
                 }
 
+                
+                if(variData.inheritedType == true){
+                    variData.type = exprNode->nodeRep.exprNode.dataT;
+                    variData.inheritedType = false;
+                }
+                else{
+                    if(variData.type != exprNode->nodeRep.exprNode.dataT){
+                        ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", varName);
+                    }
+                }
                 entryData.data.vData = variData;
                 insertSymNode(symtableStack.top->tbPtr, varName, entryData);
 
@@ -821,9 +831,10 @@ bool after_id(char *id, astNode *block){
             correct = (currentToken.type == tokentype_semicolon);
             GT
         }
-
+        expressionDT = newAssExpNode->nodeRep.exprNode.dataT;
         if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", id);}
 
+        entry->data.used = true;
         createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
         connectToBlock(newAssNode, block);
     }
@@ -878,20 +889,6 @@ bool builtin(char *id){
     DEBPRINT(" %d\n", correct);
     return correct;
 }
-
-// int main(){
-//     initStack(&symtableStack);
-//     funSymtable = createSymtable();
-//     input_file = fopen("file.txt", "r");
-//     GT
-//     //prog();
-//     DEBPRINT("%d\n", prog());
-//     DEBPRINT("\n\n");
-
-//     astNode * rootTree = ASTree.root;
-
-// }
-
 
 
 /* HELPER SEMANTIC FUNCTIONS */
