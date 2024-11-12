@@ -31,7 +31,8 @@ Buffer_node *buf_new_node(){
 }
 
 bool buf_add(Buffer_ll *buf, char *str){
-    char *tmp = realloc(buf->tmp, sizeof(char)*(strlen(str)+1));
+    size_t old_len = (buf->tmp != NULL) ? strlen(buf->tmp) : 0;
+    char *tmp = realloc(buf->tmp, sizeof(char)*(strlen(str)+old_len+1));
     if(tmp == NULL){
         return false;
     }
@@ -46,7 +47,7 @@ bool buf_add(Buffer_ll *buf, char *str){
     return true;
 }
 
-bool buf_push_code(Buffer_ll *buf){
+bool buf_push(Buffer_ll *buf){
     Buffer_node *new = buf_new_node();
     if(new == NULL){
         return false;
@@ -65,7 +66,7 @@ bool buf_push_code(Buffer_ll *buf){
 
 bool buf_add_push(Buffer_ll *buf, char *str){
     if(!buf_add(buf, str)) return false;
-    if(!buf_push_code(buf)) return false;
+    if(!buf_push(buf)) return false;
     return true;
 }
 
@@ -76,6 +77,35 @@ void buf_add_flag(Buffer_ll *buf){
 
 void buf_delete_flag(Buffer_ll *buf){
     buf->flag = NULL;
+}
+
+bool buf_add_int(Buffer_ll *buf, int num){
+    char str[30];  
+    sprintf(str, "%d", num);
+    if(!buf_add(buf, str)) return false;
+    return true;
+}
+
+bool buf_add_float(Buffer_ll *buf, float num){
+    char str[100];  
+    sprintf(str, "%a", num);
+    if(!buf_add(buf, str)) return false;
+    return true;
+}
+
+bool buf_add_string(Buffer_ll *buf, char *str){
+    char tmp[5];
+    for(size_t i = 0; i < strlen(str); i++){
+        if(str[i] <= 32 || str[i] == 35 || str[i] == 92){
+            sprintf(tmp, "\\%03d", str[i]);
+            if(!buf_add(buf, tmp)) return false;
+        }
+        else{
+            sprintf(tmp, "%c", str[i]);
+            if(!buf_add(buf, tmp)) return false;
+        }
+    }
+    return true;
 }
 
 bool buf_push_after_flag(Buffer_ll *buf){
@@ -102,7 +132,7 @@ bool fprint_buffer(Buffer_ll *buf, FILE *stream) {
     }
     Buffer_node *tmp = buf->first;
     while(tmp != NULL){
-        fprintf(stream, "%s", tmp->str);
+        if(tmp->str != NULL) fprintf(stream, "%s", tmp->str);
         tmp = tmp->next;
     }
     return true;

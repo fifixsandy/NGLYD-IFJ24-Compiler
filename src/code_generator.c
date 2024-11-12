@@ -10,23 +10,40 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "code_buffer.h"
+#include "ast.h"
 
 #define BUFFER buf
 
-Buffer *BUFFER;
+Buffer_ll *BUFFER;
 
 // Add code to buffer with error handling
-#define add_code(val) \
+#define add_push_code(val) \
     do { \
-        if (!buf_push_code(BUFFER, val)) { \
+        if (!buf_add_push(BUFFER, val)) { \
             return false; \
         } \
     } while (0)
 
-// Add space to buffer with error handling
-#define space() \
+#define push_code(val) \
     do { \
-        if (!buf_push_code(BUFFER, " ")) { \
+        if (!buf_push(BUFFER, val)) { \
+            return false; \
+        } \
+    } while (0)
+
+#define add_code(val) \
+    do { \
+        if (!buf_add(BUFFER, val)) { \
+            return false; \
+        } \
+    } while (0)
+
+#define add_param(val) \
+    do { \
+        if (!buf_add(BUFFER, " ")) { \
+            return false; \
+        } \
+        if (!buf_add(BUFFER, val)) { \
             return false; \
         } \
     } while (0)
@@ -34,37 +51,27 @@ Buffer *BUFFER;
 // Add newline to buffer with error handling
 #define endl() \
     do { \
-        if (!buf_push_code(BUFFER, "\n")) { \
+        if (!buf_add_push(BUFFER, "\n")) { \
             return false; \
         } \
     } while (0)
 
 
-
-// Declare buffer as a global variable
-Buffer *BUFFER;
-
-bool add_param(char *param){
-    space();
-    add_code(param);    
-    return true;
-}
-
 bool add_int(int val){
     add_code("int@");
-    if(!buf_push_int(buf, val)) return false;
+    if(!buf_add_int(buf, val)) return false;
     return true;
 }
 
 bool add_float(int val){
     add_code("float@");
-    if(!buf_push_float(buf, val)) return false;
+    if(!buf_add_float(buf, val)) return false;
     return true;
 }
 
 bool add_string(char *str){
     add_code("string@");
-    if(!buf_push_string(buf, str)) return false;
+    if(!buf_add_string(buf, str)) return false;
     return true;
 }
 
@@ -80,7 +87,7 @@ bool add_read(char *var, Types type){
     case STRING:
         add_param("string");
     }
-    add_param(var);
+    add_param(var);  
     endl();
     return true;
 }
@@ -144,3 +151,9 @@ bool generate_build_in_functions(){
     add_code(ORD);
     return true;
 }
+
+bool generate_header(){
+    add_code("#.IFJcode24\n\n");
+    return true;
+}
+

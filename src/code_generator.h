@@ -169,54 +169,99 @@ typedef enum {INT, FLOAT, STRING} Types;
 
 
 /**
- * @brief Add a parameter to the code buffer
- * @param param The parameter to be added
- * @return true if the operation was successful, false otherwise
+ * @brief Add a parameter to the code buffer.
+ * @param param The parameter to be added.
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_param(char *param);
 
 /**
- * @brief Add formatted int value to the code buffer
- * @param val The int value to be added
- * @return true if the operation was successful, false otherwise
+ * @brief Add formatted int value to the code buffer.
+ * @param val The int value to be added.
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_int(int val);
 
 /**
- * @brief Add formatted float value to the code buffer
- * @param val The float value to be added
- * @return true if the operation was successful, false otherwise
+ * @brief Add formatted float value to the code buffer.
+ * @param val The float value to be added.
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_float(int val);
 
 /**
- * @brief Add formatted string value to the code buffer
- * @param str The string value to be added
- * @return true if the operation was successful, false otherwise
+ * @brief Add formatted string value to the code buffer.
+ * @param str The string value to be added.
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_string(char *str);
 
 /**
- * @brief Add READ instruction to the code buffer
- * @param var The variable which input will be assigned to
- * @param type Type of variable being read (INT, FLOAT, STRING)
- * @return true if the operation was successful, false otherwise
+ * @brief Add READ instruction to the code buffer.
+ * @param var The variable which input will be assigned to.
+ * @param type Type of variable being read (INT, FLOAT, STRING).
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_read(char *var, Types type);
 
 /**
- * @brief Add WRITE instruction to the code buffer
- * @param term The term (int, float, string or variable) to be printed
- * @return true if the operation was successful, false otherwise
+ * @brief Add WRITE instruction to the code buffer.
+ * @param term The term (int, float, string, or variable) to be printed.
+ * @return true if the operation was successful, false otherwise.
  */
 bool add_write(char *term);
 
 /**
- * @brief Add INT2FLOAT instruction to the code buffer
- * @param var The variable where the conversion will be assigned to
- * @param symb The symbol (string or variable) from which the conversion is done
- * @return true if the operation was successful, fals
+ * @brief Add INT2FLOAT instruction to the code buffer.
+ * @param var The variable where the conversion result will be assigned.
+ * @param symb The symbol (string or variable) from which the conversion is performed.
+ * @return true if the operation was successful, false otherwise.
  */
-bool add_int2float(char *var, char *symb);
+bool add_i2f(char *var, char *symb);
+
+/**
+ * @brief Add FLOAT2INT instruction to the code buffer.
+ * @param var The variable where the conversion result will be assigned.
+ * @param symb The symbol (string or variable) from which the conversion is performed.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool add_f2i(char *var, char *symb);
+
+/**
+ * @brief Add STRLEN instruction to the code buffer.
+ * @param var The variable where the result will be assigned.
+ * @param symb The symbol (string or variable) whose length will be calculated.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool add_str_len(char *var, char *symb);
+
+/**
+ * @brief Add CONCAT instruction to the code buffer.
+ * @param var The variable where the concatenation result will be assigned.
+ * @param symb1 The first symbol to concatenate.
+ * @param symb2 The second symbol to concatenate.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool add_str_concat(char *var, char *symb1, char *symb2);
+
+/**
+ * @brief Add INT2CHAR instruction to the code buffer.
+ * @param var The variable where the character result will be assigned.
+ * @param symb The symbol (integer or variable) to be converted to a character.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool add_chr(char *var, char *symb);
+
+/**
+ * @brief Generate built-in functions in the code buffer.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool generate_build_in_functions();
+
+/**
+ * @brief Generate the header for the code.
+ * @return true if the operation was successful, false otherwise.
+ */
+bool generate_header();
 
 #endif
