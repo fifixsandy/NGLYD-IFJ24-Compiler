@@ -1,11 +1,12 @@
 #include "ast.h"
-
+#include "error.h"
+#include "parser.h"
 
 
 astNode *createAstNode(){
     astNode *new = malloc(sizeof(astNode));
-    if(new == NULL){ // TODO ERROR
-
+    if(new == NULL){ 
+        ERROR(ERR_INTERNAL,"Error occured while allocating memory.");
     }
 
     new->next   = NULL;

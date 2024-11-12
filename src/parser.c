@@ -22,7 +22,7 @@
 #include "parser.h"
 
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
@@ -53,6 +53,8 @@ bool prog(){
         }
         // TODO Check eof idk how rn
     }
+    else if(currentToken.type == tokentype_EOF){return true;}
+    else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -92,7 +94,7 @@ bool prolog(){
     }
     GT
     if (currentToken.type != tokentype_semicolon) {
-        ERROR(ERR_SYNTAX, "Expected: \";\" .\n");
+        ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");
     }
     GT
 
@@ -110,7 +112,7 @@ bool code(){
         correct = def_func();
     }
     else{
-        ERROR(ERR_SYNTAX, "Expected : \"pub\"\n");
+        ERROR(ERR_SYNTAX, "Expected: \"pub\"\n");
     }
     DEBPRINT("%d %d\n", correct, currentToken.type);
     return correct;
@@ -128,7 +130,7 @@ bool next_code(){
         correct = mainDefined(); // check if main function is defined and has correct data
         allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     }
-    else{ERROR(ERR_SYNTAX, "Expected : \"pub\" or EOF\n");}
+    else{ERROR(ERR_SYNTAX, "Expected: \"pub\" or EOF\n");}
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -181,10 +183,19 @@ bool def_func(){
         if(currentToken.type == tokentype_lcbracket){
         GT
         if(body(returnType, bodyAstRoot)){
-        correct = (currentToken.type == tokentype_rcbracket);
+        if(currentToken.type == tokentype_rcbracket){
+            correct = true;
+        }else{ERROR(ERR_SYNTAX, "Expected: \"}\".\n");}
         GT
-        }}}}}}}}
-    }
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"{\".\n");}
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \")\".\n");}
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"(\".\n");}
+        }else{ERROR(ERR_SYNTAX, "Expected: id.\n");}
+        }else{ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");}
 
 
     // information is now known, set it
@@ -261,9 +272,9 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
     }
 
     // RULE 8 <params> -> ε
-    else{
-        correct = (currentToken.type == tokentype_rbracket);   
-    }
+    else if(currentToken.type == tokentype_rbracket){
+        correct = true; 
+    }else{ERROR(ERR_SYNTAX, "Expected: id or \")\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -277,9 +288,10 @@ bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
         correct = params(paramNum, paramTypes, paramNames);
     }
     // RULE 10 <params_n> -> ε
-    else{
-        correct = (currentToken.type == tokentype_rbracket);
+    else if(currentToken.type == tokentype_rbracket){
+        correct = true;
     }
+    else{ERROR(ERR_SYNTAX, "Expected: \",\" or \")\".\n");}
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -340,7 +352,10 @@ bool def_variable(astNode *block){
                 createDefVarNode(varAstNode ,varName, initExpr, varEntry, block); // create the correct representation
                 connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
 
-                }}}}
+                }
+                }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
+                }
+                }else{ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -359,7 +374,7 @@ bool varorconst(bool *isConst){
         *isConst = 0;
         correct = true;
         GT
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");}
     DEBPRINT(" %d %s\n", correct, currentToken.value);
     return correct;
 }
@@ -377,11 +392,13 @@ bool unused_decl(astNode *block){
         if(currentToken.type == tokentype_assign){
             GT
             if(expression()){ // TODO EXPRESSION
-                correct = (currentToken.type == tokentype_semicolon);
+                if(currentToken.type == tokentype_semicolon){
+                    correct = true;
+                }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
                 GT
             }
-        }
-    }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"=\" .\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"_\".\n");}
 
     // create node with correct data and connect it into block
     createUnusedNode(newUnused, expr, block);
@@ -416,9 +433,9 @@ bool type_normal(dataType *datatype){
                 correct = true;
                 *datatype = u8;
                 GT
-            }
-        }
-    }
+            }else{ERROR(ERR_SYNTAX, "Expected: \"u8\" .\n");}
+        }else{ERROR(ERR_SYNTAX, "Expected: \"]\" .\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"i32\" or \"f64\" or \"[\" .\n");}
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -429,7 +446,7 @@ bool type_null(dataType *datatype){
     if(currentToken.type == tokentype_nullid){
         GT
         correct = type_normal(datatype);
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"?\" .\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -446,7 +463,7 @@ bool type(bool *nullable, dataType *datatype){
     else if(currentToken.type == tokentype_nullid){
         *nullable = true;
         correct = type_null(datatype);
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" .\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -468,7 +485,7 @@ bool type_func_ret(bool *nullable, dataType *datatype){
         correct = true;
         *datatype = void_;
         GT
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" or \"void\".\n");}
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -487,11 +504,11 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
         }
     }
     // RULE 24 <type_var_def> -> ε
-    else{
-        correct = (currentToken.type == tokentype_assign);
+    else if(currentToken.type == tokentype_assign){
+        correct = true;
         *inheritedDType = true;
         
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" or \"=\".\n");}
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -524,6 +541,7 @@ bool st(dataType expReturnType, astNode *block){
     else if(currentToken.type == tokentype_kw_return){ 
         correct = return_(expReturnType, block);
     }
+    else{ERROR(ERR_SYNTAX, "Unexpected start of a statement.\n");}
 
 
     return correct;
@@ -548,7 +566,7 @@ bool body(dataType returnType, astNode *block){
         if(st(returnType, block)){
             correct = body(returnType, block);
         }
-    }
+    }else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
 
     DEBPRINT("  %d %d\n", correct, currentToken.type);
     return correct;
@@ -564,10 +582,12 @@ bool return_(dataType expReturnType, astNode *block){
     if(currentToken.type == tokentype_kw_return){ 
         GT
         if(exp_func_ret(expReturnType, exprNode)){
-            correct = (currentToken.type == tokentype_semicolon);
+            if(currentToken.type == tokentype_semicolon){
+                correct = true;
+            }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
             GT
         }
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"return\".\n");}
 
     createReturnNode(returnNode, exprNode, expReturnType, block);
     connectToBlock(returnNode, block);
@@ -618,16 +638,18 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             insertSymNode(symtableStack.top->tbPtr, currentToken.value, data);
 
             GT
-            correct = (currentToken.type == tokentype_vbar);
+            if(currentToken.type == tokentype_vbar){
+                correct = true;
+            }else{ERROR(ERR_SYNTAX, "Expected: \"|\" .\n");}
             GT
-        }
+        }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
     }
     // RULE 46 <id_without_null> -> ε
     else if(currentToken.type == tokentype_lcbracket){
         *withNull     = false;
         *id_wout_null = NULL;
         correct       = true;
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"{\" or \"|\".\n");}
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -651,24 +673,26 @@ bool while_statement(dataType expRetType, astNode *block){
     // RULE 47 <while_statement> -> while ( expression ) <id_without_null> { <body> }
     if(currentToken.type == tokentype_kw_while){ 
         GT
-        if(currentToken.type == tokentype_lcbracket){
+        if(currentToken.type == tokentype_lbracket){
             GT
             if(expression()){ // TODO EXPRESSION
-                if(currentToken.type == tokentype_rcbracket){
+                if(currentToken.type == tokentype_rbracket){
                     GT
                     if(id_without_null(&withNull, &id_wout_null)){
                         if(currentToken.type == tokentype_lcbracket){
                             GT
                             if(body(expRetType, bodyAstNode)){
-                                correct = (currentToken.type == tokentype_rcbracket);
+                                if(currentToken.type == tokentype_rcbracket){
+                                    correct = true;
+                                }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
                                 GT
                             }
-                        }
+                        }ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
                     }
-                }
+                }else{ERROR(ERR_SYNTAX, "Expected: \")\" .\n");}
             }
-        }
-    }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"while\" .\n");}
 
 
     
@@ -726,10 +750,21 @@ bool if_statement(dataType expRetType, astNode *block){
         if(currentToken.type == tokentype_lcbracket){
             GT
         if(body(expRetType, elseNode)){
-        correct = (currentToken.type == tokentype_rcbracket);
+        if(currentToken.type == tokentype_rcbracket){
+            correct = true;
+        }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
             GT
-        }}}}}}}}}} 
-    }
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");};
+        }else{ERROR(ERR_SYNTAX, "Expected: \"else\" .\n");};
+        }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");}
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \")\" .\n");}
+        }
+        }else{ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");} 
+    }else{ERROR(ERR_SYNTAX, "Expected: \"if\" .\n");}
     allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block else
     pop(&symtableStack); // pop the else stack so scopes are not disturbed
 
@@ -747,13 +782,14 @@ bool if_statement(dataType expRetType, astNode *block){
 
 bool expr_params(){
     bool correct = false;
-    // RULE 25 <expr_params> -> expression <expr_params_n>
-    if(expression()){ // TODO EXPRESSION
-        correct = expr_params_n();
-    }
+
     // RULE 26 <expr_params> -> ε
     if(currentToken.type == tokentype_rbracket){
         correct = true;
+    }
+    // RULE 25 <expr_params> -> expression <expr_params_n>
+    else if(expression()){ // TODO EXPRESSION
+        correct = expr_params_n();
     }
 DEBPRINT(" %d\n", correct);
     return correct;
@@ -769,7 +805,7 @@ bool expr_params_n(){
     // RULE 28 <expr_params_n> -> ε 
     else if(currentToken.type == tokentype_rbracket){
         correct = true;
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \",\" or \")\" .\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -814,7 +850,7 @@ bool after_id(char *id, astNode *block){
                 }
             }
         }
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -826,7 +862,7 @@ bool assign_or_f_call(astNode *block){
         char *id = currentToken.value;
         GT
         correct = after_id(id, block);
-    }
+    }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -842,12 +878,12 @@ bool builtin(char *id){
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
             correct = true;
             GT
-        }
+        }else{ERROR(ERR_SYNTAX, "Expected: builtin id .\n");}
     }
     // RULE 33 <builtin> -> ε
-    else{
-        correct = (currentToken.type == tokentype_lbracket);
-    }
+    else if(currentToken.type == tokentype_lbracket){
+        correct = true;
+    }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -863,7 +899,7 @@ int main(){
     funSymtable = createSymtable();
     input_file = fopen("file.txt", "r");
     GT
-    prog();
+    //prog();
     DEBPRINT("%d\n", prog());
     DEBPRINT("\n\n");
 

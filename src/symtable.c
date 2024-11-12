@@ -16,6 +16,7 @@
 */
 
 #include "symtable.h"
+#include "parser.h"
 
 stack symtableStack;
 symtable *funSymtable;
@@ -30,7 +31,7 @@ symtable *builtinSymtable;
 symtable* createSymtable(){
     symtable *table = (symtable *)malloc(sizeof(symtable));
     if(table == NULL){
-        // TODO HANDLE ERROR;
+        ERROR(ERR_INTERNAL,"Error occured while allocating memory.");
         return NULL;
     }
     initSymtable(table);
@@ -62,7 +63,7 @@ void initSymtable(symtable *tb){
 symNode *createSymNode(char *key, symData data){
     symNode *newNode = (symNode *)malloc(sizeof(symNode));
     if(newNode == NULL){
-        // TODO HANDLE ERROR;
+        ERROR(ERR_INTERNAL,"Error occured while allocating memory.");
         return NULL;
     }
 
@@ -246,7 +247,7 @@ void freeSymNodes(symNode *node){
     if(node == NULL){
         return;
     }
-    
+
     if(node->data.varOrFun){
         free(node->data.data.fData.paramTypes);
         free(node->data.data.fData.paramNames);
@@ -291,7 +292,7 @@ void initStack(stack *st){
 stackElem *createStElem(symtable *tb){
     stackElem* newElem = (stackElem*)malloc(sizeof(stackElem));
     if(newElem == NULL){
-        //ERROR
+        ERROR(ERR_INTERNAL,"Error occured while allocating memory.");
         return NULL;
     }
     newElem->tbPtr = tb;
