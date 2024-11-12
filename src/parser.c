@@ -213,7 +213,7 @@ bool def_func(){
 
     insertSymNode(funSymtable, funID, entrySymData);
 
-    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root); // add correct data to astnode previously created
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames); // add correct data to astnode previously created
     connectToBlock(funcAstNode, ASTree.root);
 
     DEBPRINT("%d\n", correct);
