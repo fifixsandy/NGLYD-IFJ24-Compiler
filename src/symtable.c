@@ -19,6 +19,8 @@
 
 stack symtableStack;
 symtable *funSymtable;
+symtable *builtinSymtable;
+
 /**
  * @brief  Creates an empty symtable.
  * 
@@ -559,6 +561,143 @@ bool isStackBottom(stackElem *se){
 int max(int a, int b){
     return(a > b) ? a : b;
 }
+
+
+/**************************************************************************************************************
+                                         SECTION Builtin
+
+ **************************************************************************************************************/
+
+void prepareBuiltinSymtable(){
+    builtinSymtable = createSymtable();
+
+    symData data = {.varOrFun = 0};
+    funData fData = {.defined = true, 
+                     .paramTypes = NULL, 
+                     .paramNames = NULL};
+
+    // ifj.readstr() ?[]u8
+    fData.paramNum      = 0;
+    fData.returnType    = u8;
+    fData.nullableRType = true;
+    fData.paramTypes    = NULL;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "readstr", data);
+
+    // ifj.readi32() ?i32
+    fData.paramNum      = 0;
+    fData.returnType    = i32;
+    fData.nullableRType = true;
+    fData.paramTypes    = NULL;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "readi32", data);
+
+    // ifj.readf64() ?f64
+    fData.paramNum      = 0;
+    fData.returnType    = f64;
+    fData.nullableRType = true;
+    fData.paramTypes    = NULL;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "readf64", data);
+
+    // ifj.write(term) void
+    fData.paramNum         = 1;
+    fData.paramTypes       = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0]    = any;
+    fData.returnType       = void_;
+    data.data.fData        = fData;
+    insertSymNode(builtinSymtable, "write", data);
+
+    // ifj.i2f(term ∶ i32) f64
+    fData.paramNum      = 1;
+    fData.returnType    = f64;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = i32;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "i2f", data);
+
+    // ifj.f2i(term ∶ f64) i32
+    fData.paramNum      = 1;
+    fData.returnType    = i32;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = f64;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "f2i", data);
+
+    // ifj.string(term) []u8
+    fData.paramNum      = 1;
+    fData.returnType    = u8;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = any;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "string", data);
+
+    // ifj.length(s : []u8) i32
+    fData.paramNum      = 1;
+    fData.returnType    = i32;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = u8;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "length", data);
+
+    // ifj.concat(s1 : []u8, s2 : []u8) []u8
+    fData.paramNum      = 2;
+    fData.returnType    = u8;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = u8;
+    fData.paramTypes[1] = u8;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "concat", data);
+
+    // ifj.substring(s : []u8, i : i32, j : i32) ?[]u8
+    fData.paramNum      = 3;
+    fData.returnType    = u8;
+    fData.nullableRType = true;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = u8;
+    fData.paramTypes[1] = i32;
+    fData.paramTypes[2] = i32;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "substring", data);
+    
+    //  ifj.strcmp(s1 : []u8, s2 : []u8) i32
+    fData.paramNum      = 2;
+    fData.returnType    = i32;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = u8;
+    fData.paramTypes[1] = u8;
+    data.data.fData     = fData;
+
+    insertSymNode(builtinSymtable, "strcmp", data);
+    
+    // ifj.ord(s : []u8, i : i32) i32
+    fData.paramNum      = 2;
+    fData.returnType    = i32;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = u8;
+    fData.paramTypes[1] = i32;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "ord", data);
+    
+    // ifj.chr(i : i32) []u8 
+    fData.paramNum      = 1;
+    fData.returnType    = u8;
+    fData.nullableRType = false;
+    fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
+    fData.paramTypes[0] = i32;
+    data.data.fData     = fData;
+    insertSymNode(builtinSymtable, "chr", data);
+    
+}
+
+
 
 /************************************************************************************************************** 
                                          SECTION Debug print

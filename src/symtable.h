@@ -33,7 +33,8 @@ typedef enum dataType{
    i32,
    f64,
    void_,
-   unknown
+   unknown,
+   any
 } dataType;
 
 typedef struct funData{

@@ -69,7 +69,7 @@ bool prolog(){
         ERROR(ERR_SYNTAX, "Expected: identifier \"ifj\" .\n");
     }
     if (strcmp(currentToken.value, "ifj") != 0) {
-        ERROR(ERR_SYNTAX, "Wrong ID in prologue section.\nExpected: \"ifj\"\nGot: \"%s\"\n",currentToken.value);
+        ERROR(ERR_SYNTAX, "Wrong namespace in prologue section.\nExpected: \"ifj\"\nGot: \"%s\"\n",currentToken.value);
     }
     GT
     if (currentToken.type != tokentype_assign) {
@@ -800,7 +800,7 @@ bool after_id(char *id, astNode *block){
         createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
         connectToBlock(newAssNode, block);
     }
-    // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; // TODO CHECK THIS VERY MUCH
+    // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
         if(builtin(id)){
             if(currentToken.type == tokentype_lbracket){
@@ -836,7 +836,7 @@ bool builtin(char *id){
     // RULE 32 <builtin> -> . id
     if(currentToken.type == tokentype_dot){
         if(strcmp(id, "ifj") != 0){
-            ERROR(ERR_SYNTAX, "Expected: identifier \"ifj\" for builtin functions. Got: \"%s\" .\n", id);
+            ERROR(ERR_SYNTAX, "Incorrect namespace for builtin functions. Expected: \"ifj\" Got: \"%s\" .\n", id);
         }
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
