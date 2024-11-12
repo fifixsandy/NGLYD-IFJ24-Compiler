@@ -479,7 +479,7 @@ bool generate_code(astNode *ast){
     if(!buf_init(&BUFFER)) return false;
     Defined_vars var_def;
     inint_def_vars(&var_def);
-    if(!code_generator(ast, &var_def)) return false;
+    if(!code_generator(ast->next, &var_def)) return false;
     fprint_buffer(BUFFER, stdout);
     return true;
 }
