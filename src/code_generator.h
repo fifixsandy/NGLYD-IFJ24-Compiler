@@ -20,7 +20,7 @@
 
 typedef enum {INT, FLOAT, STRING} Types;
 
-typedef enum {WHILE_COND, WHILE_END, IF_COND, IF_ELSE, IF_END} LABEL_TYPES;
+typedef enum {WHILE_COND, WHILE_END, IF_ELSE, IF_END} LABEL_TYPES;
 
 typedef struct{
     char ** names;
@@ -277,6 +277,6 @@ void inint_def_vars(Defined_vars *vars);
 bool add_to_def_vars(Defined_vars *vars, char *name);
 bool is_in_def_vars(Defined_vars *vars, char *name);
 void delete_def_vars(Defined_vars *vars);
-char *generate_label(LABEL_TYPES type, int number);
-bool code_generator(astNode *ast);
+void generate_label(char *label, LABEL_TYPES type, int number);
+bool code_generator(astNode *ast,  Defined_vars *TF_vars);
 #endif

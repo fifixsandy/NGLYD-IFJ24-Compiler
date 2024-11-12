@@ -117,7 +117,7 @@ void delete_def_vars(Defined_vars *vars){
         } \
     } while (0)
 
-#define GF(val) \
+#define GF() \
     do { \
         if (!buf_add(BUFFER, "GF@retval")) { \
             return false; \
@@ -239,76 +239,186 @@ bool generate_header(){
     return true;
 }
 
-char *generate_label(LABEL_TYPES type, int number){
-    char* label = malloc(sizeof(char)*(51));
-    if(label == NULL){
-        return NULL;
-    }
+void generate_label(char *label, LABEL_TYPES type, int number){
     char tmp[15];
     switch(type){
         case WHILE_COND:
-            strcpy(tmp, "while_cond");
+            strcpy(tmp, "while-cond");
             break;
         case WHILE_END:
-            strcpy(tmp, "while_end");
-            break;
-        case IF_COND:
-            strcpy(tmp, "if_cond");
+            strcpy(tmp, "while-end");
             break;
         case IF_ELSE:
-            strcpy(tmp, "if_else");
+            strcpy(tmp, "if-else");
             break;
         case IF_END:
-            strcpy(tmp, "if_end");
+            strcpy(tmp, "if-end");
             break;
     }
     sprintf(label, "&%s-%d", tmp, number);
-    return label;
 }
 
-bool code_generator(astNode *ast){
-    int static count = 0;
+bool code_generator(astNode *ast, Defined_vars *TF_vars){
+    static int count = 0;
     if(ast == NULL) return true;
+    char cond_label[52];
+    char else_label[52];
+    char end_label[52];
     switch (ast->type){
         case AST_NODE_WHILE:
+            count++;
+            //TODO id_with_null
+            //save genrated label names
+            generate_label(cond_label, WHILE_COND, count);
+            generate_label(end_label, WHILE_END, count);
+
+            add_code("LABEL "); add_code(cond_label); endl();
+
+            if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
+            add_code("POPS TF@tmp_bool"); endl();
+
+            add_code("JUMPIFNEQ "); add_code(end_label); add_code(" TF@tmp_bool bool@true"); endl();
+
+            if(!code_generator(ast->nodeRep.whileNode.body, TF_vars)) return false;
+            
+            add_code("JUMP "); add_code(cond_label); endl();
+            add_code("LABEL "); add_code(end_label); endl();
+
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         case AST_NODE_IFELSE:
-            /* code */
+            count++;
+            //TODO id_with_null
+            //save genrated label names
+            generate_label(else_label, IF_ELSE, count);
+            generate_label(end_label, IF_END, count);
+
+            if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
+            add_code("POPS TF@tmp_bool"); endl();
+
+            add_code("JUMPIFNEQ "); add_code(else_label); add_code(" TF@tmp_bool bool@true"); endl();
+            if(!code_generator(ast->nodeRep.ifElseNode.ifPart, TF_vars)) return false;
+            add_code("JUMP "); add_code(end_label); endl();
+
+            add_code("LABEL "); add_code(else_label); endl();
+            if(!code_generator(ast->nodeRep.ifElseNode.elsePart, TF_vars)) return false;
+            add_code("LABEL "); add_code(end_label); endl();
+            
+            if(!code_generator(ast->next, TF_vars)) return false;
+
             break;
         case AST_NODE_IF:
-            /* code */
+            //TODO id_with_null
+            if(!code_generator(ast->nodeRep.ifNode.body, TF_vars)) return false;
             break;
         
         case AST_NODE_ELSE:
-            /* code */
+            //TODO id_with_null
+            if(!code_generator(ast->nodeRep.elseNode.body, TF_vars)) return false;
             break;
         
         case AST_NODE_ASSIGN:
-            /* code */
+            if(!code_generator(ast->nodeRep.assignNode.expression, TF_vars)) return false;
+            add_code("POPS "); TF(ast->nodeRep.assignNode.id); endl();
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_EXPR:
-            /* code */
+            //add_code("CLEARS"); endl();
+            if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
             break;
         
         case AST_NODE_BINOP:
-            /* code */
+            //ast->nodeRep.binOpNode.
+            if(!code_generator(ast->nodeRep.binOpNode.left, TF_vars)) return false;
+            if(ast->nodeRep.binOpNode.left != NULL && ast->nodeRep.binOpNode.left->type == AST_NODE_FUNC_CALL){
+                add_code("PUSHS "); GF(); endl();
+            }
+            if(!code_generator(ast->nodeRep.binOpNode.right, TF_vars)) return false;
+            if(ast->nodeRep.binOpNode.right != NULL && ast->nodeRep.binOpNode.right->type == AST_NODE_FUNC_CALL){
+                add_code("PUSHS "); GF(); endl();
+            }
+            symbol_number type = ast->nodeRep.binOpNode.op;
+             //TODO LOWER_OR_EQUAL,         // 8
+            //GREATER_OR_EQUAL,       // 9
+            switch (type){
+            case MULTYPLICATION:
+                add_code("MULS"); endl();
+                break;
+            case DIVISION:
+                if(ast->nodeRep.binOpNode.dataT == i32){
+                    add_code("IDIVS"); endl();
+                }
+                else{
+                    add_code("DIVS"); endl();
+                }
+                break;
+
+            case ADDITION:
+                add_code("ADDS"); endl();
+                break;
+            case SUBSTRACTION:
+                add_code("SUBs"); endl();
+                break;
+            case EQUAL:
+                add_code("EQS");endl();
+                break;
+            case NOT_EQUAL:
+                add_code("EQS");endl();
+                add_code("NOTS");endl();
+                break;
+            case LOWER:
+                add_code("LTS");endl();
+                break;
+            case GREATER:
+                add_code("GTS");endl();
+                break;
+            default:
+                //code
+                break;
+            }
             break;
         
         case AST_NODE_LITERAL:
-            /* code */
+            add_code("PUSHS ");
+            switch(ast->nodeRep.literalNode.dataT){
+            case u8:
+                if(!add_string(ast->nodeRep.literalNode.value.charData)) return false;
+                break;
+            case i32:
+                if(!add_int(ast->nodeRep.literalNode.value.intData)) return false;
+                break;
+            case f64:
+                if(!add_float(ast->nodeRep.literalNode.value.floatData)) return false;
+                break;
+            default:
+                break;
+            }
+            endl();
             break;
         
         case AST_NODE_VAR:
-            /* code */
+            add_code("PUSHS ");
+            TF(ast->nodeRep.varNode.id); endl();
             break;
 
         case AST_NODE_DEFVAR:
-            /* code */
+            ;
+            char *name = ast->nodeRep.defVarNode.id;
+            if(!is_in_def_vars(TF_vars, name)){
+                TF(name);
+                if(!buf_push_after_flag(BUFFER)) return false;
+                if(!add_to_def_vars(TF_vars, name)) return false;
+            }
+
+            if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
+            add_code("POPS "); TF(name); endl();
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_UNUSED:
-            /* code */
+            if(!code_generator(ast->nodeRep.unusedNode.expr, TF_vars)) return false;
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_DEFFUNC:
@@ -320,8 +430,12 @@ bool code_generator(astNode *ast){
             add_code("PUSHFRAME"); endl();
             add_code("CREATEFRAME"); endl();
             
+            //TODO add bin operators, maybe
+            add_code("DEFVAR TF@tmp_bool");endl();
+
             for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
                 char *name = ast->nodeRep.defFuncNode.paramNames[i];
+                if(!add_to_def_vars(TF_vars, name)) return false;
                 add_code("DEFVAR "); TF(name); endl();
 
                 add_code("MOVE "); TF(name); space(); PARAM(i); endl();
@@ -330,20 +444,27 @@ bool code_generator(astNode *ast){
             //create flag for var definition
             buf_add_flag(BUFFER);
             //generate body
-            code_generator(ast->nodeRep.defFuncNode.body);
+            if(!code_generator(ast->nodeRep.defFuncNode.body, TF_vars)) return false;
             
-            add_code("POPFRAME"); endl();
-            add_code("RETURN"); endl();
             
-            code_generator(ast->next);
+            
+            delete_def_vars(TF_vars);
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_RETURN:
-            /* code */
+            if(!code_generator(ast->nodeRep.returnNode.returnExp, TF_vars)) return false;
+            add_code("POPS "); GF(); endl();
+            add_code("POPFRAME"); endl();
+            add_code("RETURN"); endl();
             break;
         
         case AST_NODE_ROOT:
-            /* code */
+            if(!code_generator(ast->next, TF_vars)) return false;
+            break;
+
+        case AST_NODE_FUNC_CALL:
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_INVALID:
@@ -353,6 +474,4 @@ bool code_generator(astNode *ast){
     }
     return true;
 }
-
-
 
