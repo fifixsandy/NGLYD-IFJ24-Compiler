@@ -18,6 +18,5 @@ int main(){
 
     astNode * rootTree = ASTree.root;
 
-    printf("%d", rootTree == NULL);
     generate_code(rootTree);
 }

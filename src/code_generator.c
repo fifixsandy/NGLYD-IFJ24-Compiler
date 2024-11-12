@@ -235,7 +235,9 @@ bool generate_build_in_functions(){
 }
 
 bool generate_header(){
-    add_code("#.IFJcode24\n\n");
+    add_code(".IFJcode24\n"); endl();
+    add_code("DEFVAR "); GF(); endl();
+    endl();
     return true;
 }
 
@@ -406,7 +408,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             ;
             char *name = ast->nodeRep.defVarNode.id;
             if(!is_in_def_vars(TF_vars, name)){
-                TF(name);
+                add_code("DEFVAR "); TF(name); endl();
                 if(!buf_push_after_flag(BUFFER)) return false;
                 if(!add_to_def_vars(TF_vars, name)) return false;
             }
@@ -423,11 +425,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         
         case AST_NODE_DEFFUNC:
             //LABAL $id
-            add_code("LABAEL "); 
+            add_code("LABEL "); 
             add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
             endl();
 
-            add_code("PUSHFRAME"); endl();
+            if(strcmp(ast->nodeRep.defFuncNode.id, "main") != 0){
+                add_code("PUSHFRAME"); endl();
+            }
             add_code("CREATEFRAME"); endl();
             
             //TODO add bin operators, maybe
@@ -445,18 +449,21 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             buf_add_flag(BUFFER);
             //generate body
             if(!code_generator(ast->nodeRep.defFuncNode.body, TF_vars)) return false;
-            
-            
-            
+
+            if(strcmp(ast->nodeRep.defFuncNode.id, "main") != 0){
+                add_code("POPFRAME"); endl();
+                add_code("RETURN"); endl();
+            }
+
             delete_def_vars(TF_vars);
             if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_RETURN:
             if(!code_generator(ast->nodeRep.returnNode.returnExp, TF_vars)) return false;
-            add_code("POPS "); GF(); endl();
-            add_code("POPFRAME"); endl();
-            add_code("RETURN"); endl();
+            if(ast->nodeRep.returnNode.returnType != void_){
+                add_code("POPS "); GF(); endl();
+            }
             break;
         
         case AST_NODE_ROOT:
@@ -479,6 +486,7 @@ bool generate_code(astNode *ast){
     if(!buf_init(&BUFFER)) return false;
     Defined_vars var_def;
     inint_def_vars(&var_def);
+    if(!generate_header()) return false;
     if(!code_generator(ast->next, &var_def)) return false;
     fprint_buffer(BUFFER, stdout);
     return true;
