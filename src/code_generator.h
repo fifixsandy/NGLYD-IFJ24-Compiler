@@ -19,6 +19,11 @@
 
 typedef enum {INT, FLOAT, STRING} Types;
 
+typedef struct{
+    char ** names;
+    int num_of_vars;
+} Defined_vars;
+
 /**
  * @brief The header section of the code generation
  */
@@ -264,4 +269,9 @@ bool generate_build_in_functions();
  */
 bool generate_header();
 
+
+void inint_def_vars(Defined_vars *vars);
+bool add_to_def_vars(Defined_vars *vars, char *name);
+bool is_in_def_vars(Defined_vars *vars, char *name);
+void delete_def_vars(Defined_vars *vars);
 #endif

@@ -16,6 +16,45 @@
 
 Buffer_ll *BUFFER;
 
+
+void inint_def_vars(Defined_vars *vars){
+    vars->names = NULL;
+    vars->num_of_vars = 0;
+}
+
+bool add_to_def_vars(Defined_vars *vars, char *name){
+    char **tmp = realloc(vars->names, sizeof(char*)*(vars->num_of_vars+1));
+    if(tmp == NULL) return false;
+
+    vars->names = tmp;
+    vars->names[vars->num_of_vars] = name;
+
+    vars->names[vars->num_of_vars] = malloc(strlen(name) + 1);
+    if (vars->names[vars->num_of_vars] == NULL) {
+        return false; 
+    }
+
+    strcpy(vars->names[vars->num_of_vars], name);
+    vars->num_of_vars++;
+
+    return true;
+}
+
+bool is_in_def_vars(Defined_vars *vars, char *name){
+    for(int i = 0; i<vars->num_of_vars; i++){
+        if(strcmp(vars->names[i], name) == 0) return true;
+    }
+    return false;
+}
+
+void delete_def_vars(Defined_vars *vars){
+    for(int i = 0; i<vars->num_of_vars; i++){
+        free(vars->names[i]);
+    }
+    free(vars->names);
+    vars->num_of_vars = 0;
+}
+
 // Add code to buffer with error handling
 #define add_push_code(val) \
     do { \
@@ -160,99 +199,87 @@ bool generate_header(){
 bool code_generator(astNode *ast){
     if(ast == NULL) return true;
     switch (ast->type){
-    case AST_NODE_WHILE:
-        break;
-    case AST_NODE_IFELSE:
-        /* code */
-        break;
-    case AST_NODE_IF:
-        /* code */
-        break;
-    
-    case AST_NODE_ELSE:
-        /* code */
-        break;
-    
-    case AST_NODE_ASSIGN:
-        /* code */
-        break;
-    
-    case AST_NODE_EXPR:
-        /* code */
-        break;
-    
-    case AST_NODE_BINOP:
-        /* code */
-        break;
-    
-    case AST_NODE_LITERAL:
-        /* code */
-        break;
-    
-    case AST_NODE_VAR:
-        /* code */
-        break;
+        case AST_NODE_WHILE:
 
-    case AST_NODE_DEFVAR:
-        /* code */
-        break;
-    
-    case AST_UNUSED:
-        /* code */
-        break;
-    
-    case AST_NODE_DEFFUNC:
-        //LABAL $id
-        add_code("LABAEL "); 
-        add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
-        endl();
+            break;
+        case AST_NODE_IFELSE:
+            /* code */
+            break;
+        case AST_NODE_IF:
+            /* code */
+            break;
+        
+        case AST_NODE_ELSE:
+            /* code */
+            break;
+        
+        case AST_NODE_ASSIGN:
+            /* code */
+            break;
+        
+        case AST_NODE_EXPR:
+            /* code */
+            break;
+        
+        case AST_NODE_BINOP:
+            /* code */
+            break;
+        
+        case AST_NODE_LITERAL:
+            /* code */
+            break;
+        
+        case AST_NODE_VAR:
+            /* code */
+            break;
 
-        add_code("PUSHFRAME"); endl();
-        add_code("CREATEFRAME"); endl();
+        case AST_NODE_DEFVAR:
+            /* code */
+            break;
         
-        //TODO create loc variabiles from %1, %2, ....
-        //create flag for var definition
-        buf_add_flag(BUFFER);
-        //generate body
-        code_generator(ast->nodeRep.defFuncNode.body);
+        case AST_UNUSED:
+            /* code */
+            break;
         
-        add_code("POPFRAME"); endl();
-        add_code("RETURN"); endl();
+        case AST_NODE_DEFFUNC:
+            //LABAL $id
+            add_code("LABAEL "); 
+            add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
+            endl();
+
+            add_code("PUSHFRAME"); endl();
+            add_code("CREATEFRAME"); endl();
+            
+            //TODO create loc variabiles from %1, %2, ....
+        /* for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
+                DEF
+            }*/
+            //ast->nodeRep.defFuncNode.paramNames;
+            //create flag for var definition
+            buf_add_flag(BUFFER);
+            //generate body
+            code_generator(ast->nodeRep.defFuncNode.body);
+            
+            add_code("POPFRAME"); endl();
+            add_code("RETURN"); endl();
+            
+            code_generator(ast->next);
+            break;
         
-        code_generator(ast->next);
-        break;
-    
-    case AST_NODE_RETURN:
-        /* code */
-        break;
-    
-    case AST_NODE_ROOT:
-        /* code */
-        break;
-    
-    case AST_INVALID:
-        /* code */
-        break;
+        case AST_NODE_RETURN:
+            /* code */
+            break;
+        
+        case AST_NODE_ROOT:
+            /* code */
+            break;
+        
+        case AST_INVALID:
+            /* code */
+            break;
     
     }
+    return true;
 }
 
 
-
-int main(){
-    buf_init(&BUFFER);
-      
-    add_float(3.14);
-    add_string("Hello, World!");
-
-    add_read("myVar", INT);
-    add_write("myVar");
-
-    add_i2f("floatVar", "intVar");
-    add_f2i("intVar", "floatVar");
-
-    add_str_len("length", "myString");
-    add_str_concat("concatVar", "str1", "str2");
-    add_chr("charVar", "intVar");
-    fprint_buffer(BUFFER, stdout);
-}
