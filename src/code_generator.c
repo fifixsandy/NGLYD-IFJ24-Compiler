@@ -157,3 +157,102 @@ bool generate_header(){
     return true;
 }
 
+bool code_generator(astNode *ast){
+    if(ast == NULL) return true;
+    switch (ast->type){
+    case AST_NODE_WHILE:
+        break;
+    case AST_NODE_IFELSE:
+        /* code */
+        break;
+    case AST_NODE_IF:
+        /* code */
+        break;
+    
+    case AST_NODE_ELSE:
+        /* code */
+        break;
+    
+    case AST_NODE_ASSIGN:
+        /* code */
+        break;
+    
+    case AST_NODE_EXPR:
+        /* code */
+        break;
+    
+    case AST_NODE_BINOP:
+        /* code */
+        break;
+    
+    case AST_NODE_LITERAL:
+        /* code */
+        break;
+    
+    case AST_NODE_VAR:
+        /* code */
+        break;
+
+    case AST_NODE_DEFVAR:
+        /* code */
+        break;
+    
+    case AST_UNUSED:
+        /* code */
+        break;
+    
+    case AST_NODE_DEFFUNC:
+        //LABAL $id
+        add_code("LABAEL "); 
+        add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
+        endl();
+
+        add_code("PUSHFRAME"); endl();
+        add_code("CREATEFRAME"); endl();
+        
+        //TODO create loc variabiles from %1, %2, ....
+        //create flag for var definition
+        buf_add_flag(BUFFER);
+        //generate body
+        code_generator(ast->nodeRep.defFuncNode.body);
+        
+        add_code("POPFRAME"); endl();
+        add_code("RETURN"); endl();
+        
+        code_generator(ast->next);
+        break;
+    
+    case AST_NODE_RETURN:
+        /* code */
+        break;
+    
+    case AST_NODE_ROOT:
+        /* code */
+        break;
+    
+    case AST_INVALID:
+        /* code */
+        break;
+    
+    }
+}
+
+
+
+int main(){
+    buf_init(&BUFFER);
+      
+    add_float(3.14);
+    add_string("Hello, World!");
+
+    add_read("myVar", INT);
+    add_write("myVar");
+
+    add_i2f("floatVar", "intVar");
+    add_f2i("intVar", "floatVar");
+
+    add_str_len("length", "myString");
+    add_str_concat("concatVar", "str1", "str2");
+    add_chr("charVar", "intVar");
+    fprint_buffer(BUFFER, stdout);
+}
