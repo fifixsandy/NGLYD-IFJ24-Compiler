@@ -279,4 +279,5 @@ bool is_in_def_vars(Defined_vars *vars, char *name);
 void delete_def_vars(Defined_vars *vars);
 void generate_label(char *label, LABEL_TYPES type, int number);
 bool code_generator(astNode *ast,  Defined_vars *TF_vars);
+bool generate_code(astNode *ast);
 #endif
