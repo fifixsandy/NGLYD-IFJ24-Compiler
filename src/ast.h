@@ -18,6 +18,27 @@
 
 typedef struct astNode astNode;
 
+typedef enum{
+    MULTYPLICATION,         // 0
+    DIVISION,                // 1
+    ADDITION,               // 2
+    SUBSTRACTION,           // 3
+    EQUAL,                  // 4
+    NOT_EQUAL,              // 5
+    LOWER,                  // 6
+    GREATER,                // 7
+    LOWER_OR_EQUAL,         // 8
+    GREATER_OR_EQUAL,       // 9
+    LBR,                    // 10
+    RBR,                    // 11
+
+    ID,                     // 12
+    STOP,                   // 13
+    NO_TERMINAL,            // 14 - neterminálny symbol, pri vyhodnocovaní skip
+    ERROR                   // 15
+} symbol_number;
+
+
 typedef enum {
     AST_NODE_WHILE,
     AST_NODE_IFELSE,
@@ -31,6 +52,7 @@ typedef enum {
     AST_NODE_LITERAL,
     AST_NODE_VAR,
     AST_NODE_DEFVAR,
+    AST_UNUSED,
 
     AST_NODE_DEFFUNC,
     AST_NODE_RETURN,
@@ -42,10 +64,14 @@ typedef enum {
 }astNodeType;
 
 typedef enum {
+    BO_MUL,
+    BO_DIV,
     BO_PLUS,
     BO_MINUS,
-    BO_MUL,
-    BO_DIV
+    BO_EQL,
+    BO_NOT_EQL,
+    BO_LWR,
+    BO_GRT
 }binOpType;
 
 typedef struct astWhile {
@@ -115,7 +141,7 @@ typedef struct astExpr {
 
 typedef struct astBinOp {
     
-    binOpType op;
+    symbol_number op;
     astNode  *left;
     astNode  *right;
     dataType  dataT;
@@ -149,6 +175,13 @@ typedef struct astDefVar {
     symNode *symtableEntry;  
 } astDefVar;
 
+typedef struct astUnused {
+
+    astNode *expr;
+    
+}astUnused;
+
+
 typedef struct AST { 
 
     astNode *root;
@@ -156,7 +189,7 @@ typedef struct AST {
 }AST;
 
 
-typedef struct astNode {
+struct astNode {
 
     astNodeType     type;
     struct astNode *parent;  // in which block it is
@@ -176,13 +209,14 @@ typedef struct astNode {
         astVar      varNode;
         astFuncCall funcCallNode;
         astDefVar   defVarNode;
+        astUnused   unusedNode;
 
         astDefFunc  defFuncNode;
         astReturn   returnNode;
         
     }nodeRep;// exact representaion of the current node
 
-}astNode;
+};
 
 
 
@@ -194,10 +228,11 @@ void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *par
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
 void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent);
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
-void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent);
+void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symtableEntry, astNode *parent);
+void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
 astNode *createRootNode();
 
 void connectToBlock(astNode *toAdd, astNode *blockRoot);

@@ -6,6 +6,7 @@ const char *keywords[NUM_OF_KEYWORDS] = {
 };
 
 FILE *input_file;
+int Line_Number = 1;
 
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1,token_types type2){
     char nextchar = getc(file);
@@ -23,8 +24,8 @@ token_types is_next_token(FILE *file, Token *token, char expected_char, token_ty
 int is_keyword(const char *str, Token *token) {
     for(int i = 0; i < NUM_OF_KEYWORDS; i++) {
         if(strcmp(str, keywords[i]) == 0) {
-            token->type = tokentype_keyword;
-            //token->value = i; TODO
+            int index = i + FIRST_KEYWORD;
+            token->type = (token_types)index;
             return 1;
         }
     }
@@ -72,7 +73,9 @@ Token getToken() {
     
     here:
     while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
-        continue;
+        if(c == '\n') {
+            Line_Number++;;
+        }
     }
     if(c == EOF) {
         current_token.type = tokentype_EOF;
@@ -86,6 +89,7 @@ Token getToken() {
                     c = getc(input_file);
                     continue;
                 }
+                Line_Number++;
                 goto here;
             }
             else {
@@ -167,6 +171,7 @@ Token getToken() {
                 current_token.type = tokentype_notequal;
             }
             else {
+                ungetc(nextchar, input_file);
                 current_token.type = tokentype_invalid;
             }
             break;
@@ -186,6 +191,10 @@ Token getToken() {
         case ',' :
             current_token.type = tokentype_comma;
             break;
+        
+        case '\\':
+            current_token = process_Multiline_String_Token(input_file);
+            break;
 
         default:
             if(c >= '0' && c <= '9') {
@@ -198,8 +207,6 @@ Token getToken() {
                     ungetc(nextchar, input_file);
 
                     //printf("%d\n", current_token.type);
-
-                    return current_token;
                 }
                 else {
                     ungetc(nextchar, input_file);
@@ -210,6 +217,7 @@ Token getToken() {
                 current_token = process_ID_Token(c, input_file);
             }    
     }
+    current_token.line = Line_Number;
     return current_token;
 }   
 
@@ -231,7 +239,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         if(isdigit(nextchar = getc(input_file))) {
             current_token.type = tokentype_invalid;
             fprintf(stderr, "A whole number cannot start with 0\n");
-            //ungetc(nextchar, input_file); DO OR DONT?
+            ungetc(nextchar, input_file);
             return current_token;
         }
         current_token.type = tokentype_zeroint;
@@ -267,7 +275,6 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         }
     }
     if(nextchar == 'e' || nextchar == 'E') {
-            
         if(current_token.type == tokentype_zeroint) {
             fprintf(stderr, "Number zero cannot have an exponent\n");
             current_token.type = tokentype_invalid;
@@ -309,7 +316,6 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     current_token.value[index] = '\0';
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
-
     return current_token;
 }
 
@@ -337,8 +343,10 @@ Token process_String_Token(char firstchar, FILE *input_file) {
             }
         }
         current_token.value[index++] = nextchar;
-
         if(nextchar == '\n' || nextchar == EOF) {
+            if(nextchar == '\n') {
+                Line_Number++;
+            }
             fprintf(stderr, "String incorrect\n");
             current_token.type = tokentype_invalid;
             return current_token;
@@ -500,13 +508,76 @@ Token process_Import(FILE *input_file) {
     return current_token;
 }
 
+Token process_Multiline_String_Token(FILE *input_file) {
+    char nextchar;
+    Token current_token;
+    int index = 0;
+    int buffer_size = 2;
+
+    if(init_value(&current_token.value, buffer_size) == -1) {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+    
+    if((nextchar = getc(input_file)) == '\\') {
+        current_token.type = tokentype_string;
+        
+        while(1) {
+                
+            if (index >= buffer_size - 1) {
+                if (realloc_value(&current_token.value, &buffer_size) == -1) {
+                    current_token.type = tokentype_invalid;
+                    return current_token;
+                }
+            }
+            nextchar = getc(input_file);
+            
+            if(nextchar == EOF) {
+                break;
+            }
+            if(nextchar == '\n') {
+                Line_Number++;
+                char tempchar;
+                while((tempchar = getc(input_file)) != EOF && isspace(tempchar)) {
+                    if(tempchar == '\n') {
+                        break;
+                    }
+                }
+                if(tempchar == '\\' && (nextchar = getc(input_file)) == '\\') {
+                    current_token.value[index++] = '\n';
+                    continue;
+                }
+                else {
+                    Line_Number--;
+                    ungetc(tempchar, input_file);
+                    ungetc(nextchar, input_file);
+                    break;
+                }
+            }
+            else {
+                current_token.value[index++] = nextchar;
+            }
+        }
+        current_token.value[index] = '\0';
+    }
+    else {
+        current_token.type = tokentype_invalid;
+        return current_token;
+    }
+
+    //printf("%s", current_token.value);
+    //printf("%d\n", current_token.type);
+
+    return current_token;
+}
+
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
 //  int main() {
 
 //      input_file = fopen("file.txt", "r");
     
-//      for(int i = 0; i < 1000; i++) {
+//      for(int i = 0; i < 10; i++) {
 //          getToken();
 //      }
 

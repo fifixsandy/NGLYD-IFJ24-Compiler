@@ -8,6 +8,9 @@
 #include <string.h>
 
 #define NUM_OF_KEYWORDS 13
+#define FIRST_KEYWORD 36
+
+extern int Line_Number;
 
 typedef enum {
     tokentype_EOF,
@@ -52,6 +55,20 @@ typedef enum {
 
     tokentype_invalid,
 
+    tokentype_kw_const,
+    tokentype_kw_else,
+    tokentype_kw_fn,
+    tokentype_kw_if,
+    tokentype_kw_i32,
+    tokentype_kw_f64,
+    tokentype_kw_null,
+    tokentype_kw_pub,
+    tokentype_kw_return,
+    tokentype_kw_u8,
+    tokentype_kw_var,
+    tokentype_kw_void,
+    tokentype_kw_while
+    
 }token_types;
 
 typedef struct {
@@ -78,6 +95,8 @@ Token process_ID_Token(char firstchar, FILE *input_file);
 Token process_Char_Arr(FILE *input_file);
 
 Token process_Import(FILE *input_file);
+
+Token process_Multiline_String_Token(FILE *input_file);
 
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1, token_types type2);
 

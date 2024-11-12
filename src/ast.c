@@ -123,7 +123,7 @@ void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, as
     dest->nodeRep.returnNode = newReturn;
 }
 
-void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
+void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
     astBinOp newBinOp = {
         .op = op,
         .left = left,
@@ -131,6 +131,8 @@ void createBinOpNode(astNode *dest, binOpType op, astNode *left, astNode *right,
         .dataT = dataT
     };
 
+    left->parent = dest;
+    right->parent = dest;    
     dest->next = NULL;
     dest->type = AST_NODE_BINOP;
     dest->parent = parent;
@@ -180,6 +182,19 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, symNode *symt
     dest->type = AST_NODE_FUNC_CALL;
     dest->parent = parent;
     dest->nodeRep.funcCallNode = newFuncCall;
+}
+
+void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
+
+    astUnused newUnused = {
+        .expr = expr
+    };
+
+    dest->next               = NULL;
+    dest->type               = AST_UNUSED;
+    dest->parent             = parent;
+    dest->nodeRep.unusedNode = newUnused;
+
 }
 
 astNode *createRootNode(){
