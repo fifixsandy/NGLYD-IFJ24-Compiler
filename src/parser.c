@@ -310,7 +310,6 @@ bool def_variable(astNode *block){
 
     varData  variData;
     symData  entryData;
-    astNode *initExpr;
 
     astNode *varAstNode = createAstNode(); // allocate new ast node with no representation yet
     astNode *exprNode   = createAstNode();
@@ -352,7 +351,7 @@ bool def_variable(astNode *block){
 
                 varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
 
-                createDefVarNode(varAstNode ,varName, initExpr, varEntry, block); // create the correct representation
+                createDefVarNode(varAstNode ,varName, exprNode, varEntry, block); // create the correct representation
                 connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
 
                 }
@@ -602,7 +601,6 @@ bool return_(dataType expReturnType, astNode *block){
 
 bool exp_func_ret(dataType expRetType, astNode *exprNode){
     bool correct = false;
-    astNode *expr = createAstNode();
     // RULE 43 <exp_func_ret> -> ε
     DEBPRINT("expected %d\n", expRetType);
     if(currentToken.type == tokentype_semicolon){
@@ -617,7 +615,7 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
     // RULE 44 <exp_func_ret> -> expression
     else{
         dataType returnedDataType;
-        correct = expression(expr); // TODO EXPRESSION
+        correct = expression(exprNode); // TODO EXPRESSION
         if(returnedDataType != expRetType){
             // TODO ERROR UNEXPECTED RETURN TYPE
         }
