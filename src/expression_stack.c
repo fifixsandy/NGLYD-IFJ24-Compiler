@@ -137,7 +137,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
     switch(token.type){
         case tokentype_multiply :
             
-            return MULTYPLICATION;
+            return MULTIPLICATION;
             
         case tokentype_divide :
             
@@ -274,6 +274,7 @@ bool shift(exp_stack *estack){
 
 astNode *process_expr(exp_stack *exp_stack){
     GT
+    DEBPRINT("curr token type %d \n", currentToken.type);
     astNode *curr_node = createAstNode();
     symbol_number curr_symb = evaluate_given_token(exp_stack, currentToken, curr_node);
     if(curr_symb == STOP){
