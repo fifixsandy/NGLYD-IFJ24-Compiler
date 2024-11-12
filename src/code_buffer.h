@@ -14,20 +14,31 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Define the Buffer structure
+typedef struct Buffer_node{
+    char *str;
+    struct Buffer_node *next;
+} Buffer_node;
+
 typedef struct {
-    char *str;           // The string buffer
-    size_t length; // Current length of the buffer
-    size_t alloc_size; // Allocated size of the buffer
-} Buffer;
+    Buffer_node *first;
+    Buffer_node *last;
+    Buffer_node *flag;
+    char *tmp;
+} Buffer_ll;
+
 
 // Function prototypes for buffer operations
-bool buf_init(Buffer **buf);
-bool buf_expand(Buffer *buf, size_t min_add_size);
-bool buf_push_code(Buffer *buf, char *str);
-bool buf_push_int(Buffer *buf, int num);
-bool buf_push_float(Buffer *buf, float num);
-bool buf_push_string(Buffer *buf, char *str);
-bool fprint_buffer(Buffer *buf, FILE *stream);
+bool buf_init(Buffer_ll **buf);
+Buffer_node *buf_new_node();
+bool buf_add(Buffer_ll *buf, char *str);
+bool buf_push(Buffer_ll *buf);
+bool buf_add_push(Buffer_ll *buf, char *str);
+void buf_add_flag(Buffer_ll *buf);
+void buf_delete_flag(Buffer_ll *buf);
+bool buf_add_int(Buffer_ll *buf, int num);
+bool buf_add_float(Buffer_ll *buf, float num);
+bool buf_add_string(Buffer_ll *buf, char *str);
+bool buf_push_after_flag(Buffer_ll *buf);
+bool fprint_buffer(Buffer_ll *buf, FILE *stream);
 
 #endif // CODE_BUFFER_H
