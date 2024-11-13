@@ -12,10 +12,12 @@ int main(){
     funSymtable = createSymtable();
     input_file = fopen("file.txt", "r");
     GT
-    prog();
-    //DEBPRINT("%d\n", prog());
+    //prog();
+    DEBPRINT("%d\n", prog());
     //DEBPRINT("\n\n");
     astNode * rootTree = ASTree.root;
+    //printf("\n\nHERE WE GO\n\n");
+    printf("%s \n",rootTree->next->next->nodeRep.defFuncNode.body->next->nodeRep.funcCallNode.id);
 
-    generate_code(rootTree);
+    //generate_code(rootTree);
 }

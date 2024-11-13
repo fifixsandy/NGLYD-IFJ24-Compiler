@@ -876,10 +876,38 @@ bool after_id(char *id, astNode *block){
     // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
 
-        symNode *entry   = NULL;
+        astNode *newFCallNode = createAstNode();
+        funCallHandle(id, newFCallNode);
+        connectToBlock(newFCallNode, block);
+        
+        DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
+    }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
+
+
+DEBPRINT(" %d\n", correct);
+    return correct;
+}
+
+
+
+/**
+ * @brief Handles function call logic.
+ * 
+ *        This function is used, when there is a statement that calls function. 
+ *        Logic is separated from after_id function, because
+ *        statement can be standalone when it is void-returning function, or 
+ *        in expressions. This separation allows using this function both in
+ *        top-down parsing as well as in bottom-up parsing of expressions.
+ * 
+ * @param id Name of function to process.
+ * @param node Pointer to astNode where to save created funcCallNode
+ * 
+ * @note Function exits the whole program with suitable error message and code when encountering error. 
+ */
+void funCallHandle(char *id, astNode *node){
+            symNode *entry   = NULL;
         bool builtinCall = false;
         
-        astNode *newFCallNode = createAstNode();
         astNode **exprParamsArr = malloc(sizeof(astNode*)*MAX_PARAM_NUM);
         int paramCnt            = 0;
 
@@ -890,7 +918,6 @@ bool after_id(char *id, astNode *block){
                     if(currentToken.type == tokentype_rbracket){
                         GT
                         if(currentToken.type == tokentype_semicolon){
-                            correct = true;
                         }else{ERROR(ERR_SYNTAX, "Expected: \";\".\n");}
                         GT
                     }
@@ -925,16 +952,10 @@ bool after_id(char *id, astNode *block){
         }
         
         entry = findSymNode(funSymtable->rootPtr, id);
-        createFuncCallNode(newFCallNode, id, void_, builtinCall, entry, NULL);
+        createFuncCallNode(node, id, void_, builtinCall, entry, NULL);
         DEBPRINT("Made %d\n ", entry->data.used );
-        connectToBlock(newFCallNode, block);
-        DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
-    }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
-
-
-DEBPRINT(" %d\n", correct);
-    return correct;
 }
+
 
 bool assign_or_f_call(astNode *block){
     bool correct = false;

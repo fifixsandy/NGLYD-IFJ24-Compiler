@@ -48,6 +48,7 @@ bool after_id(char *id, astNode *block);
 bool assign_or_f_call(astNode *block);
 bool builtin(char *id, symNode **symtableNode, bool *builtinCall);
 
+void funCallHandle(char *id, astNode *node);
 bool mainDefined();
 void allUsed(symNode *root);
 bool wasDefined(char *ID, symNode **node);
