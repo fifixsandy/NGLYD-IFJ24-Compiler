@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "parser.h"
 #include "ast.h"
+#include "error.h"
 
 //precedence table
 typedef enum{
@@ -34,6 +35,10 @@ typedef struct stack_item{
     astNode *node;
     symbol_number expr;
     struct stack_item *next;
+    bool is_nullable;
+    bool var_litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
+    bool is_convertable;
+    bool type;
 } stack_item;
 
 
@@ -57,10 +62,10 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 //funkcia na poskladanie stromu zo stacku ale to potom
 void reduce_bin_op(exp_stack *estack);
 void reduce(exp_stack *estack);
-bool shift(exp_stack *estack);
+int shift(exp_stack *estack, astNode *curr_node);
 void is_funID();
 bool expression(astNode *expr_node);
-astNode *process_expr(exp_stack *exp_stack);
+bool process_expr(exp_stack *estack);
 dataType what_type(astNode *elemnt_node);
 
 

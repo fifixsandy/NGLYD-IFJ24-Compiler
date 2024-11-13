@@ -23,7 +23,7 @@
 
 // ADD CLEANUP
 #define ERROR(errNum, ...) do { \
-    fprintf(stderr, "ERROR NUMBER %d at line %d: \n", errNum, currentToken.line); \
+    fprintf(stderr, "\nERROR NUMBER %d at line %d: ", errNum, currentToken.line); \
     fprintf(stderr, __VA_ARGS__); \
     exit(errNum); \
 } while (0)

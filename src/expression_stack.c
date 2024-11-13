@@ -36,16 +36,7 @@ exp_stack *exp_stack_create(){
     return Stack;
 }
 
-/*
-* Pushni node na vrchol zásobníka, vytvor element stacku a hoď ho na vrchol ez ne?
-* veľmi podstatný je symbol_number a tu ide vec lebo podľa normálneho algoritmu sa musí dať symbol indetifikátora na vrchol zásobníka
-* a až potom sa vyhodnocuje jeho prevod na neterminálny symbol IBAŽE asi vo väčšine prípadoch sa ten symbol automaticky prevedie
-* neprevedie sa iba v prípade, pokiaľ je id na vrchole zásobníka a na input príde (, no my vtedy vyhodnocujeme že sa jedná o funkciu
-* čiže tá sa premení na neterminál a po neterminále tiež nemôže byť zátvorka (pokiaľ v IFJ24 neexistujú implicitné *) ale vyhodnotenie
-* niečoho takého by no bolo zaujímavé asi najlepšie to bude hodiť na exp_stack a pri ďalšom symbole vyhodnotiť a previesť na neterminál
-* potom znovu sa znovu pokusiť to hodiť na stack a vyhodnotiť podľa pravidiel, lebo keď pri prvom hodení víde ND tak je problém niečo
-* čo nemôže byť a BUUUUUUM error, keď si toto dočítal sorry xDD ako sa máš mi napíš na DS
-*/
+
 void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op){
     stack_item *new_item = (stack_item *)malloc(sizeof(stack_item));
     if(new_item == NULL){
@@ -59,14 +50,9 @@ void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op){
 }
 
 
-/*
-* No tu je kus problém lebo funkcia bude vraciať element toho zásobníka keď sa to popne a ten obsahuje viac vecí než len ast node
-* tu to bude treba domyslieť asi by som mohol zrobiť že by sa vytiahol iba node stack_element by sa uvoľnil celý element lebo aj tak
-* jeho atributy sa budú meniť hlavne keď budem robiť reduce no a tu ide otázka
-* nedochádza tu ku memorry leakom????
-*/
 
-//treba zavolať funkcia ktorá vyymaže stack_item a nechá iba astNode proste len priradim do premennej vytvorim novu do tej priradim ast a staru free
+
+
 astNode *exp_stack_pop(exp_stack *estack){
     if (estack->top == NULL){
         return NULL;
@@ -79,14 +65,11 @@ astNode *exp_stack_pop(exp_stack *estack){
     return top_node;
 }
 
-/*
-* nič extra len kvôli porovnaniu treba poznať najvyšší terminálny symbol aby sa podľa precedenčnej tabuľky vedelo vkládať do stacku
-* prípadne vytvárať podstromy s nižšou prioritou
-*/
+
 symbol_number exp_stack_top_term_symb(exp_stack *estack){
     if(estack->top->expr == NO_TERMINAL){
         if(estack->top->next->expr == NO_TERMINAL){
-            return ERROR; // toto nemože nastať keby hej error, chyba parsera alebo výrazu,
+            ERROR(ERR_SYNTAX, ("Expected operation between operands")); // toto nemože nastať keby hej error, chyba parsera alebo výrazu,
         }
         return estack->top->next->expr;
     }
@@ -96,17 +79,13 @@ symbol_number exp_stack_top_term_symb(exp_stack *estack){
 }
 
 
-/*
-* tato funkcia sa sama vysvetľuje takže skip
-*/
+
 bool exp_stack_is_empty(exp_stack *estack){
     return estack->top == NULL;
 }
 
 
-/*
-* asi by sa patrilo mať niečo takéto aj keď neviem aby sme mohli vyprázdniť stack musíme hej musíme 
-*/
+
 void exp_stack_free_stack(exp_stack *estack){
     stack_item *curr = estack->top;
     while(curr){
@@ -132,13 +111,11 @@ bool exp_stack_find_lbr(exp_stack *estack){
 /****************************************************************************************** */
 /*                              veci stade napchaj potom inde                               */
 
+
+
 symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node){
     symNode *symnode;
     switch(token.type){
-        case tokentype_zeroint :
-            createLiteralNode(node, i32, token.value, NULL);
-            return ID;
-            
         case tokentype_multiply :
             
             return MULTIPLICATION;
@@ -192,12 +169,18 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_id :
         //doriešiť funkcie
-            if(wasDefined(token.value, &symnode)){
+            if(wasDefined(token.value, &symnode)){  //check že či je to NULL
                 createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
                 return ID;
             }
             else{
-                return ERROR; //TODO ERRROR
+                GT
+                if(currentToken.value == tokentype_lbracket){
+                    ERROR(ERR_SYNTAX, ("Nedeklarovana funkcia TODO-----------------------\n")); //nedeklarovana funkcia nepozname return typ na presné určenie čo to môže byť diera v strome
+                }
+                else{
+                    ERROR(ERR_SYNTAX, ("Undeclared variable\n")); //TODO ERRROR
+                }
             }
 
         case tokentype_int :
@@ -211,85 +194,106 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         default:
             //free(node);
             return STOP;
-        // no a tu sme pri probléééééme ktorý vyžaduje vyriešnie, počuješ budúci matúš, okay poriešil si to asi, si boss, diki, ja viem
+        
 
     }
 }
 
 
-// tu by trebalo funkciu čo by vyhodnotila že id ako klasické id a id ako funkciu ale keď sa nemýlim filip mi hoovril že ast vie to rozpoznať
-//volanie funkcie bude jeden node??
+// ako opravil som niektoré veci pri základom parsovaní ale pokazil som vyhodnotenie error funkcie
 
-//vytvoernie vzoru pre pravidlo reduce
-
-
-//zisti typ tej kokotiny čo si spracoval ked je to číslo len na základe tokenu 
-//ked je to id hladaj ked nie je inicalizované id chyba
-
-
+/*
+* @brief A funcion that calls helper funcions to build an expression tree
+*
+* @return True if build was successful; False if build wasn't successful
+*/
 bool expression(astNode *expr_node){
+    //fprintf(stderr, "\nDOSTAL SOM SA DO EXPRESSION ČASTI!!\n");
     exp_stack *estack = exp_stack_create();
         if(estack == NULL){
-            return NULL; //TODO internal error
+            return false; //TODO internal error
         }
     exp_stack_push(estack, NULL, STOP);
 
-    if(shift(estack)){
+    if(process_expr(estack)){
         astNode *final_exp = exp_stack_pop(estack);
         
         createExpressionNode(expr_node, what_type(final_exp), final_exp); 
         exp_stack_free_stack(estack);
+        
         return true;
     }
-    // tu budeš volať process_expr
+    
+    fprintf(stderr, "HODNOTA SUČASNÉHO TOKENU: %d", currentToken.type);
     exp_stack_free_stack(estack);
     return false;
 }
 
-bool shift(exp_stack *estack){
+
+/*
+* @brief A function that evaluates the precedence of a token with the precedence of the highest terminal symbol and applies a rule according to precedence parsing.
+*
+* @param estack A pointer to an expression stack
+* @param pointer to a node of an expression tree
+* 
+* @return True if the expression has been fully processed or encountered an error; false if the expression has not been fully processed.
+*/
+int shift(exp_stack *estack, astNode *curr_node){
+    
+    symbol_number top_term = exp_stack_top_term_symb(estack);
+    
+    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node);
+    if(curr_symb == ERROR){
+        
+        return 2; // TODO error
+    }
+    precedence compare = precedence_table[top_term][curr_symb];
+    if(compare == LS || compare == EQ){
+        exp_stack_push(estack, curr_node, curr_symb);
+        return 0;
+    }
+    else if(compare == GR){
+        fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
+        reduce(estack);
+        return shift(estack, curr_node);
+    }
+    else{
+        if(top_term == ID && curr_symb == LBR){
+        }
+
+        else if(top_term == STOP && curr_symb == STOP){
+            return 1; // GG vyhrali sme
+        }
+        else{
+            fprintf(stderr, "vyhodnocovacie pravidlo nd\n");
+            ERROR(ERR_SYNTAX, ("Invalid expression, expected: \";\"\n")); // ERORR chybný expression
+        }
+    }
+}
+
+
+bool process_expr(exp_stack *estack){
     GT
     astNode *curr_node = createAstNode();
     if(curr_node == NULL){
         return false; //TODO internal Error
     }
-    HERE:
-    symbol_number top_term = exp_stack_top_term_symb(estack);
-    if(top_term == ERROR){
-        return false; // TODO WRONG INPUT error
+    int evaluate = shift(estack, curr_node);
+    fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
+    if(evaluate == 0){
+        return process_expr(estack);
     }
-    
-    DEBPRINT("currtokentype %d\n", currentToken.type);
-    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node);
-    DEBPRINT("SYMBOL NUM %d,,,,%d\n", curr_symb, top_term);
-    precedence compare = precedence_table[top_term][curr_symb];
-    DEBPRINT("precedenc %d\n", compare);
-    if(compare == LS){
-        exp_stack_push(estack, curr_node, curr_symb);
-    }
-    else if(compare == GR || compare == EQ){
-        reduce(estack);
-        goto HERE;
-        exp_stack_push(estack, curr_node, curr_symb);
+    else if(evaluate == 1){
+        if(estack->top->expr != NO_TERMINAL){
+            ERROR(ERR_SYNTAX, "Empty expression\n");
+        }
+        return true;
     }
     else{
-        if(top_term == STOP && curr_symb == STOP){
-            return true; // GG vyhrali sme
-        }
-        
+        return false;
     }
-    return shift(estack);
-}
-
-
-astNode *process_expr(exp_stack *exp_stack){
-    GT
-    DEBPRINT("curr token type %d \n", currentToken.type);
-    astNode *curr_node = createAstNode();
-    symbol_number curr_symb = evaluate_given_token(exp_stack, currentToken, curr_node);
-    if(curr_symb == STOP){
-        return NULL; //TODO doriešiť ako pracovať s týmto a vyhodnotiť kedy je to error
-    }
-    return curr_node;
+    return false;
+    
 }
 
 
@@ -302,14 +306,11 @@ void reduce(exp_stack *stack){
             break;
  
         case RBR :
-            if(stack->count < 4){
-                return; // TODO error
-            }
             astNode *rbr = exp_stack_pop(stack);
             free(rbr);
             astNode *expr = exp_stack_pop(stack);
             if(stack->top->expr != LBR){
-                return; // TODO error
+                ERROR(ERR_SYNTAX, "Invalid Token");
             }
             astNode *lbr = exp_stack_pop(stack);
             free(lbr);
@@ -317,12 +318,22 @@ void reduce(exp_stack *stack){
             return;
 
         case STOP :
-            //napojenie na expr, node, môj výsledný strom
             break;
 
+
+        case MULTIPLICATION:
+        case DIVISION:
+        case ADDITION:
+        case SUBSTRACTION:
+        case LOWER:
+        case GREATER:
+        case LOWER_OR_EQUAL:
+        case GREATER_OR_EQUAL:
+            //ked jedna je nulovacia error
+
         default :
-            if(stack->count < 4 || top_term == ERROR){
-                return; // TODO error
+            if(stack->count < 4 ){
+                ERROR(ERR_SYNTAX, "Invalid token\n");
             }
             
             dataType data_type_buffer;  // semanticke pravidlo pretypovania alebo erroru, treba urobiť porovnanie oboch výrazo a prípadne pritypovanie
@@ -351,7 +362,6 @@ void reduce(exp_stack *stack){
 
 
 dataType what_type(astNode *elemnt_node){
-    DEBPRINT("ELEMENT IS NULL %d at %d\n", elemnt_node == NULL, currentToken.type);
     switch(elemnt_node->type){
         case AST_NODE_VAR :
             return elemnt_node->nodeRep.varNode.dataT;
@@ -368,58 +378,15 @@ dataType what_type(astNode *elemnt_node){
     }
 }
 
+bool retype_literals(astNode *left_element, astNode *right_element){
+    astNodeType l_el = left_element->type;
+    astNodeType r_el = right_element->type;
 
-/*
-find in stack
+    if(l_el == AST_NODE_LITERAL || left_element->nodeRep.defVarNode.symtableEntry->data.data.vData.isConst == true){
+        // toto som ešte nedomyslel tu treba vytvoriť proste podmienku že no pretypovať f64 na int alebo sa to bude riadiť podla assign?? že ked assign je float tak sa pretypuje na float alebo až ten koniec sa pretypuje???
 
-*/
-
-
-/*
-RULES : { 
-1. E->i
-2. E->E*E
-3. E->E/E
-4. E->E+E
-5. E->E-E
-6. E->E==E
-7. E->E!=E
-8. E->E<E
-9. E->E>E
-10. E->E<=E
-11. E->E>=E
-12. E->(E)
-*/
-
-/*
-while(curr_stack_item->expr != STOP){
-        count++;
-        curr_stack_item->next;
-        if(curr_stack_item == ID){
-            break;
-        }
-        else if(curr_stack_item != ID || curr_stack_item != NO_TERMINAL || curr_stack_item)
     }
-*/
-
-
-//pokiaľ by to bolo možné táto funkcia sa dá uplne spraviť inak enum kktiny
-// tu by trebalo zrobiť asi aj semanticke porovnanie a porovnanie či popy boli uspšené
-
-
-/*
-*@brief funcion to apply reduction rule of terminal in expression stack based on precedencial rules
-*
-*/
-
-
-/*
-    
-*/
-
-
-
+    else if(r_el == AST_NODE_LITERAL){
         
-
-    
-// create astNOde
+    }
+}
