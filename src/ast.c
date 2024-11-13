@@ -177,12 +177,13 @@ void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEnt
     symtableEntry->data.used = true; // set for semantic check
 }
 
-void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent) {
+void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **paramExpr) {
     astFuncCall newFuncCall = {
         .retType = retType,
         .id = id,
         .symtableEntry = symtableEntry,
-        .builtin = builtin
+        .builtin = builtin,
+        .paramExpr = paramExpr
     };
     dest->next = NULL;
     dest->type = AST_NODE_FUNC_CALL;

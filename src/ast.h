@@ -167,10 +167,11 @@ typedef struct astVar {
 }astVar;
 
 typedef struct astFuncCall {
-    dataType retType;
-    char    *id;
-    symNode *symtableEntry;
-    bool     builtin;
+    dataType  retType;
+    char     *id;
+    symNode  *symtableEntry;
+    bool      builtin;
+    astNode **paramExpr;
 }astFuncCall;
 
 typedef struct astDefVar {
@@ -235,7 +236,7 @@ void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, as
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, char *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
-void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent);
+void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **exprParams);
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
 void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot);
 astNode *createRootNode();

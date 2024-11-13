@@ -905,7 +905,7 @@ DEBPRINT(" %d\n", correct);
  * @note Function exits the whole program with suitable error message and code when encountering error. 
  */
 void funCallHandle(char *id, astNode *node){
-            symNode *entry   = NULL;
+        symNode *entry   = NULL;
         bool builtinCall = false;
         
         astNode **exprParamsArr = malloc(sizeof(astNode*)*MAX_PARAM_NUM);
@@ -952,7 +952,7 @@ void funCallHandle(char *id, astNode *node){
         }
         
         entry = findSymNode(funSymtable->rootPtr, id);
-        createFuncCallNode(node, id, void_, builtinCall, entry, NULL);
+        createFuncCallNode(node, id, void_, builtinCall, entry, NULL, exprParamsArr);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
 
