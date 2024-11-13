@@ -952,7 +952,7 @@ void funCallHandle(char *id, astNode *node){
         }
         
         entry = findSymNode(funSymtable->rootPtr, id);
-        createFuncCallNode(node, id, void_, builtinCall, entry, NULL, exprParamsArr);
+        createFuncCallNode(node, id, void_, builtinCall, entry, NULL, exprParamsArr, paramCnt);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
 
