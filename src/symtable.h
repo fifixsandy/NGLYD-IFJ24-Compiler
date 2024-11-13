@@ -34,6 +34,7 @@ typedef enum dataType{
    f64,
    void_,
    null_,
+   unknown,
    any
 } dataType;
 
