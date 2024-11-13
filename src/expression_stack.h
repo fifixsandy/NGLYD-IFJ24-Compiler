@@ -31,14 +31,18 @@ typedef enum{
 
 extern precedence precedence_table[14][14];
 
+typedef struct control_items{
+    bool is_nullable;
+    bool var_litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
+    bool is_convertable;
+    dataType type;
+} control_items;
+
 typedef struct stack_item{
     astNode *node;
     symbol_number expr;
     struct stack_item *next;
-    bool is_nullable;
-    bool var_litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
-    bool is_convertable;
-    bool type;
+    struct control_items *control;
 } stack_item;
 
 
@@ -58,12 +62,12 @@ void exp_stack_free_stack(exp_stack *estack);
 
 /****************************************************************************************** */
 /*                              veci stade napchaj potom inde                               */
-symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node);    //tu možeš poriešiť asi aj funkciu -> id
+symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node, control_items *control);    //tu možeš poriešiť asi aj funkciu -> id
 //funkcia na poskladanie stromu zo stacku ale to potom
-void reduce_bin_op(exp_stack *estack);
+//void reduce_bin_op(exp_stack *estack, control_items *control);
 void reduce(exp_stack *estack);
-int shift(exp_stack *estack, astNode *curr_node);
-void is_funID();
+int shift(exp_stack *estack, astNode *curr_node, control_items *control);
+
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
 dataType what_type(astNode *elemnt_node);
