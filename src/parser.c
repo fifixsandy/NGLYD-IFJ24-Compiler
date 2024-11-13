@@ -904,7 +904,7 @@ DEBPRINT(" %d\n", correct);
  * 
  * @note Function exits the whole program with suitable error message and code when encountering error. 
  */
-void funCallHandle(char *id, astNode *node){
+void funCallHandle(char *id, astNode *node, bool inExpr){
         symNode *entry   = NULL;
         bool builtinCall = false;
         
@@ -936,8 +936,12 @@ void funCallHandle(char *id, astNode *node){
         }
         else{ // already defined user function or builtin function was called, semantic check of the parameters and return type
             
-            if(entry->data.data.fData.returnType != void_){
+            if(entry->data.data.fData.returnType != void_ && !inExpr){
                 ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
+            }
+            
+            if(entry->data.data.fData.returnType == void_ && inExpr){
+                ERROR(ERR_SEM_FUN, "Void function \"%s\" called in expression.\n", id);
             }
 
             if(entry->data.data.fData.paramNum != paramCnt){
