@@ -351,7 +351,7 @@ bool def_variable(astNode *block){
                     variData.type          = varType;
 
                 if(currentToken.type == tokentype_assign){
-                    
+                    GT
                     if(expression(exprNode)){ // TODO EXPRESSION
                         //DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
                         if(currentToken.type == tokentype_semicolon){
@@ -417,7 +417,7 @@ bool unused_decl(astNode *block){
     if(currentToken.type == tokentype_pseudovar){
         GT
         if(currentToken.type == tokentype_assign){
-            
+            GT
             if(expression(expr)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_semicolon){
                     correct = true;
@@ -608,7 +608,7 @@ bool return_(dataType expReturnType, astNode *block){
 
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
-        
+        GT
         if(exp_func_ret(expReturnType, exprNode)){
             if(currentToken.type == tokentype_semicolon){
                 correct = true;
@@ -702,7 +702,7 @@ bool while_statement(dataType expRetType, astNode *block){
     if(currentToken.type == tokentype_kw_while){ 
         GT
         if(currentToken.type == tokentype_lbracket){
-            
+            GT
             if(expression(condExprAstNode)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_rbracket){
                     GT
@@ -760,7 +760,7 @@ bool if_statement(dataType expRetType, astNode *block){
     if(currentToken.type == tokentype_kw_if){ 
             GT
         if(currentToken.type == tokentype_lbracket){
-            
+            GT
         if(expression(condExrpNode)){ // TODO EXPRESSION
         if(currentToken.type == tokentype_rbracket){
             GT
@@ -857,7 +857,7 @@ bool after_id(char *id, astNode *block){
 
         varDataType = entry->data.data.vData.type;
 
-        
+        GT
         if(expression(newAssExpNode)){// TODO EXPRESSION
             correct = (currentToken.type == tokentype_semicolon);
             GT

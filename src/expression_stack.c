@@ -224,7 +224,7 @@ bool expression(astNode *expr_node){
         return true;
     }
     
-    fprintf(stderr, "HODNOTA SUČASNÉHO TOKENU: %d", currentToken.type);
+    //fprintf(stderr, "HODNOTA SUČASNÉHO TOKENU: %d", currentToken.type);
     exp_stack_free_stack(estack);
     return false;
 }
@@ -253,7 +253,7 @@ int shift(exp_stack *estack, astNode *curr_node){
         return 0;
     }
     else if(compare == GR){
-        fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
+        //fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
         reduce(estack);
         return shift(estack, curr_node);
     }
@@ -265,7 +265,7 @@ int shift(exp_stack *estack, astNode *curr_node){
             return 1; // GG vyhrali sme
         }
         else{
-            fprintf(stderr, "vyhodnocovacie pravidlo nd\n");
+            //fprintf(stderr, "vyhodnocovacie pravidlo nd\n");
             ERROR(ERR_SYNTAX, ("Invalid expression, expected: \";\"\n")); // ERORR chybný expression
         }
     }
@@ -273,14 +273,15 @@ int shift(exp_stack *estack, astNode *curr_node){
 
 
 bool process_expr(exp_stack *estack){
-    GT
+    
     astNode *curr_node = createAstNode();
     if(curr_node == NULL){
         return false; //TODO internal Error
     }
     int evaluate = shift(estack, curr_node);
-    fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
+    //fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
     if(evaluate == 0){
+        GT
         return process_expr(estack);
     }
     else if(evaluate == 1){
