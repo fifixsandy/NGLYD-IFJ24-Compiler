@@ -38,7 +38,6 @@ bool prog(){
                 }
             }
         }
-        // TODO Check eof idk how rn
     }
     else if(currentToken.type == tokentype_EOF){return true;}
     else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
@@ -74,10 +73,10 @@ bool prolog(){
         ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
     }
     GT
-    if (true) { // TODO CHECK THE EXPRESSION IN IMPORT
+    if (currentToken.type == tokentype_string && strcmp(currentToken.value, "ifj24.zig") == 0) { 
         GT
         correct = false;
-    }
+    }else{ERROR(ERR_SYNTAX, "Incorrect expression in prologue. Expected: \"ifj24.zig\".\n");}
     if (currentToken.type != tokentype_rbracket) {
         ERROR(ERR_SYNTAX, "Expected: \")\"  .\n");
     }
@@ -141,6 +140,9 @@ bool def_func(){
     astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
     astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
 
+    bool recheck           = false;
+    symNode *functionEntry = NULL;
+
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type == tokentype_kw_pub){ 
         GT
@@ -152,9 +154,14 @@ bool def_func(){
         
         funID = currentToken.value;
         // check for redefining already defined function
-        symNode *functionEntry = findSymNode(funSymtable->rootPtr, funID);
+        functionEntry = findSymNode(funSymtable->rootPtr, funID);
         if(functionEntry != NULL){
-            if(functionEntry->data.data.fData.defined){ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);}
+            if(functionEntry->data.data.fData.defined){
+                ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);
+            }
+            else{
+                recheck = true;
+            }
         } // TODO SEMANTIC error 5 redefinition and recheck of parameters and return type
         
 
@@ -185,6 +192,26 @@ bool def_func(){
         }else{ERROR(ERR_SYNTAX, "Expected: id.\n");}
         }else{ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");}
     }else{ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");}
+
+    // if function was called, but not yet defined, semantic check of paramNum and paramTypes is needed
+    if(recheck){
+
+        int       expectedParamNum   = functionEntry->data.data.fData.paramNum;
+        dataType *expectedParamTypes = functionEntry->data.data.fData.paramTypes;
+        dataType  expectedRetType    = getReturnType(funID);
+        int       badIndex           = 0; // index of the first bad parameter, if mismatch appears
+
+        if(paramNum != expectedParamNum){
+            ERROR(ERR_SEM_FUN, "Incorrect number of parameters when calling function \"%s\".\n", funID);
+        }
+        if(!compareDataTypesArray(expectedParamTypes, paramTypes, paramNum, &badIndex)){
+            ERROR(ERR_SEM_FUN, "Parameter number %d is of different type than defined. \"%s\".\n", badIndex, funID);
+        }
+        if(expectedRetType != returnType){
+            ERROR(ERR_SEM_FUN, "Return type mismatch in function \"%s\".\n", funID);
+        }
+
+    }
 
 
     // information is now known, set it
@@ -329,7 +356,9 @@ bool def_variable(astNode *block){
                     
                     if(expression(exprNode)){ // TODO EXPRESSION
                         DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
-                        correct = (currentToken.type == tokentype_semicolon);
+                        if(currentToken.type == tokentype_semicolon){
+                            correct = true;
+                        }else{ERROR(ERR_SYNTAX, "Expected \";\".\n");}
                         GT
                     }
                 }
@@ -612,10 +641,10 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
     }
     // RULE 44 <exp_func_ret> -> expression
     else{
-        dataType returnedDataType;
         correct = expression(exprNode); // TODO EXPRESSION
-        if(returnedDataType != expRetType){
-            // TODO ERROR UNEXPECTED RETURN TYPE
+        dataType exprType = exprNode->nodeRep.exprNode.dataT;
+        if(exprType != expRetType){
+            ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
         }
     }
     DEBPRINT(" %d\n", correct);
@@ -798,10 +827,10 @@ DEBPRINT(" %d\n", correct);
 
 bool expr_params_n(){
     bool correct = false;
-    // RULE 27 <expr_params_n> -> , <expr_params_n>
+    // RULE 27 <expr_params_n> -> , <expr_params>
     if(currentToken.type == tokentype_comma){
         GT
-        correct = expr_params_n();
+        correct = expr_params();
     }
     // RULE 28 <expr_params_n> -> ε 
     else if(currentToken.type == tokentype_rbracket){
@@ -840,7 +869,13 @@ bool after_id(char *id, astNode *block){
     }
     // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
-        if(builtin(id)){
+
+        symNode *entry = NULL;
+
+        if(builtin(id, entry)){
+            if(entry == NULL){
+                
+            }
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params()){
@@ -869,7 +904,7 @@ bool assign_or_f_call(astNode *block){
     return correct;
 }
 
-bool builtin(char *id){
+bool builtin(char *id, symNode *symtableNode){
     bool correct = false;
     // RULE 32 <builtin> -> . id
     if(currentToken.type == tokentype_dot){
@@ -878,12 +913,14 @@ bool builtin(char *id){
         }
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
+            symtableNode = checkBuiltinId(id);
             correct = true;
             GT
         }else{ERROR(ERR_SYNTAX, "Expected: builtin id .\n");}
     }
     // RULE 33 <builtin> -> ε
     else if(currentToken.type == tokentype_lbracket){
+        symtableNode = findSymNode(funSymtable->rootPtr, id);
         correct = true;
     }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
     DEBPRINT(" %d\n", correct);
@@ -1005,5 +1042,70 @@ dataType getVarType(char *ID){
 
     return entry->data.data.vData.type;
 }
+
+
+/**
+ * @brief          Checks that an array of expressions have the correct dataTypes as
+ *                 they are expected to have.
+ * 
+ * @param expected An array of expected data types from definiton of a function.
+ * @param given    An array of pointers to astNode that represent the expression.
+ * @param paramNum Number of parameters.
+ * 
+ * @warning         Similar function is compareDataTypesArray. Make sure to use
+ *                  the one with intended behaviour. 
+ * 
+ * @note            Used in funcCalls to validate input parameters given to the function.
+ * 
+ * @return         False if there is a mismatch, true if all valid.
+ */
+bool checkParameterTypes(dataType *expected, astNode **given, int paramNum){
+    dataType givenDataType;
+
+    for(int i = 0; i < paramNum; i++){
+        givenDataType = given[i]->nodeRep.exprNode.dataT;
+        if(expected[i] != givenDataType){
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief          Compares two arrays of dataTypes.
+ * 
+ * @param expected An array of expected data types.
+ * @param given    An array of given data types to compare with expected.
+ * @param paramNum Number of parameters.
+ * @param badIndex Pointer to a int flag signalising position of first incorrect parameter type.
+ * 
+ * @warning         Similar function is checkParameterTypes.. Make sure to use
+ *                  the one with intended behaviour.           
+ * 
+ * @return         False if there is a mismatch, true if all valid.
+ */
+bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex){
+
+    for(int i = 0; i < paramNum; i++){
+
+        if(expected[i] != given[i]){
+            *badIndex = i;
+            return false;
+        }
+    }
+    return true;
+}
+
+symNode *checkBuiltinId(char *id){
+    symNode *symtableNode = findSymNode(builtinSymtable->rootPtr, id);
+    if(symtableNode == NULL){
+        ERROR(ERR_SEM_UNDEF, "Builtin function with id \"%s\" does not exist.", id);
+    }
+    else{
+        return symtableNode;
+    }
+
+}
+
 
 /* EOF parser.c */

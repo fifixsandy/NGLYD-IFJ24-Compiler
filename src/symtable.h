@@ -100,7 +100,9 @@ extern stack symtableStack;
    function createSymtable() should be called on it
    in exactly one file, accessible everywhere where
    symtable.h is included */
-extern symtable* funSymtable;  
+extern symtable* funSymtable;
+
+extern symtable* builtinSymtable;
                            
 
 /* Functions for working with symtable and stack of symtables (user) */

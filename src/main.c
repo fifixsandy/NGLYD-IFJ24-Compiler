@@ -15,7 +15,6 @@ int main(){
     prog();
     //DEBPRINT("%d\n", prog());
     //DEBPRINT("\n\n");
-
     astNode * rootTree = ASTree.root;
 
     generate_code(rootTree);
