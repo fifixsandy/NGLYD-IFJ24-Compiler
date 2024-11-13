@@ -184,7 +184,6 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin,
         .symtableEntry = symtableEntry,
         .builtin = builtin
     };
-
     dest->next = NULL;
     dest->type = AST_NODE_FUNC_CALL;
     dest->parent = parent;

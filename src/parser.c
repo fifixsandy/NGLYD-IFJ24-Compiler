@@ -45,7 +45,7 @@ bool prog(){
     else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
     correct = mainDefined(); // check if main function is defined and has correct data
     allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
-    DEBPRINT("%d\n", correct);
+    
     return correct;
 }
 
@@ -201,6 +201,7 @@ bool def_func(){
         dataType *expectedParamTypes = functionEntry->data.data.fData.paramTypes;
         dataType  expectedRetType    = getReturnType(funID);
         int       badIndex           = 0; // index of the first bad parameter, if mismatch appears
+        entrySymData                 = functionEntry->data;
 
         if(paramNum != expectedParamNum){
             ERROR(ERR_SEM_FUN, "Incorrect number of parameters when calling function \"%s\".\n", funID);
@@ -212,6 +213,9 @@ bool def_func(){
             ERROR(ERR_SEM_FUN, "Return type mismatch in function \"%s\".\n", funID);
         }
 
+    }
+    else{
+        entrySymData.used = false;
     }
 
 
@@ -235,9 +239,6 @@ bool def_func(){
     if(strcmp(funID, "main") == 0){
         entrySymData.used = true;
     }
-    else{
-        entrySymData.used = false;
-    }
 
     insertSymNode(funSymtable, funID, entrySymData);
 
@@ -245,7 +246,7 @@ bool def_func(){
     createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum); 
     connectToBlock(funcAstNode, ASTree.root);
 
-    DEBPRINT("%d\n", correct);
+    DEBPRINT("WAS USED %d\n", entrySymData.used);
     return correct;
 }
 
@@ -925,6 +926,7 @@ bool after_id(char *id, astNode *block){
         
         entry = findSymNode(funSymtable->rootPtr, id);
         createFuncCallNode(newFCallNode, id, void_, builtinCall, entry, NULL);
+        DEBPRINT("Made %d\n ", entry->data.used );
         connectToBlock(newFCallNode, block);
         DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
     }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
