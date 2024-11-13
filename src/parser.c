@@ -39,8 +39,12 @@ bool prog(){
             }
         }
     }
-    else if(currentToken.type == tokentype_EOF){return true;}
+    else if(currentToken.type == tokentype_EOF){
+        return true;
+    }
     else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
+    correct = mainDefined(); // check if main function is defined and has correct data
+    allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -113,8 +117,7 @@ bool next_code(){
     }
     // RULE 5 <next_code> -> ε
     else if(currentToken.type == tokentype_EOF){
-        correct = mainDefined(); // check if main function is defined and has correct data
-        allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
+        correct = true;
     }
     else{ERROR(ERR_SYNTAX, "Expected: \"pub\" or EOF\n");}
     DEBPRINT("%d\n", correct);
@@ -872,9 +875,10 @@ bool after_id(char *id, astNode *block){
     // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
 
-        symNode *entry = NULL;
+        symNode *entry   = NULL;
         bool builtinCall = false;
         
+        astNode *newFCallNode = createAstNode();
         astNode **exprParamsArr = malloc(sizeof(astNode*)*MAX_PARAM_NUM);
         int paramCnt            = 0;
 
@@ -892,14 +896,13 @@ bool after_id(char *id, astNode *block){
                 }
             }
         }
+        
         if(entry == NULL && !builtinCall){ // not-yet-defined user function was called
-            
             // extract data types
             dataType *paramTypes = malloc(sizeof(dataType)*paramCnt); 
             for(int i = 0; i < paramCnt; i++){
                 paramTypes[i] = exprParamsArr[i]->nodeRep.exprNode.dataT;
             }
-
             insertUndefinedFunction(id, paramTypes, void_, false, paramCnt); // function was called without assignment, void return is expected
 
         }
@@ -919,7 +922,11 @@ bool after_id(char *id, astNode *block){
             }
 
         }
-
+        
+        entry = findSymNode(funSymtable->rootPtr, id);
+        createFuncCallNode(newFCallNode, id, void_, builtinCall, entry, NULL);
+        connectToBlock(newFCallNode, block);
+        DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
     }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
 
 
@@ -981,11 +988,10 @@ bool builtin(char *id, symNode **symtableNode, bool *builtinCall){
  * @return True if all correct, false if an error occurs.
  */
 bool mainDefined(){
-
     symNode *found = findSymNode(funSymtable->rootPtr, "main");
     if(found == NULL){
-        return false;
         ERROR(ERR_SEM_UNDEF, "Definition for function \"main\" was not found.\n");
+        return false;
     }
 
     funData data = found->data.data.fData;
@@ -1004,11 +1010,13 @@ bool mainDefined(){
 }
 
 /**
- * @brief        Validates that all variables that were defined are also used in scope.
+ * @brief        Validates that all entries that were defined are also used in scope and checks if all called
+ *               functions were defined.
  * 
  *               Function uses resursive preorder traversal to go through the BST.
- *               When a entry of a variable which used flag is false is found, function
+ *               When an entry of a variable or function which used flag is false is found, function
  *               triggers error.
+ *               When an entry of a function with defined flag is false, function triggers error.
  * 
  * @see          symData
  * 
@@ -1018,8 +1026,18 @@ bool mainDefined(){
 void allUsed(symNode *root){
 
     if(root != NULL){
+
+        if(root->data.varOrFun == 1 && !root->data.data.fData.defined){
+            ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", root->key);
+        }
+
         if(!root->data.used){
-            ERROR(ERR_SEM_UNUSED, "Variable \"%s\" defined but not used within block.\n", root->key);
+            if(root->data.varOrFun == 0){
+                ERROR(ERR_SEM_UNUSED, "Variable \"%s\" defined but not used within block.\n", root->key);
+            }
+            else{
+                ERROR(ERR_SEM_UNUSED, "Function \"%s\" defined but not used in a program.\n", root->key);
+            }
         }
         allUsed(root->l);
         allUsed(root->r);
@@ -1172,7 +1190,6 @@ void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnT
     symData sData = {.data.fData = fData,
                     .used = true,
                     .varOrFun = 1};
-
     insertSymNode(funSymtable, funID, sData);
 
 }
