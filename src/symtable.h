@@ -33,7 +33,7 @@ typedef enum dataType{
    i32,
    f64,
    void_,
-   unknown,
+   null_,
    any
 } dataType;
 

@@ -150,9 +150,11 @@ void createLiteralNode(astNode *dest, dataType dataT, char *value, astNode *pare
     if (dataT == i32) {
         if(*value == '0'){newLiteral.value.intData = 0;}
         else{newLiteral.value.intData = atoi(value);}
-    } else if (dataT == f64) {
+    } 
+    else if (dataT == f64) {
         newLiteral.value.floatData = atof(value);
-    } else if (dataT == u8) {
+    } 
+    else if (dataT == u8) {
         newLiteral.value.charData = value;
     }
 
