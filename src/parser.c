@@ -193,7 +193,7 @@ bool def_func(){
         }else{ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");}
     }else{ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");}
 
-    // if function was called, but not yet defined, semantic check of paramNum and paramTypes is needed
+    // if function was called before, but is defined now, semantic check of paramNum and paramTypes is needed
     if(recheck){
 
         int       expectedParamNum   = functionEntry->data.data.fData.paramNum;
@@ -871,11 +871,9 @@ bool after_id(char *id, astNode *block){
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
 
         symNode *entry = NULL;
+        bool builtinCall = false;
 
-        if(builtin(id, entry)){
-            if(entry == NULL){
-                
-            }
+        if(builtin(id, entry, &builtinCall)){
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params()){
@@ -887,7 +885,17 @@ bool after_id(char *id, astNode *block){
                 }
             }
         }
+        if(entry == NULL && builtinCall){ // not-yet-defined user function was called
+                
+                
+
+
+        }
+
+
     }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
+
+
 DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -904,7 +912,7 @@ bool assign_or_f_call(astNode *block){
     return correct;
 }
 
-bool builtin(char *id, symNode *symtableNode){
+bool builtin(char *id, symNode *symtableNode, bool *builtinCall){
     bool correct = false;
     // RULE 32 <builtin> -> . id
     if(currentToken.type == tokentype_dot){
@@ -913,15 +921,18 @@ bool builtin(char *id, symNode *symtableNode){
         }
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
-            symtableNode = checkBuiltinId(id);
+            char *builtinName = currentToken.value;
+            symtableNode = checkBuiltinId(builtinName); // if there is no builtin with id, it exits with error
             correct = true;
+            *builtinCall = true;
             GT
-        }else{ERROR(ERR_SYNTAX, "Expected: builtin id .\n");}
+        }else{ERROR(ERR_SYNTAX, "Expected: builtin id.\n");}
     }
     // RULE 33 <builtin> -> ε
     else if(currentToken.type == tokentype_lbracket){
         symtableNode = findSymNode(funSymtable->rootPtr, id);
         correct = true;
+        *builtinCall = false;
     }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
@@ -1104,6 +1115,36 @@ symNode *checkBuiltinId(char *id){
     else{
         return symtableNode;
     }
+
+}
+
+
+/**
+ * @brief               Inserts incomplete description of a function to funSymtable.
+ *         
+ *                      This function should be used when function is used in a program before it is defined.
+ * 
+ * @param funID         Name of the function.
+ * @param paramTypes    Array of expected dataTypes of parameters.
+ * @param returnType    Expected dataType of return of the function.
+ * @param nullableRType Flag, whether return value can be null.
+ * @param paramNum      Number of parameters.
+ */
+void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnType, bool nullableRType, int paramNum){
+
+    funData fData = {.defined = false,
+                     .nullableRType = nullableRType,
+                     .paramNames = NULL,
+                     .paramTypes = paramTypes,
+                     .paramNum = paramNum,
+                     .returnType = returnType,
+                     .tbPtr = NULL};
+
+    symData sData = {.data.fData = fData,
+                    .used = true,
+                    .varOrFun = 1};
+
+    insertSymNode(funSymtable, funID, sData);
 
 }
 

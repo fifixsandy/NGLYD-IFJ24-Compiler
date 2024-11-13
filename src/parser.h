@@ -56,5 +56,6 @@ dataType getVarType(char *ID);
 bool checkParameterTypes(dataType *expected, astNode **given, int paramNum);
 symNode *checkBuiltinId(char *id);
 bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex);
+void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnType, bool nullableRType, int paramNum);
 
 #endif
