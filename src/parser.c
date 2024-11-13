@@ -47,8 +47,6 @@ bool prog(){
 
 bool prolog(){
     bool correct = false;
-
-    astNode *expr = createAstNode();
     // RULE 2 <prolog> -> const id = @import ( expression ) ;
     if (currentToken.type != tokentype_kw_const) {
         ERROR(ERR_SYNTAX, "Expected: \"const\".\n");
@@ -810,7 +808,7 @@ bool if_statement(dataType expRetType, astNode *block){
     return correct;
 }
 
-bool expr_params(){
+bool expr_params(astNode **params, int *paramCnt){
     bool correct = false;
     astNode *expr = createAstNode();
     // RULE 26 <expr_params> -> ε
@@ -819,18 +817,22 @@ bool expr_params(){
     }
     // RULE 25 <expr_params> -> expression <expr_params_n>
     else if(expression(expr)){ // TODO EXPRESSION
-        correct = expr_params_n();
+
+        params[*paramCnt] = expr;
+        (*paramCnt)++;
+
+        correct = expr_params_n(params, paramCnt);
     }
 DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool expr_params_n(){
+bool expr_params_n(astNode **params, int *paramCnt){
     bool correct = false;
-    // RULE 27 <expr_params_n> -> , <expr_params>
+    // RULE 27 <expr_params_n> -> , <expr_params> // TODO CHECK THIS
     if(currentToken.type == tokentype_comma){
         GT
-        correct = expr_params();
+        correct = expr_params(params, paramCnt);
     }
     // RULE 28 <expr_params_n> -> ε 
     else if(currentToken.type == tokentype_rbracket){
@@ -872,26 +874,51 @@ bool after_id(char *id, astNode *block){
 
         symNode *entry = NULL;
         bool builtinCall = false;
+        
+        astNode **exprParamsArr = malloc(sizeof(astNode*)*MAX_PARAM_NUM);
+        int paramCnt            = 0;
 
-        if(builtin(id, entry, &builtinCall)){
+        if(builtin(id, &entry, &builtinCall)){
             if(currentToken.type == tokentype_lbracket){
                 GT
-                if(expr_params()){
+                if(expr_params(exprParamsArr, &paramCnt)){
                     if(currentToken.type == tokentype_rbracket){
                         GT
-                        correct = (currentToken.type == tokentype_semicolon);
+                        if(currentToken.type == tokentype_semicolon){
+                            correct = true;
+                        }else{ERROR(ERR_SYNTAX, "Expected: \";\".\n");}
                         GT
                     }
                 }
             }
         }
-        if(entry == NULL && builtinCall){ // not-yet-defined user function was called
-                
-                
+        if(entry == NULL && !builtinCall){ // not-yet-defined user function was called
+            
+            // extract data types
+            dataType *paramTypes = malloc(sizeof(dataType)*paramCnt); 
+            for(int i = 0; i < paramCnt; i++){
+                paramTypes[i] = exprParamsArr[i]->nodeRep.exprNode.dataT;
+            }
 
+            insertUndefinedFunction(id, paramTypes, void_, false, paramCnt); // function was called without assignment, void return is expected
 
         }
+        else{ // already defined user function or builtin function was called, semantic check of the parameters and return type
+            
+            if(entry->data.data.fData.returnType != void_){
+                ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
+            }
 
+            if(entry->data.data.fData.paramNum != paramCnt){
+                ERROR(ERR_SEM_FUN, "Calling \"%s\" with wrong number of parameters.\nExpected: %d\nGot: %d\n", 
+                                    id, entry->data.data.fData.paramNum, paramCnt);
+            }
+            int badIndex = 0;
+            if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
+                ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
+            }
+
+        }
 
     }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
 
@@ -912,7 +939,7 @@ bool assign_or_f_call(astNode *block){
     return correct;
 }
 
-bool builtin(char *id, symNode *symtableNode, bool *builtinCall){
+bool builtin(char *id, symNode **symtableNode, bool *builtinCall){
     bool correct = false;
     // RULE 32 <builtin> -> . id
     if(currentToken.type == tokentype_dot){
@@ -922,7 +949,7 @@ bool builtin(char *id, symNode *symtableNode, bool *builtinCall){
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
             char *builtinName = currentToken.value;
-            symtableNode = checkBuiltinId(builtinName); // if there is no builtin with id, it exits with error
+            *symtableNode = checkBuiltinId(builtinName); // if there is no builtin with id, it exits with error
             correct = true;
             *builtinCall = true;
             GT
@@ -930,7 +957,7 @@ bool builtin(char *id, symNode *symtableNode, bool *builtinCall){
     }
     // RULE 33 <builtin> -> ε
     else if(currentToken.type == tokentype_lbracket){
-        symtableNode = findSymNode(funSymtable->rootPtr, id);
+        *symtableNode = findSymNode(funSymtable->rootPtr, id);
         correct = true;
         *builtinCall = false;
     }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
@@ -1025,7 +1052,7 @@ bool wasDefined(char *ID, symNode **node){
 
 
 /**
- * @brief    Returns return type of needed function.
+ * @brief    Returns return type of needed user defined function.
  * 
  * @param ID Id of the function.
  * 
@@ -1062,20 +1089,22 @@ dataType getVarType(char *ID){
  * @param expected An array of expected data types from definiton of a function.
  * @param given    An array of pointers to astNode that represent the expression.
  * @param paramNum Number of parameters.
+ * @param badIndex Pointer to a int flag signalising position of first incorrect parameter type.
  * 
  * @warning         Similar function is compareDataTypesArray. Make sure to use
  *                  the one with intended behaviour. 
  * 
  * @note            Used in funcCalls to validate input parameters given to the function.
  * 
- * @return         False if there is a mismatch, true if all valid.
+ * @return          False if there is a mismatch, true if all valid.
  */
-bool checkParameterTypes(dataType *expected, astNode **given, int paramNum){
+bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex){
     dataType givenDataType;
 
     for(int i = 0; i < paramNum; i++){
         givenDataType = given[i]->nodeRep.exprNode.dataT;
         if(expected[i] != givenDataType){
+            *badIndex = i;
             return false;
         }
     }

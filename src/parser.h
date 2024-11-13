@@ -6,7 +6,7 @@
 #include "error.h"
 #include "expression_stack.h"
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
@@ -46,14 +46,14 @@ bool expr_params();
 bool expr_params_n();
 bool after_id(char *id, astNode *block);
 bool assign_or_f_call(astNode *block);
-bool builtin(char *id, symNode *symtableNode);
+bool builtin(char *id, symNode **symtableNode, bool *builtinCall);
 
 bool mainDefined();
 void allUsed(symNode *root);
 bool wasDefined(char *ID, symNode **node);
 dataType getReturnType(char *ID);
 dataType getVarType(char *ID);
-bool checkParameterTypes(dataType *expected, astNode **given, int paramNum);
+bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex);
 symNode *checkBuiltinId(char *id);
 bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex);
 void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnType, bool nullableRType, int paramNum);
