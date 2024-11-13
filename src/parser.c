@@ -353,7 +353,7 @@ bool def_variable(astNode *block){
                 if(currentToken.type == tokentype_assign){
                     
                     if(expression(exprNode)){ // TODO EXPRESSION
-                        DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
+                        //DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
                         if(currentToken.type == tokentype_semicolon){
                             correct = true;
                         }else{ERROR(ERR_SYNTAX, "Expected \";\".\n");}
@@ -608,7 +608,7 @@ bool return_(dataType expReturnType, astNode *block){
 
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
-        GT
+        
         if(exp_func_ret(expReturnType, exprNode)){
             if(currentToken.type == tokentype_semicolon){
                 correct = true;
