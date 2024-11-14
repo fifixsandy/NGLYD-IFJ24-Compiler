@@ -19,11 +19,11 @@
 extern Token currentToken;
 extern AST   ASTree;
 
-bool prog();
+bool prog(bool firstTraverse);
 bool prolog();
-bool code();
-bool next_code();
-bool def_func();
+bool code(bool firstTraverse);
+bool next_code(bool firstTraverse);
+bool def_func(bool firstTraverse);
 bool params(int *paramNum, dataType **paramTypes, char ***paramNames);
 bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames);
 bool def_variable(astNode *block);
