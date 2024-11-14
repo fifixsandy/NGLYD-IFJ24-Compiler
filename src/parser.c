@@ -387,6 +387,11 @@ bool def_variable(astNode *block){
         GT
         
         if(variData.inheritedType == true){
+            if(exprNode->nodeRep.exprNode.exprTree->type == AST_NODE_LITERAL){
+                if(exprNode->nodeRep.exprNode.exprTree->nodeRep.literalNode.dataT == null_){
+                    ERROR(ERR_SEM_INHERIT, "Data type for variable \"%s\" cannot be deduced from \"null\".\n", varName);
+                }
+            }
             variData.type = exprNode->nodeRep.exprNode.dataT;
             variData.inheritedType = false;
         }
