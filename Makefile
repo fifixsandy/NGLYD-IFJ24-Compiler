@@ -80,8 +80,8 @@ run: $(NAME) $(IFJCODE)
 	./$(NAME) > $(IFJCODE)
 
 # Run the main executable
-zig: $(IFJCODE)
-	./zig $(IFJCODE)
+ic: $(IFJCODE)
+	./ic24int $(IFJCODE)
 
 # Phony targets
 .PHONY: all clean test run_tests run
