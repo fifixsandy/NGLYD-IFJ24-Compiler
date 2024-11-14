@@ -157,6 +157,11 @@ bool add_string(char *str){
     return true;
 }
 
+bool add_null(){
+    add_code("nil@nil");
+    return true;
+}
+
 bool add_read(char *var, Types type){
     add_code("READ");
     switch (type){
@@ -244,6 +249,15 @@ bool generate_header(){
 
 bool generate_footer(){
     add_code("LABEL $$end\n"); endl();
+    return true;
+}
+
+bool def_var(Defined_vars *TF_vars, char *var_tmp){
+    if(!is_in_def_vars(TF_vars, var_tmp)){
+        add_code("DEFVAR "); TF(var_tmp); add_code("\n");
+        if(!buf_push_after_flag(BUFFER)) return false;
+        if(!add_to_def_vars(TF_vars, var_tmp)) return false;
+    }   
     return true;
 }
 
@@ -382,6 +396,38 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             case GREATER:
                 add_code("GTS");endl();
                 break;
+            case LOWER_OR_EQUAL:
+                if(!def_var(TF_vars, "TF@tmp_1")) return false;
+                if(!def_var(TF_vars, "TF@tmp_2")) return false;
+                add_code("POPS TF@tmp_1"); endl();
+                add_code("POPS TF@tmp_2"); endl();
+
+                add_code("PUSHS TF@tmp_1"); endl();
+                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("LTS");endl();
+
+                add_code("PUSHS TF@tmp_1"); endl();
+                add_code("PUSHS TF@tmp_2"); endl();
+                
+                add_code("EQS");endl();
+                add_code("OR");endl();                              
+                break;
+            case GREATER_OR_EQUAL:
+                if(!def_var(TF_vars, "TF@tmp_1")) return false;
+                if(!def_var(TF_vars, "TF@tmp_2")) return false;
+                add_code("POPS TF@tmp_1"); endl();
+                add_code("POPS TF@tmp_2"); endl();
+
+                add_code("PUSHS TF@tmp_1"); endl();
+                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("GTS");endl();
+
+                add_code("PUSHS TF@tmp_1"); endl();
+                add_code("PUSHS TF@tmp_2"); endl();
+                
+                add_code("EQS");endl();
+                add_code("OR");endl();   
+                break;
             default:
                 //code
                 break;
@@ -400,6 +446,9 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             case f64:
                 if(!add_float(ast->nodeRep.literalNode.value.floatData)) return false;
                 break;
+            case null_:
+                if(!add_null()) return false;
+                break;
             default:
                 break;
             }
@@ -414,11 +463,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         case AST_NODE_DEFVAR:
             ;
             char *name = ast->nodeRep.defVarNode.id;
-            if(!is_in_def_vars(TF_vars, name)){
-                add_code("DEFVAR "); TF(name); add_code("\n");
-                if(!buf_push_after_flag(BUFFER)) return false;
-                if(!add_to_def_vars(TF_vars, name)) return false;
-            }
+            //define var if it is not defined on begining
+            if(!def_var(TF_vars, name)) return false;
 
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
             add_code("POPS "); TF(name); endl();
@@ -522,14 +568,14 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "concat")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
+                    
                     char var_tmp[] = "%1";
-                    if(!is_in_def_vars(TF_vars, var_tmp)){
-                        add_code("DEFVAR "); TF(var_tmp); add_code("\n");
-                        if(!buf_push_after_flag(BUFFER)) return false;
-                        if(!add_to_def_vars(TF_vars, var_tmp)) return false;
-                    }
+                    //define var if it is not defined on begining
+                    if(!def_var(TF_vars,var_tmp)) return false;
+
                     add_code("MOVE %1 "); GF(); endl();
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
+
                     add_code("POPS "); GF(); endl();
                     if(!add_str_concat("GF@retval", var_tmp, "GF@retval")) return false;
                     break;
@@ -544,11 +590,9 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
                 char var_tmp[30];
                 sprintf(var_tmp, "TF@%%%d", i);
-                if(!is_in_def_vars(TF_vars, var_tmp)){
-                    add_code("DEFVAR "); TF(var_tmp); add_code("\n");
-                    if(!buf_push_after_flag(BUFFER)) return false;
-                    if(!add_to_def_vars(TF_vars, var_tmp)) return false;
-                }
+                //define var if it is not defined on begining
+                if(!def_var(TF_vars, var_tmp)) return false;
+
                 if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
                 add_code("POPS "); TF(var_tmp); endl();
                 //add_code("MOVE "); TF(var_tmp); space(); GF(); endl();

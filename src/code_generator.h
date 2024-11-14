@@ -190,6 +190,8 @@ bool add_param(char *param);
  */
 bool add_int(int val);
 
+bool add_null();
+
 /**
  * @brief Add formatted float value to the code buffer.
  * @param val The float value to be added.
