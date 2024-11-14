@@ -739,10 +739,12 @@ bool while_statement(dataType expRetType, astNode *block){
                             if(body(expRetType, bodyAstNode)){
                                 if(currentToken.type == tokentype_rcbracket){
                                     correct = true;
-                                }else{ERROR(ERR_SYNTAX, "bExpected: \"}\" .\n");}
+                                }else{ERROR(ERR_SYNTAX, "Expected: \"}\" at the end of \"while\" .\n");}
                                 GT
                             }
-                        }ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
+                        }else{
+                            ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
+                        }
                     }
                 }else{ERROR(ERR_SYNTAX, "Expected: \")\" .\n");}
             }
@@ -894,7 +896,7 @@ bool after_id(char *id, astNode *block){
             GT
         }
         expressionDT = newAssExpNode->nodeRep.exprNode.dataT;
-        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\" %d.\n", id, expressionDT);}
+        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", id);}
 
         entry->data.used    = true;
         entry->data.changed = true;
@@ -910,7 +912,7 @@ bool after_id(char *id, astNode *block){
         correct = true;
         
         DEBPRINT("Created call %s\n",id);
-    }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" after id \"%s\".\n",id);}
 
 
 DEBPRINT(" %d\n", correct);
@@ -947,7 +949,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
                     if(currentToken.type == tokentype_rbracket){
                         GT
                         if(currentToken.type == tokentype_semicolon){
-                        }else{ERROR(ERR_SYNTAX, "Expected: \";\".\n");}
+                        }else{ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);}
                         GT
                     }
                 }
@@ -1171,7 +1173,7 @@ bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int 
 
     for(int i = 0; i < paramNum; i++){
         givenDataType = given[i]->nodeRep.exprNode.dataT;
-        if(expected[i] != givenDataType){
+        if(expected[i] != givenDataType && expected[i] != any){
             *badIndex = i;
             return false;
         }
