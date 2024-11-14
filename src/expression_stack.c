@@ -33,6 +33,7 @@ exp_stack *exp_stack_create(){
         return NULL; //internal error
     }
     Stack->top = NULL;
+    Stack->count = 0;
     return Stack;
 }
 
