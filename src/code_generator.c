@@ -496,22 +496,32 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             // Define the variable in the temporary frame if not yet defined
             if(!def_var(TF_vars, name)) return false;
 
+            // Evaluate assigning expression
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
+
+            //Asign the result after evaulation
             add_code("POPS "); TF(name); endl();
+
             if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
+
+        // Hadnle expression which isn't assign to anything
+        // Just evaluate the expresion
         case AST_UNUSED:
             if(!code_generator(ast->nodeRep.unusedNode.expr, TF_vars)) return false;
             if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
+        // Handle fucntion definition node in AST
+        // Genrate lables, and body of function
         case AST_NODE_DEFFUNC:
-            // LABAL $id
+            // Generating label, based on name of function
             add_code("LABEL "); 
             add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
             endl();
 
+            // Push old frame, unless it's the 'main' function
             if(strcmp(ast->nodeRep.defFuncNode.id, "main") != 0){
                 add_code("PUSHFRAME"); endl();
             }
