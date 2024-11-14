@@ -21,9 +21,9 @@ int main(){
     GT
     DEBPRINT("%d\n", prog(false));
     //DEBPRINT("\n\n");
-    //astNode * rootTree = ASTree.root;
+    astNode * rootTree = ASTree.root;
     //printf("\n\nHERE WE GO\n\n");
     //printf("here boy%d \n",rootTree->next->next->nodeRep.defFuncNode.body->next->nodeRep.funcCallNode.paramNum);
 
-    //generate_code(rootTree);
+    generate_code(rootTree);
 }
