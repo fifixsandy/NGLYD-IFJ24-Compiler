@@ -14,6 +14,8 @@
 
 #define BUFFER buf
 #define RETVAL "GF@retval"
+#define TMP1 "TF@tmp_1"
+#define TMP2 "TF@tmp_2"
 
 Buffer_ll *BUFFER;
 
@@ -139,30 +141,34 @@ void delete_def_vars(Defined_vars *vars){
         } \
     } while (0)
 
-
+// Help function for adding const int value
 bool add_int(int val){
     add_code("int@");
     if(!buf_add_int(buf, val)) return false;
     return true;
 }
 
+// Help function for adding const float value
 bool add_float(int val){
     add_code("float@");
     if(!buf_add_float(buf, val)) return false;
     return true;
 }
 
+// Help function for adding const string value
 bool add_string(char *str){
     add_code("string@");
     if(!buf_add_string(buf, str)) return false;
     return true;
 }
 
+// Help function for adding null
 bool add_null(){
     add_code("nil@nil");
     return true;
 }
 
+// Genarate built in funciton ifj.read
 bool add_read(char *var, Types type){
     add_code("READ");
     switch (type){
@@ -180,7 +186,7 @@ bool add_read(char *var, Types type){
     return true;
 }
 
-
+// Genarate built in funciton ifj.write
 bool add_write(char *term){
     add_code("WRITE");
     add_param(term);
@@ -188,6 +194,7 @@ bool add_write(char *term){
     return true;
 }
 
+// Genarate built in funciton ifj.i2f
 bool add_i2f(char *var, char *symb){
     add_code("INT2FLOAT");
     add_param(var);
@@ -196,6 +203,7 @@ bool add_i2f(char *var, char *symb){
     return true;
 }
 
+// Genarate built in funciton ifj.f2i
 bool add_f2i(char *var, char *symb){
     add_code("FLOAT2INT");
     add_param(var);
@@ -204,7 +212,7 @@ bool add_f2i(char *var, char *symb){
     return true;
 }
 
-
+// Genarate built in funciton ifj.length
 bool add_str_len(char *var, char *symb){
     add_code("STRLEN");
     add_param(var);
@@ -213,6 +221,7 @@ bool add_str_len(char *var, char *symb){
     return true;
 }
 
+// Genarate built in funciton ifj.concat
 bool add_str_concat(char *var, char *symb1, char *symb2){
     add_code("CONCAT");
     add_param(var);
@@ -222,6 +231,7 @@ bool add_str_concat(char *var, char *symb1, char *symb2){
     return true;
 }
 
+// Genarate built in funciton ifj.chr
 bool add_chr(char *var, char *symb){
     add_code("INT2CHAR");
     add_param(var);
@@ -230,7 +240,7 @@ bool add_chr(char *var, char *symb){
     return true;
 }
 
-
+// Genarate bulit in functions, from macros
 bool generate_build_in_functions(){
     add_code(SUBSTRING);
     endl();
@@ -253,6 +263,7 @@ bool generate_footer(){
     return true;
 }
 
+// Function for checking if var vas defined if no, will be defined
 bool def_var(Defined_vars *TF_vars, char *var_tmp){
     if(!is_in_def_vars(TF_vars, var_tmp)){
         add_code("DEFVAR "); TF(var_tmp); add_code("\n");
@@ -282,16 +293,18 @@ void generate_label(char *label, LABEL_TYPES type, int number){
 }
 
 bool code_generator(astNode *ast, Defined_vars *TF_vars){
-    static int count = 0;
+    static int count = 0;   // count for function genarate_label 
     if(ast == NULL) return true;
+
+    // Vars for storing generated lable
     char cond_label[52];
     char else_label[52];
     char end_label[52];
     switch (ast->type){
         case AST_NODE_WHILE:
             count++;
-            //TODO id_with_null
-            //save genrated label names
+            // TODO id_with_null
+            // save genrated label names
             generate_label(cond_label, WHILE_COND, count);
             generate_label(end_label, WHILE_END, count);
 
@@ -311,8 +324,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             break;
         case AST_NODE_IFELSE:
             count++;
-            //TODO id_with_null
-            //save genrated label names
+            // TODO id_with_null
+            // save genrated label names
             generate_label(else_label, IF_ELSE, count);
             generate_label(end_label, IF_END, count);
 
@@ -331,44 +344,51 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
             break;
         case AST_NODE_IF:
-            //TODO id_with_null
+            // TODO id_with_null
             if(!code_generator(ast->nodeRep.ifNode.body, TF_vars)) return false;
             break;
         
         case AST_NODE_ELSE:
-            //TODO id_with_null
+            // TODO id_with_null
             if(!code_generator(ast->nodeRep.elseNode.body, TF_vars)) return false;
             break;
         
         case AST_NODE_ASSIGN:
+            // Expresion evaluation
             if(!code_generator(ast->nodeRep.assignNode.expression, TF_vars)) return false;
+
+            // Assign result to var
             add_code("POPS "); TF(ast->nodeRep.assignNode.id); endl();
+
             if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_EXPR:
-            //add_code("CLEARS"); endl();
+            // Expresion evaluation
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
             break;
         
         case AST_NODE_BINOP:
-            //ast->nodeRep.binOpNode.
+            // Check if left operand is function call, if so push the return value to data stack
             if(!code_generator(ast->nodeRep.binOpNode.left, TF_vars)) return false;
             if(ast->nodeRep.binOpNode.left != NULL && ast->nodeRep.binOpNode.left->type == AST_NODE_FUNC_CALL){
                 add_code("PUSHS "); GF(); endl();
             }
+
+            // Check if right operand is function call, if so push the return value to data stack
             if(!code_generator(ast->nodeRep.binOpNode.right, TF_vars)) return false;
             if(ast->nodeRep.binOpNode.right != NULL && ast->nodeRep.binOpNode.right->type == AST_NODE_FUNC_CALL){
                 add_code("PUSHS "); GF(); endl();
             }
-            symbol_number type = ast->nodeRep.binOpNode.op;
-             //TODO LOWER_OR_EQUAL,         // 8
-            //GREATER_OR_EQUAL,       // 9
-            switch (type){
+
+            // Handle binary operations based on the operator type in the AST node
+            // Each case corresponds to a different binary operation
+            switch (ast->nodeRep.binOpNode.op){
             case MULTIPLICATION:
                 add_code("MULS"); endl();
                 break;
             case DIVISION:
+                // Check data type for integer or float division
                 if(ast->nodeRep.binOpNode.dataT == i32){
                     add_code("IDIVS"); endl();
                 }
@@ -397,36 +417,38 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 add_code("GTS");endl();
                 break;
             case LOWER_OR_EQUAL:
-                if(!def_var(TF_vars, "TF@tmp_1")) return false;
-                if(!def_var(TF_vars, "TF@tmp_2")) return false;
+                // Handle <= comparison by combining LTS and EQS
+                if(!def_var(TF_vars, TMP1)) return false;
+                if(!def_var(TF_vars, TMP2)) return false;
                 add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
-                add_code("LTS");endl();
+                add_code("LTS");endl();     // Check if tmp_2 < tmp_1
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
+                add_code("EQS");endl();  // Check if tmp_2 == tmp_1
                 
-                add_code("EQS");endl();
-                add_code("OR");endl();                              
+                add_code("OR");endl(); // Combine LTS and EQS results                            
                 break;
             case GREATER_OR_EQUAL:
-                if(!def_var(TF_vars, "TF@tmp_1")) return false;
-                if(!def_var(TF_vars, "TF@tmp_2")) return false;
+                // Handle >= comparison by combining GTS and EQS
+                if(!def_var(TF_vars, TMP1)) return false;
+                if(!def_var(TF_vars, TMP2)) return false;
                 add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
-                add_code("GTS");endl();
+                add_code("GTS");endl();     // Check if tmp_2 > tmp_1
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
-                
-                add_code("EQS");endl();
-                add_code("OR");endl();   
+                add_code("EQS");endl();     // Check if tmp_2 == tmp_1
+
+                add_code("OR");endl();      // Combine GTS and EQS results
                 break;
             default:
                 //code
@@ -434,6 +456,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             }
             break;
         
+        // Handle literal nodes in the AST
+        // Pushes the literal value onto the stack in correct format based on it's type
         case AST_NODE_LITERAL:
             add_code("PUSHS ");
             switch(ast->nodeRep.literalNode.dataT){
@@ -455,15 +479,21 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             endl();
             break;
         
+
+        // Handle variable nodes in the AST
+        // Pushes the variable's value onto the stack based on its var id
         case AST_NODE_VAR:
             add_code("PUSHS ");
             TF(ast->nodeRep.varNode.id); endl();
             break;
 
+
+        // Handle variable definition nodes in the AST
+        // Defines a variable if not already defined and generates code to initialize it
         case AST_NODE_DEFVAR:
             ;
             char *name = ast->nodeRep.defVarNode.id;
-            //define var if it is not defined on begining
+            // Define the variable in the temporary frame if not yet defined
             if(!def_var(TF_vars, name)) return false;
 
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
@@ -477,7 +507,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             break;
         
         case AST_NODE_DEFFUNC:
-            //LABAL $id
+            // LABAL $id
             add_code("LABEL "); 
             add_code("$"); add_code(ast->nodeRep.defFuncNode.id);
             endl();
@@ -487,7 +517,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             }
             add_code("CREATEFRAME"); endl();
             
-            //TODO add bin operators, maybe
+            // TODO add bin operators, maybe
             add_code("DEFVAR TF@tmp_bool");endl();
 
             for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
@@ -497,10 +527,10 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
                 add_code("MOVE "); TF(name_); space(); add_code("LF@"); PARAM(i); endl();
             }
-            //ast->nodeRep.defFuncNode.paramNames;
-            //create flag for var definition
+            // ast->nodeRep.defFuncNode.paramNames;
+            // create flag for var definition
             buf_add_flag(BUFFER);
-            //generate body
+            // generate body
             if(!code_generator(ast->nodeRep.defFuncNode.body, TF_vars)) return false;
 
             if(strcmp(ast->nodeRep.defFuncNode.id, "main") == 0){
@@ -558,7 +588,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     if(!add_f2i(RETVAL, RETVAL)) return false;
                     break;
                 }
-                //TODO String
+                // TODO String
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
@@ -570,7 +600,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     add_code("POPS "); GF(); endl();
                     
                     char var_tmp[] = "%1";
-                    //define var if it is not defined on begining
+                    // define var if it is not defined on begining
                     if(!def_var(TF_vars,var_tmp)) return false;
 
                     add_code("MOVE %1 "); GF(); endl();
@@ -590,15 +620,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
                 char var_tmp[30];
                 sprintf(var_tmp, "TF@%%%d", i);
-                //define var if it is not defined on begining
+                // define var if it is not defined on begining
                 if(!def_var(TF_vars, var_tmp)) return false;
 
                 if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
                 add_code("POPS "); TF(var_tmp); endl();
-                //add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
+                // add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
             }
             add_code("CALL $");
-            if(ast->nodeRep.funcCallNode.builtin) add_code("$");        //adding second $, because builin functions have $$ before name
+            if(ast->nodeRep.funcCallNode.builtin) add_code("$");        // adding second $, because builin functions have $$ before name
             add_code(ast->nodeRep.funcCallNode.id);endl();
 
             break;
