@@ -13,6 +13,7 @@
 #include "ast.h"
 
 #define BUFFER buf
+#define RETVAL "GF@retval"
 
 Buffer_ll *BUFFER;
 
@@ -119,7 +120,7 @@ void delete_def_vars(Defined_vars *vars){
 
 #define GF() \
     do { \
-        if (!buf_add(BUFFER, "GF@retval")) { \
+        if (!buf_add(BUFFER, RETVAL)) { \
             return false; \
         } \
     } while (0)
@@ -529,40 +530,40 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         case AST_NODE_FUNC_CALL:
             if(ast->nodeRep.funcCallNode.builtin){
                 if(strcmp(ast->nodeRep.funcCallNode.id, "readstr")){
-                    if(!add_read("GF@retval", STRING)) return false;
+                    if(!add_read(RETVAL, STRING)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readi32")){
-                    if(!add_read("GF@retval", INT)) return false;
+                    if(!add_read(RETVAL, INT)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readf64")){
-                    if(!add_read("GF@retval", FLOAT)) return false;
+                    if(!add_read(RETVAL, FLOAT)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "write")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
-                    if(!add_write("GF@retval")) return false;
+                    if(!add_write(RETVAL)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
-                    if(!add_i2f("GF@retval", "GF@retval")) return false;
+                    if(!add_i2f(RETVAL, RETVAL)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
-                    if(!add_f2i("GF@retval", "GF@retval")) return false;
+                    if(!add_f2i(RETVAL, RETVAL)) return false;
                     break;
                 }
                 //TODO String
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
-                    if(!add_str_len("GF@retval", "GF@retval")) return false;
+                    if(!add_str_len(RETVAL, RETVAL)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "concat")){
@@ -577,13 +578,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
 
                     add_code("POPS "); GF(); endl();
-                    if(!add_str_concat("GF@retval", var_tmp, "GF@retval")) return false;
+                    if(!add_str_concat(RETVAL, var_tmp, RETVAL)) return false;
                     break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
-                    if(!add_chr("GF@retval", "GF@retval")) return false;
+                    if(!add_chr(RETVAL, RETVAL)) return false;
                     break;
                 }
             }

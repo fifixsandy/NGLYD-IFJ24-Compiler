@@ -28,10 +28,10 @@
     exit(errNum); \
 } while (0)
 
-#define ERRORLEX(...) do{\
-    fprintf(stderr, "\nERROR NUMBER %d: ", ERR_LEX); \
+#define ERRORLEX(errNum, ...) do{\
+    fprintf(stderr, "\nERROR NUMBER %d: ", errNum); \
     fprintf(stderr, __VA_ARGS__); \
-    exit(ERR_LEX); \
+    exit(errNum); \
 } while (0)
 
 /*
