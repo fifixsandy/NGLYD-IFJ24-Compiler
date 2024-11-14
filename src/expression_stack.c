@@ -166,6 +166,7 @@ bool process_expr(exp_stack *estack){
     int evaluate = shift(estack, curr_node, control);
     //fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
     if(evaluate == 0){
+        DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
         GT
         return process_expr(estack);
     }
@@ -173,6 +174,7 @@ bool process_expr(exp_stack *estack){
         if(estack->top->expr != NO_TERMINAL){
             ERROR(ERR_SYNTAX, "Empty expression\n");
         }
+        
         return true;
     }
     else{
@@ -258,12 +260,20 @@ void reduce(exp_stack *stack){
         case GREATER:
         case LOWER_OR_EQUAL:
         case GREATER_OR_EQUAL:
-
+            if(stack->count < 4 ){
+                ERROR(ERR_SYNTAX, "Invalid token\n");
+            }
+            if(stack->top->control->is_nullable == true){
+                ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
+            }
+            else if(stack->top->next->next->control->is_nullable == true){
+                ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
+            }
             //ked jedna je nulovacia error
 
         default :
             if(stack->count < 4 ){
-                ERROR(ERR_SYNTAX, "Invalid token\n");
+                ERROR(ERR_SYNTAX, "Invalid token in expression\n");
             }
             
             dataType data_type_buffer;  // semanticke pravidlo pretypovania alebo erroru, treba urobiť porovnanie oboch výrazo a prípadne pritypovanie
@@ -347,18 +357,18 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         //doriešiť funkcie
             if(wasDefined(token.value, &symnode)){
                     createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
-                    control->var_litconst = node->nodeRep.varNode.symtableEntry->data.data.vData.isConst;
-                    if(control->var_litconst == true){
+                    control->litconst = node->nodeRep.varNode.symtableEntry->data.data.vData.isConst;
+                    if(control->litconst == true){
                         if(symnode->data.data.vData.type == f64){
-                            
+                            control->is_convertable = false;
 
                         }else if(symnode->data.data.vData.type == i32){
-
+                                control->is_convertable = true;
                         }else{
-                            control->is_convertable = false;
+                             ERROR(ERR_SYNTAX, (" incompatible type in expression\n"));
                         }
                     }
-                    else{
+                    else{   //vo výraze môže byť premenná len typu f64 alebo i32 ostatné typy (zamerané presnejšie na []u8 je nepodoporvaný)
                         control->is_convertable = false;
                     }
                     control->is_nullable = node->nodeRep.varNode.isNullable;
@@ -366,11 +376,19 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 return ID;
             }
             else{
+                DEBPRINT("DOSTAL SOM SA DO ELSUUUUUUUUUUUUUUUUUUUUUUUUU\n");
                 char *id = currentToken.value;
+                DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
                 GT
+                DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
                 if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
                     
                     funCallHandle(id, node, true);
+                    control->is_nullable = false; //alebo može byť null??
+                    control->type = node->nodeRep.funcCallNode.retType;
+                    control->is_convertable = false;
+                    control->litconst = false;
+                    return ID;
                 }
                 else{
                     ERROR(ERR_SYNTAX, ("Unexpected Token\n")); //TODO ERRROR
@@ -381,7 +399,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             createLiteralNode(node, i32, token.value, NULL);
             control->is_nullable = false;
             control->type = i32;
-            control->var_litconst = true;
+            control->litconst = true;
             control->is_convertable = true;
             return ID;
 
@@ -389,7 +407,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             createLiteralNode(node, f64, token.value, NULL);
             control->is_nullable = false;
             control->type = f64;
-            control->var_litconst = true;
+            control->litconst = true;
             if((int) node->nodeRep.literalNode.value.floatData == node->nodeRep.literalNode.value.floatData ){
                 control->is_convertable = true;
             }
@@ -402,7 +420,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             createLiteralNode(node, null_, NULL, NULL );
             control->is_nullable = true;
             control->type = null_;
-            control->var_litconst = true;
+            control->litconst = true;
             control->is_convertable = false;
 
 
