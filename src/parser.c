@@ -508,7 +508,8 @@ bool type(bool *nullable, dataType *datatype){
     if(currentToken.type == tokentype_kw_f64 || 
        currentToken.type == tokentype_kw_i32 ||
        currentToken.type == tokentype_lsbracket){ 
-            correct = type_normal(datatype);
+        correct = type_normal(datatype);
+        *nullable = false;
     }
     // RULE 20 <type> -> <type_null>
     else if(currentToken.type == tokentype_nullid){
