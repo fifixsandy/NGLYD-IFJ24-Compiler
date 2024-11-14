@@ -22,7 +22,7 @@
 #include "parser.h"
 
 
-bool prog(){
+bool prog(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d\n", currentToken.type);
 
@@ -31,12 +31,11 @@ bool prog(){
     // RULE 1 <prog> -> <prolog> <code> <next_code> // EOF MBY
     if(currentToken.type == tokentype_kw_const){
         if(prolog()){
-            if(code()){
-                DEBPRINT("%d\n", currentToken.type);
-                if(next_code()){
+            code(firstTraverse);
+                DEBPRINT("%d HIER HOER HIER\n", currentToken.type);
+                if(next_code(firstTraverse)){
                     correct = true;
                 }
-            }
         }
     }
     else if(currentToken.type == tokentype_EOF){
@@ -44,7 +43,9 @@ bool prog(){
     }
     else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
     correct = mainDefined(); // check if main function is defined and has correct data
-    allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
+    if(!firstTraverse){
+        allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
+    }
     
     return correct;
 }
@@ -94,12 +95,12 @@ bool prolog(){
 }
 
 
-bool code(){
+bool code(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d\n",currentToken.type);
     // RULE 3 <code> -> <def_func>
     if(currentToken.type == tokentype_kw_pub){
-        correct = def_func();
+        correct = def_func(firstTraverse);
     }
     else{
         ERROR(ERR_SYNTAX, "Expected: \"pub\"\n");
@@ -108,12 +109,12 @@ bool code(){
     return correct;
 }
 
-bool next_code(){
+bool next_code(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d\n", currentToken.type);
     // RULE 4 <next_code> -> <code>
     if(currentToken.type == tokentype_kw_pub){ 
-        correct = code();
+        correct = code(firstTraverse);
     }
     // RULE 5 <next_code> -> ε
     else if(currentToken.type == tokentype_EOF){
@@ -124,7 +125,7 @@ bool next_code(){
     return correct;
 }
 
-bool def_func(){
+bool def_func(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d \n",currentToken.type);
 
@@ -139,114 +140,121 @@ bool def_func(){
     bool      nullable;
 
     astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
-    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
+    astNode  *bodyAstRoot = NULL; // create root node for body (statements in body will be connected to this)
 
-    bool recheck           = false;
     symNode *functionEntry = NULL;
 
     // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
-    if(currentToken.type == tokentype_kw_pub){ 
-        GT
-        DEBPRINT("%d %s \n",currentToken.type, currentToken.value);
-        if(currentToken.type == tokentype_kw_fn){ 
-        GT
-        DEBPRINT("%d %s\n",currentToken.type, currentToken.value);
-        if(currentToken.type == tokentype_id){
+    if(currentToken.type != tokentype_kw_pub){
+        ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");
+    }
+
+    GT
+    DEBPRINT("%d %s \n",currentToken.type, currentToken.value);
+
+    if(currentToken.type != tokentype_kw_fn){
+        ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");
+    }
+    
+    GT
+    DEBPRINT("%d %s\n",currentToken.type, currentToken.value);
+
+    if(currentToken.type != tokentype_id){
+        ERROR(ERR_SYNTAX, "Expected: id.\n");
+    }
         
-        funID = currentToken.value;
-        // check for redefining already defined function
-        functionEntry = findSymNode(funSymtable->rootPtr, funID);
-        if(functionEntry != NULL){
-            if(functionEntry->data.data.fData.defined){
-                ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);
-            }
-            else{
-                recheck = true;
-            }
-        } // TODO SEMANTIC error 5 redefinition and recheck of parameters and return type
+    funID = currentToken.value;
+    // check for redefining already defined function when first traverse
+    functionEntry = findSymNode(funSymtable->rootPtr, funID);
+    if(functionEntry != NULL && firstTraverse){
+        ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);
+    }
         
 
-        // create new scope and push it
-        symtable *symtableNewF = createSymtable();
-        push(&symtableStack, symtableNewF);
+    // create new scope and push it
+    symtable *symtableNewF = createSymtable();
+    push(&symtableStack, symtableNewF);
 
-        GT
-        if(currentToken.type == tokentype_lbracket){
-        GT
-        if(params(&paramNum, &paramTypes, &paramNames)){
-        if(currentToken.type == tokentype_rbracket){
-        GT
-        if(type_func_ret(&nullable, &returnType)){ 
-        if(currentToken.type == tokentype_lcbracket){
-        GT
-        if(body(returnType, bodyAstRoot)){
-        if(currentToken.type == tokentype_rcbracket){
-            correct = true;
-        }else{ERROR(ERR_SYNTAX, "Expected: \"}\".\n");}
-        GT
-        }
-        }else{ERROR(ERR_SYNTAX, "Expected: \"{\".\n");}
-        }
-        }else{ERROR(ERR_SYNTAX, "Expected: \")\".\n");}
-        }
-        }else{ERROR(ERR_SYNTAX, "Expected: \"(\".\n");}
-        }else{ERROR(ERR_SYNTAX, "Expected: id.\n");}
-        }else{ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");}
-    }else{ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");}
+    GT
+    
+    if(currentToken.type != tokentype_lbracket){
+        ERROR(ERR_SYNTAX, "Expected: \"(\".\n");
+    }
+    
+    GT
+        
+    params(&paramNum, &paramTypes, &paramNames);
 
-    // if function was called before, but is defined now, semantic check of paramNum and paramTypes is needed
-    if(recheck){
+    if(currentToken.type != tokentype_rbracket){
+        ERROR(ERR_SYNTAX, "Expected: \")\".\n");
+    }
 
-        int       expectedParamNum   = functionEntry->data.data.fData.paramNum;
-        dataType *expectedParamTypes = functionEntry->data.data.fData.paramTypes;
-        dataType  expectedRetType    = getReturnType(funID);
-        int       badIndex           = 0; // index of the first bad parameter, if mismatch appears
-        entrySymData                 = functionEntry->data;
+    GT
+        
+    type_func_ret(&nullable, &returnType);
 
-        if(paramNum != expectedParamNum){
-            ERROR(ERR_SEM_FUN, "Incorrect number of parameters when calling function \"%s\".\n", funID);
-        }
-        if(!compareDataTypesArray(expectedParamTypes, paramTypes, paramNum, &badIndex)){
-            ERROR(ERR_SEM_FUN, "Parameter number %d is of different type than defined. \"%s\".\n", badIndex, funID);
-        }
-        if(expectedRetType != returnType){
-            ERROR(ERR_SEM_FUN, "Return type mismatch in function \"%s\".\n", funID);
-        }
+    if(currentToken.type != tokentype_lcbracket){
+        ERROR(ERR_SYNTAX, "Expected: \"{\".\n");
+    }
 
+    GT
+    
+    if(firstTraverse){
+        while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){
+            GT
+        }
     }
     else{
-        entrySymData.used = false;
-    }
+        bodyAstRoot = createAstNode();
+        body(returnType, bodyAstRoot);
+        if(currentToken.type != tokentype_rcbracket){
+            ERROR(ERR_SYNTAX, "aExpected: %d\"}\".\n",currentToken.type);
+        }
 
+        GT
+    }
 
     // information is now known, set it
     symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
-    allUsed(symtableFun->rootPtr); // perform semantic check of used variables
-
-
-    entryData.tbPtr         = symtableFun;
-    entryData.defined       = true;
-    entryData.paramNames    = paramNames;
-    entryData.paramTypes    = paramTypes;
-    entryData.nullableRType = nullable;
-    entryData.returnType    = returnType;
-    entryData.paramNum      = paramNum;
-
-    entrySymData.data.fData = entryData;
-    entrySymData.varOrFun   = 1;
-
-    // to avoid error raised by allUsed() that main was not used
-    if(strcmp(funID, "main") == 0){
-        entrySymData.used = true;
+    if(!firstTraverse){
+        allUsed(symtableFun->rootPtr); // perform semantic check of used variables
     }
 
-    insertSymNode(funSymtable, funID, entrySymData);
+    // to avoid error raised by allUsed() that main was not used
+
+    if(firstTraverse){
+
+        entryData.tbPtr         = symtableFun;
+        entryData.defined       = true;
+        entryData.paramNames    = paramNames;
+        entryData.paramTypes    = paramTypes;
+        entryData.nullableRType = nullable;
+        entryData.returnType    = returnType;
+        entryData.paramNum      = paramNum;
+
+        entrySymData.data.fData = entryData;
+        entrySymData.varOrFun   = 1;
+
+        if(strcmp(funID, "main") == 0){
+            entrySymData.used = true;
+        }
+        else{
+            entrySymData.used = false;
+        }
+        
+        insertSymNode(funSymtable, funID, entrySymData);
+    }
+
+
 
     // add correct data to astnode previously created
-    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum); 
-    connectToBlock(funcAstNode, ASTree.root);
+    if(!firstTraverse){
+        createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum); 
+        connectToBlock(funcAstNode, ASTree.root);
+    }
 
-    DEBPRINT("WAS USED %d\n", entrySymData.used);
+    symNode *test = findSymNode(funSymtable->rootPtr, funID);
+    DEBPRINT(" %s WAS USED %d\n",funID, test->data.used);
     return correct;
 }
 
@@ -347,7 +355,7 @@ bool def_variable(astNode *block){
         
                 GT
 
-                if(type_var_def(&nullable, &varType, &inheritedType)){
+                type_var_def(&nullable, &varType, &inheritedType);
                     DEBPRINT("%d \n", currentToken.type); 
 
                     variData.inheritedType = inheritedType;
@@ -385,7 +393,6 @@ bool def_variable(astNode *block){
 
                 }
                 }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
-                }
                 }else{ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
@@ -526,6 +533,7 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
     // RULE 23 <type_var_def> -> : <type>
     DEBPRINT(" %d\n", currentToken.type);
     if(currentToken.type == tokentype_colon){
+        *inheritedDType = false;
         GT
         if(currentToken.type == tokentype_kw_i32
         || currentToken.type == tokentype_kw_f64
@@ -716,7 +724,7 @@ bool while_statement(dataType expRetType, astNode *block){
                             if(body(expRetType, bodyAstNode)){
                                 if(currentToken.type == tokentype_rcbracket){
                                     correct = true;
-                                }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
+                                }else{ERROR(ERR_SYNTAX, "bExpected: \"}\" .\n");}
                                 GT
                             }
                         }ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
@@ -784,12 +792,12 @@ bool if_statement(dataType expRetType, astNode *block){
         if(body(expRetType, elseNode)){
         if(currentToken.type == tokentype_rcbracket){
             correct = true;
-        }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
+        }else{ERROR(ERR_SYNTAX, "cExpected: \"}\" .\n");}
             GT
         }
         }else{ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");};
         }else{ERROR(ERR_SYNTAX, "Expected: \"else\" .\n");};
-        }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
+        }else{ERROR(ERR_SYNTAX, "dExpected: \"}\" .\n");}
         }
         }else{ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");}
         }
@@ -879,8 +887,9 @@ bool after_id(char *id, astNode *block){
         astNode *newFCallNode = createAstNode();
         funCallHandle(id, newFCallNode, false);
         connectToBlock(newFCallNode, block);
+        correct = true;
         
-        DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
+        DEBPRINT("Created call %s\n",id);
     }else{ERROR(ERR_SYNTAX, "Expected: \"=\" or \".\" or \"(\" .\n");}
 
 
@@ -925,37 +934,27 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
             }
         }
         
-        if(entry == NULL && !builtinCall){ // not-yet-defined user function was called
-            // extract data types
-            dataType *paramTypes = malloc(sizeof(dataType)*paramCnt); 
-            for(int i = 0; i < paramCnt; i++){
-                paramTypes[i] = exprParamsArr[i]->nodeRep.exprNode.dataT;
-            }
-            insertUndefinedFunction(id, paramTypes, void_, false, paramCnt); // function was called without assignment, void return is expected
-
+        if(entry == NULL){
+            ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", id);
         }
-        else{ // already defined user function or builtin function was called, semantic check of the parameters and return type
-            
-            if(entry->data.data.fData.returnType != void_ && !inExpr){
-                ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
-            }
-            
-            if(entry->data.data.fData.returnType == void_ && inExpr){
-                ERROR(ERR_SEM_FUN, "Void function \"%s\" called in expression.\n", id);
-            }
-
-            if(entry->data.data.fData.paramNum != paramCnt){
-                ERROR(ERR_SEM_FUN, "Calling \"%s\" with wrong number of parameters.\nExpected: %d\nGot: %d\n", 
-                                    id, entry->data.data.fData.paramNum, paramCnt);
-            }
-            int badIndex = 0;
-            if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
-                ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
-            }
-
+        // already defined user function or builtin function was called, semantic check of the parameters and return type
+        if(entry->data.data.fData.returnType != void_ && !inExpr){
+            ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
         }
         
-        entry = findSymNode(funSymtable->rootPtr, id);
+        if(entry->data.data.fData.returnType == void_ && inExpr){
+            ERROR(ERR_SEM_FUN, "Void function \"%s\" called in expression.\n", id);
+        }
+
+        if(entry->data.data.fData.paramNum != paramCnt){
+            ERROR(ERR_SEM_FUN, "Calling \"%s\" with wrong number of parameters.\nExpected: %d\nGot: %d\n", 
+                                id, entry->data.data.fData.paramNum, paramCnt);
+        }
+        int badIndex = 0;
+        if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
+            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
+        }
+
         createFuncCallNode(node, id, void_, builtinCall, entry, NULL, exprParamsArr, paramCnt);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
