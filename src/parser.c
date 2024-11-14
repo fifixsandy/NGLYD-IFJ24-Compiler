@@ -140,7 +140,8 @@ bool def_func(bool firstTraverse){
     bool      nullable;
 
     astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
-    astNode  *bodyAstRoot = NULL; // create root node for body (statements in body will be connected to this)
+    astNode  *bodyAstRoot = createAstNode(); // create root node for body (statements in body will be connected to this)
+    bodyAstRoot->type = AST_NODE_ROOT;
 
     symNode *functionEntry = NULL;
 
@@ -205,7 +206,7 @@ bool def_func(bool firstTraverse){
         }
     }
     else{
-        bodyAstRoot = createAstNode();
+        printf("HEREHEHEHEHEHEHEHEHEHE\n");
         body(returnType, bodyAstRoot);
         if(currentToken.type != tokentype_rcbracket){
             ERROR(ERR_SYNTAX, "aExpected: %d\"}\".\n",currentToken.type);
@@ -574,6 +575,7 @@ bool st(dataType expReturnType, astNode *block){
     }
     // RULE 35 <st> -> <assign_or_f_call>
     else if(currentToken.type == tokentype_id){
+        DEBPRINT("%s\n", currentToken.value);
         correct = assign_or_f_call(block);
     }
     // RULE 36 <st> -> <unused_decl>
@@ -613,10 +615,10 @@ bool body(dataType returnType, astNode *block){
             currentToken.type == tokentype_kw_return ||
             currentToken.type == tokentype_id        ||
             currentToken.type == tokentype_pseudovar){
+        DEBPRINT("%s\n", currentToken.value);
+        st(returnType, block);
+        correct = body(returnType, block);
         
-        if(st(returnType, block)){
-            correct = body(returnType, block);
-        }
     }else if(currentToken.type == tokentype_EOF){ERROR(ERR_SYNTAX, "Unexpected EOF, source code unfinished.\n");}
     else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
 
@@ -905,7 +907,7 @@ bool after_id(char *id, astNode *block){
     }
     // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
-
+        DEBPRINT("KAKAKA %d %s\n", currentToken.type, id);
         astNode *newFCallNode = createAstNode();
         funCallHandle(id, newFCallNode, false);
         connectToBlock(newFCallNode, block);
@@ -941,20 +943,24 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         
         astNode **exprParamsArr = malloc(sizeof(astNode*)*MAX_PARAM_NUM);
         int paramCnt            = 0;
-
-        if(builtin(id, &entry, &builtinCall)){
+        char *betterID = NULL;
+        builtin(id, &entry, &builtinCall, &betterID);
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params(exprParamsArr, &paramCnt)){
                     if(currentToken.type == tokentype_rbracket){
                         GT
                         if(currentToken.type == tokentype_semicolon){
-                        }else{ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);}
+                        }else{
+                            if(!inExpr){
+                            ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);
+                            }
+                        }
                         GT
                     }
                 }
             }
-        }
+        
         
         if(entry == NULL){
             ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", id);
@@ -976,8 +982,9 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
         }
-
-        createFuncCallNode(node, id, void_, builtinCall, entry, NULL, exprParamsArr, paramCnt);
+        DEBPRINT("BETTER %s\n", betterID);
+        createFuncCallNode(node, betterID, void_, builtinCall, entry, NULL, exprParamsArr, paramCnt);
+        DEBPRINT("DEBAG %s\n", node->nodeRep.funcCallNode.id);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
 
@@ -985,25 +992,30 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
 bool assign_or_f_call(astNode *block){
     bool correct = false;
     // RULE 31 <assign_or_f_call> -> id <after_id>
+    DEBPRINT("AJ EM ID %d\n", currentToken.type);
     if(currentToken.type == tokentype_id){
         char *id = currentToken.value;
         GT
+        DEBPRINT("ajdi %s\n", id);
         correct = after_id(id, block);
     }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool builtin(char *id, symNode **symtableNode, bool *builtinCall){
+bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterID){
     bool correct = false;
     // RULE 32 <builtin> -> . id
+    DEBPRINT("NOT DOT %d\n", currentToken.type);
     if(currentToken.type == tokentype_dot){
+        
         if(strcmp(id, "ifj") != 0){
             ERROR(ERR_SYNTAX, "Incorrect namespace for builtin functions. Expected: \"ifj\" Got: \"%s\" .\n", id);
         }
         GT
         if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
             char *builtinName = currentToken.value;
+            *betterID = builtinName;
             *symtableNode = checkBuiltinId(builtinName); // if there is no builtin with id, it exits with error
             correct = true;
             *builtinCall = true;
@@ -1015,6 +1027,7 @@ bool builtin(char *id, symNode **symtableNode, bool *builtinCall){
         *symtableNode = findSymNode(funSymtable->rootPtr, id);
         correct = true;
         *builtinCall = false;
+        *betterID = id;
     }else{ERROR(ERR_SYNTAX, "Expected: \"(\" or \".\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
@@ -1207,12 +1220,13 @@ bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, in
 }
 
 symNode *checkBuiltinId(char *id){
-    printf("hjehehehe %d \n", id==NULL);
+    DEBPRINT("hjehehehe %d \n", id==NULL);
     symNode *symtableNode = findSymNode(builtinSymtable->rootPtr, id);
     if(symtableNode == NULL){
         ERROR(ERR_SEM_UNDEF, "Builtin function with id \"%s\" does not exist.", id);
     }
     else{
+        
         return symtableNode;
     }
 

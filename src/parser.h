@@ -46,7 +46,7 @@ bool expr_params(astNode **params, int *paramCnt);
 bool expr_params_n(astNode **params, int *paramCnt);
 bool after_id(char *id, astNode *block);
 bool assign_or_f_call(astNode *block);
-bool builtin(char *id, symNode **symtableNode, bool *builtinCall);
+bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterID);
 
 void funCallHandle(char *id, astNode *node, bool inExpr);
 bool mainDefined();
