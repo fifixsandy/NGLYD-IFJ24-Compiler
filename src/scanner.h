@@ -8,7 +8,6 @@
 #include <string.h>
 
 #define NUM_OF_KEYWORDS 13
-#define FIRST_KEYWORD 36
 
 extern int Line_Number;
 
@@ -48,7 +47,6 @@ typedef enum {
     tokentype_float,
     tokentype_exponentialnum,
     tokentype_nullid,
-    tokentype_chararr,
     tokentype_comma,
     tokentype_lsbracket,
     tokentype_rsbracket,
@@ -71,6 +69,8 @@ typedef enum {
     
 }token_types;
 
+#define FIRST_KEYWORD tokentype_kw_const
+
 typedef struct {
     token_types type;
     int line;
@@ -78,6 +78,10 @@ typedef struct {
     char* value;
 } Token;
 
+typedef struct TokenValues {
+    char *value;
+    struct TokenValues *next;
+} TokenValues;
 
 
 extern const char *keywords[NUM_OF_KEYWORDS];
@@ -88,7 +92,7 @@ Token getToken();
 
 Token process_Number_Token(char firstchar, FILE *input_file);
 
-Token process_String_Token(char firstchar, FILE *input_file);
+Token process_String_Token(FILE *input_file);
 
 Token process_ID_Token(char firstchar, FILE *input_file);
 
@@ -105,5 +109,9 @@ int is_keyword(const char *str, Token *token);
 int init_value(char **buffer, int initial_size);
 
 int realloc_value(char **buffer, int *buffer_size);
+
+void add_value_pointer(char *value);
+
+void free_all_values();
 
 #endif

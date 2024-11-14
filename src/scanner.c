@@ -7,6 +7,7 @@ const char *keywords[NUM_OF_KEYWORDS] = {
 
 FILE *input_file;
 int Line_Number = 1;
+TokenValues *head = NULL;
 
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1,token_types type2){
     char nextchar = getc(file);
@@ -61,6 +62,34 @@ int cleanup_value(Token *token) {
         token->value = NULL;
     }
     return 0;
+}
+
+void add_value_pointer(char *value) {
+    TokenValues *new_node = (TokenValues *) malloc(sizeof(TokenValues));
+    if(new_node == NULL) {
+        fprintf(stderr, "Failed to allocate memory for TokenValues\n");
+        exit(1);
+    }
+    new_node->value = value;
+    new_node->next = head;
+    head = new_node;
+
+}
+
+void free_all_values() {
+    TokenValues *current = head;
+    while(current != NULL) {
+        TokenValues *temp = current;
+        free(current->value);
+        current = current->next;
+        free(temp);
+    }
+    head = NULL;
+}
+
+void reset_scanner() {
+    fseek(input_file, 0, SEEK_SET);
+    Line_Number = 1;
 }
 
 Token getToken() {
@@ -178,7 +207,7 @@ Token getToken() {
             break;
         
         case '"':
-            current_token = process_String_Token(c, input_file);
+            current_token = process_String_Token(input_file);
             break;
 
         case '[':
@@ -218,6 +247,7 @@ Token getToken() {
                 current_token = process_ID_Token(c, input_file);
             }    
     }
+    add_value_pointer(current_token.value);
     current_token.line = Line_Number;
     return current_token;
 }   
@@ -321,7 +351,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
 }
 
 
-Token process_String_Token(char firstchar, FILE *input_file) {
+Token process_String_Token(FILE *input_file) {
         
     Token current_token;
     char nextchar;
@@ -384,8 +414,15 @@ Token process_String_Token(char firstchar, FILE *input_file) {
                     }
                 }
                 long dec_value = strtol(hex_str, NULL, 16);
-                sprintf(current_token.value + index, "%ld", dec_value);
-                index += strlen(current_token.value + index);
+                
+                int chars_needed = snprintf(NULL, 0, "%ld", dec_value) + 1;
+                while (index + chars_needed >= buffer_size) {
+                    if (realloc_value(&current_token.value, &buffer_size) == -1) {
+                        current_token.type = tokentype_invalid;
+                        return current_token;
+                    }
+                }
+                index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value);
             }
             else {
                 fprintf(stderr, "Escape sequence incorrect\n");
@@ -409,8 +446,6 @@ Token process_String_Token(char firstchar, FILE *input_file) {
 
     return current_token;
 }
-
-
 
 Token process_ID_Token(char firstchar, FILE *input_file) {
     
@@ -456,23 +491,6 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
 
     return current_token;
 }
-
-/*Token process_Char_Arr(FILE *input_file) {
-
-    Token current_token;
-    char nextchar;
-    current_token.type = tokentype_invalid;
-
-    if((nextchar = getc(input_file)) == ']') {
-        if((nextchar = getc(input_file)) == 'u') {
-            if((nextchar = getc(input_file)) == '8') {
-                current_token.type = tokentype_chararr;
-            }
-        }
-    }
-    //printf("%d\n", current_token.type);
-    return current_token;
-}*/
 
 Token process_Import(FILE *input_file) {
     
@@ -569,6 +587,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
 //      for(int i = 0; i < 10; i++) {
 //          getToken();
 //      }
-
+//    free_all_values();
+//    fclose(input_file);
 //      return 0;
 //  }
