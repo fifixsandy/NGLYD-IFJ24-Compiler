@@ -237,7 +237,13 @@ bool generate_build_in_functions(){
 bool generate_header(){
     add_code(".IFJcode24\n"); endl();
     add_code("DEFVAR "); GF(); endl();
+    add_code("JUMP $main"); endl();
     endl();
+    return true;
+}
+
+bool generate_footer(){
+    add_code("LABEL $$end\n"); endl();
     return true;
 }
 
@@ -408,7 +414,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             ;
             char *name = ast->nodeRep.defVarNode.id;
             if(!is_in_def_vars(TF_vars, name)){
-                add_code("DEFVAR "); TF(name); endl();
+                add_code("DEFVAR "); TF(name); add_code("\n");
                 if(!buf_push_after_flag(BUFFER)) return false;
                 if(!add_to_def_vars(TF_vars, name)) return false;
             }
@@ -438,11 +444,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("DEFVAR TF@tmp_bool");endl();
 
             for(int i = 0; i < ast->nodeRep.defFuncNode.paramNum; i++){
-                char *name = ast->nodeRep.defFuncNode.paramNames[i];
-                if(!add_to_def_vars(TF_vars, name)) return false;
-                add_code("DEFVAR "); TF(name); endl();
+                char *name_ = ast->nodeRep.defFuncNode.paramNames[i];
+                if(!add_to_def_vars(TF_vars, name_)) return false;
+                add_code("DEFVAR "); TF(name_); endl();
 
-                add_code("MOVE "); TF(name); space(); PARAM(i); endl();
+                add_code("MOVE "); TF(name_); space(); add_code("LF@"); PARAM(i); endl();
             }
             //ast->nodeRep.defFuncNode.paramNames;
             //create flag for var definition
@@ -450,7 +456,10 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             //generate body
             if(!code_generator(ast->nodeRep.defFuncNode.body, TF_vars)) return false;
 
-            if(strcmp(ast->nodeRep.defFuncNode.id, "main") != 0){
+            if(strcmp(ast->nodeRep.defFuncNode.id, "main") == 0){
+                add_code("JUMP $$end"); endl();
+            }
+            else{
                 add_code("POPFRAME"); endl();
                 add_code("RETURN"); endl();
             }
@@ -467,11 +476,68 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             break;
         
         case AST_NODE_ROOT:
-            if(!code_generator(ast->next, TF_vars)) return false;
+            return code_generator(ast->next, TF_vars);
             break;
 
         case AST_NODE_FUNC_CALL:
-            if(!code_generator(ast->next, TF_vars)) return false;
+            if(ast->nodeRep.funcCallNode.builtin){
+                if(strcmp(ast->nodeRep.funcCallNode.id, "readstr")){
+                    if(!add_read("GF@retval", STRING)) return false;
+                }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "readi32")){
+                    if(!add_read("GF@retval", INT)) return false;
+                }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "readf64")){
+                    if(!add_read("GF@retval", FLOAT)) return false;
+                }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "write")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_write("GF@retval")) return false;
+                }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_i2f("GF@retval", "GF@retval")) return false;
+                }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_f2i("GF@retval", "GF@retval")) return false;
+                }
+                //TODO String
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "length")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_str_len("GF@retval", "GF@retval")) return false;
+                }
+                // //TODO
+                // else if(strcmp(ast->nodeRep.funcCallNode.id, "concat")){
+                //     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                //     add_code("POPS "); GF(); endl();
+                //     if(!add_concat("GF@retval", "GF@retval")) return false;
+                // }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "chr")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_chr("GF@retval", "GF@retval")) return false;
+                }
+                break;
+            }
+            for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
+                char var_tmp[30];
+                sprintf(var_tmp, "TF@%%%d", i);
+                if(!is_in_def_vars(TF_vars, var_tmp)){
+                    add_code("DEFVAR "); TF(name); add_code("\n");
+                    if(!buf_push_after_flag(BUFFER)) return false;
+                    if(!add_to_def_vars(TF_vars, name)) return false;
+                }
+                if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
+                add_code("POPS "); TF(var_tmp); endl();
+                //add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
+            }
+            add_code("CALL $"); add_code(ast->nodeRep.funcCallNode.id);endl();
+
             break;
         
         case AST_INVALID:
@@ -488,6 +554,7 @@ bool generate_code(astNode *ast){
     inint_def_vars(&var_def);
     if(!generate_header()) return false;
     if(!code_generator(ast->next, &var_def)) return false;
+    if(!generate_footer()) return false;
     fprint_buffer(BUFFER, stdout);
     return true;
 }
