@@ -287,7 +287,6 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
     char cond_label[52];
     char else_label[52];
     char end_label[52];
-    printf("TYPE: %d ---------------------------------\n", ast->type);
     switch (ast->type){
         case AST_NODE_WHILE:
             count++;

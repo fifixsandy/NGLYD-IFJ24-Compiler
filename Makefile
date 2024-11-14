@@ -14,6 +14,7 @@ OBJFILES := $(patsubst $(SRCFOLDER)/%.c, $(OBJFOLDER)/%.o, $(SRCFILES))
 TESTFILES := $(wildcard $(TESTFOLDER)/*/*.c)
 TESTBINS := $(TESTFILES:$(TESTFOLDER)/%.c=$(TESTFOLDER)/%)
 
+IFJCODE := out.ifjcode
 
 # Compiler and flags
 CC = gcc
@@ -75,8 +76,12 @@ run_tests: $(TESTBINS)
 	done
 
 # Run the main executable
-run: $(NAME)
-	./$(NAME)
+run: $(NAME) $(IFJCODE)
+	./$(NAME) > $(IFJCODE)
+
+# Run the main executable
+zig: $(IFJCODE)
+	./zig $(IFJCODE)
 
 # Phony targets
 .PHONY: all clean test run_tests run
