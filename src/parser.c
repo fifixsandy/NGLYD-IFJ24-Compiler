@@ -636,7 +636,7 @@ bool return_(dataType expReturnType, astNode *block){
     // RULE 42 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
         GT
-        if(exp_func_ret(expReturnType, exprNode)){
+        if(exp_func_ret(expReturnType, &exprNode)){
             if(currentToken.type == tokentype_semicolon){
                 correct = true;
             }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
@@ -651,13 +651,14 @@ bool return_(dataType expReturnType, astNode *block){
     return correct;
 }
 
-bool exp_func_ret(dataType expRetType, astNode *exprNode){
+bool exp_func_ret(dataType expRetType, astNode **exprNode){
     bool correct = false;
     // RULE 43 <exp_func_ret> -> ε
     DEBPRINT("expected %d\n", expRetType);
     if(currentToken.type == tokentype_semicolon){
         if(expRetType == void_){
             correct = true;
+            *exprNode = NULL;
         }
         else{
             ERROR(ERR_SEM_RETURN, "Missing return value in non-void function.\n");
@@ -666,8 +667,8 @@ bool exp_func_ret(dataType expRetType, astNode *exprNode){
     }
     // RULE 44 <exp_func_ret> -> expression
     else{
-        correct = expression(exprNode); // TODO EXPRESSION
-        dataType exprType = exprNode->nodeRep.exprNode.dataT;
+        correct = expression(*exprNode); // TODO EXPRESSION
+        dataType exprType = (*exprNode)->nodeRep.exprNode.dataT;
         if(exprType != expRetType){
             ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
         }

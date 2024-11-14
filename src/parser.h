@@ -38,7 +38,7 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType);
 bool st(dataType expRetType, astNode *block);
 bool body(dataType returnType, astNode *block);
 bool return_(dataType expReturnType, astNode *block);
-bool exp_func_ret(dataType expRetType, astNode *expr);
+bool exp_func_ret(dataType expRetType, astNode **expr);
 bool id_without_null(bool *withNull, char **id_wout_null);
 bool while_statement(dataType expRetType, astNode *block);
 bool if_statement(dataType expRetType, astNode *block);
