@@ -272,6 +272,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
     char cond_label[52];
     char else_label[52];
     char end_label[52];
+    printf("TYPE: %d ---------------------------------\n", ast->type);
     switch (ast->type){
         case AST_NODE_WHILE:
             count++;
@@ -483,65 +484,83 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(ast->nodeRep.funcCallNode.builtin){
                 if(strcmp(ast->nodeRep.funcCallNode.id, "readstr")){
                     if(!add_read("GF@retval", STRING)) return false;
+                    break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readi32")){
                     if(!add_read("GF@retval", INT)) return false;
+                    break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readf64")){
                     if(!add_read("GF@retval", FLOAT)) return false;
+                    break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "write")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_write("GF@retval")) return false;
+                    break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_i2f("GF@retval", "GF@retval")) return false;
+                    break;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_f2i("GF@retval", "GF@retval")) return false;
+                    break;
                 }
                 //TODO String
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_str_len("GF@retval", "GF@retval")) return false;
+                    break;
                 }
-                // //TODO
-                // else if(strcmp(ast->nodeRep.funcCallNode.id, "concat")){
-                //     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                //     add_code("POPS "); GF(); endl();
-                //     if(!add_concat("GF@retval", "GF@retval")) return false;
-                // }
+                else if(strcmp(ast->nodeRep.funcCallNode.id, "concat")){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    char var_tmp[] = "%1";
+                    if(!is_in_def_vars(TF_vars, var_tmp)){
+                        add_code("DEFVAR "); TF(var_tmp); add_code("\n");
+                        if(!buf_push_after_flag(BUFFER)) return false;
+                        if(!add_to_def_vars(TF_vars, var_tmp)) return false;
+                    }
+                    add_code("MOVE %1 "); GF(); endl();
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    if(!add_str_concat("GF@retval", var_tmp, "GF@retval")) return false;
+                    break;
+                }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr")){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_chr("GF@retval", "GF@retval")) return false;
+                    break;
                 }
-                break;
             }
             for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
                 char var_tmp[30];
                 sprintf(var_tmp, "TF@%%%d", i);
                 if(!is_in_def_vars(TF_vars, var_tmp)){
-                    add_code("DEFVAR "); TF(name); add_code("\n");
+                    add_code("DEFVAR "); TF(var_tmp); add_code("\n");
                     if(!buf_push_after_flag(BUFFER)) return false;
-                    if(!add_to_def_vars(TF_vars, name)) return false;
+                    if(!add_to_def_vars(TF_vars, var_tmp)) return false;
                 }
                 if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
                 add_code("POPS "); TF(var_tmp); endl();
                 //add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
             }
-            add_code("CALL $"); add_code(ast->nodeRep.funcCallNode.id);endl();
+            add_code("CALL $");
+            if(ast->nodeRep.funcCallNode.builtin) add_code("$");        //adding second $, because builin functions have $$ before name
+            add_code(ast->nodeRep.funcCallNode.id);endl();
 
             break;
         
         case AST_INVALID:
-            /* code */
+            return false;
             break;
     
     }
