@@ -76,8 +76,11 @@ run_tests: $(TESTBINS)
 	done
 
 # Run the main executable
-run: $(NAME) $(IFJCODE)
+
+ $(IFJCODE):
 	touch $(IFJCODE)
+
+run: $(NAME)
 	./$(NAME) > $(IFJCODE)
 	./ic24int $(IFJCODE)
 

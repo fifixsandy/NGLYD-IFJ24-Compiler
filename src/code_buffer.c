@@ -58,6 +58,7 @@ bool buf_push(Buffer_ll *buf){
     else{
         buf->last->next = new;
     }
+    DEBPRINT("push: %s\n", buf->tmp);
     buf->last = new;
     new->str = buf->tmp;
     buf->tmp = NULL;
@@ -114,13 +115,14 @@ bool buf_push_after_flag(Buffer_ll *buf){
     if(new == NULL){
         return false;
     }
-    
+    DEBPRINT("after: %s\n", buf->tmp);
     new->str = buf->tmp;
     buf->tmp = NULL;
     
     if(buf->flag == buf->last){
         buf->last = new;
     }
+
     new->next = buf->flag->next;
     buf->flag->next = new;
     return true;

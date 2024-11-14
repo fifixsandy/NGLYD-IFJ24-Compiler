@@ -14,8 +14,10 @@
 
 #define BUFFER buf
 #define RETVAL "GF@retval"
-#define TMP1 "TF@tmp_1"
-#define TMP2 "TF@tmp_2"
+#define TMP1 "tmp_1"
+#define TMP2 "tmp_2"
+#define COMPILER true
+#define USER false
 
 Buffer_ll *BUFFER;
 
@@ -30,7 +32,7 @@ bool add_to_def_vars(Defined_vars *vars, char *name){
     if(tmp == NULL) return false;
 
     vars->names = tmp;
-    vars->names[vars->num_of_vars] = name;
+    //vars->names[vars->num_of_vars] = name;
 
     vars->names[vars->num_of_vars] = malloc(strlen(name) + 1);
     if (vars->names[vars->num_of_vars] == NULL) {
@@ -55,6 +57,7 @@ void delete_def_vars(Defined_vars *vars){
         free(vars->names[i]);
     }
     free(vars->names);
+    vars->names = NULL;
     vars->num_of_vars = 0;
 }
 
@@ -92,7 +95,7 @@ void delete_def_vars(Defined_vars *vars){
 
 #define PARAM(int_val) \
     do { \
-        if (!buf_add(BUFFER, "%%")) { \
+        if (!buf_add(BUFFER, "%")) { \
             return false; \
         } \
         if (!buf_add_int(BUFFER, int_val)) { \
@@ -100,9 +103,9 @@ void delete_def_vars(Defined_vars *vars){
         } \
     } while (0)
 
-#define LF(val) \
+#define TF_ARGS(val) \
     do { \
-        if (!buf_add(BUFFER, "LF@_")) { \
+        if (!buf_add(BUFFER, "TF@")) { \
             return false; \
         } \
         if (!buf_add(BUFFER, val)) { \
@@ -264,9 +267,16 @@ bool generate_footer(){
 }
 
 // Function for checking if var vas defined if no, will be defined
-bool def_var(Defined_vars *TF_vars, char *var_tmp){
+bool def_var(Defined_vars *TF_vars, char *var_tmp, bool defined_by_who){
     if(!is_in_def_vars(TF_vars, var_tmp)){
-        add_code("DEFVAR "); TF(var_tmp); add_code("\n");
+        add_code("DEFVAR "); 
+        if(defined_by_who == COMPILER){
+            TF_ARGS(var_tmp);
+        }
+        else{
+            TF(var_tmp);
+        }
+        add_code("\n");
         if(!buf_push_after_flag(BUFFER)) return false;
         if(!add_to_def_vars(TF_vars, var_tmp)) return false;
     }   
@@ -320,7 +330,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("JUMP "); add_code(cond_label); endl();
             add_code("LABEL "); add_code(end_label); endl();
 
-            if(!code_generator(ast->next, TF_vars)) return false;
+            //if(!code_generator(ast->next, TF_vars)) return false;
             break;
         case AST_NODE_IFELSE:
             count++;
@@ -340,7 +350,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(!code_generator(ast->nodeRep.ifElseNode.elsePart, TF_vars)) return false;
             add_code("LABEL "); add_code(end_label); endl();
             
-            if(!code_generator(ast->next, TF_vars)) return false;
+            //if(!code_generator(ast->next, TF_vars)) return false;
 
             break;
         case AST_NODE_IF:
@@ -418,8 +428,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 break;
             case LOWER_OR_EQUAL:
                 // Handle <= comparison by combining LTS and EQS
-                if(!def_var(TF_vars, TMP1)) return false;
-                if(!def_var(TF_vars, TMP2)) return false;
+                if(!def_var(TF_vars, TMP1, COMPILER)) return false;
+                if(!def_var(TF_vars, TMP2, COMPILER)) return false;
                 add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
 
@@ -435,8 +445,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 break;
             case GREATER_OR_EQUAL:
                 // Handle >= comparison by combining GTS and EQS
-                if(!def_var(TF_vars, TMP1)) return false;
-                if(!def_var(TF_vars, TMP2)) return false;
+                if(!def_var(TF_vars, TMP1, COMPILER)) return false;
+                if(!def_var(TF_vars, TMP2, COMPILER)) return false;
                 add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
 
@@ -494,7 +504,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             ;
             char *name = ast->nodeRep.defVarNode.id;
             // Define the variable in the temporary frame if not yet defined
-            if(!def_var(TF_vars, name)) return false;
+            if(!def_var(TF_vars, name, USER)) return false;
 
             // Evaluate assigning expression
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
@@ -550,9 +560,9 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 add_code("POPFRAME"); endl();
                 add_code("RETURN"); endl();
             }
-
+            endl();
             delete_def_vars(TF_vars);
-            if(!code_generator(ast->next, TF_vars)) return false;
+            //TODO if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_NODE_RETURN:
@@ -611,7 +621,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     
                     char var_tmp[] = "%1";
                     // define var if it is not defined on begining
-                    if(!def_var(TF_vars,var_tmp)) return false;
+                    if(!def_var(TF_vars,var_tmp, COMPILER)) return false;
 
                     add_code("MOVE %1 "); GF(); endl();
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
@@ -629,12 +639,12 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             }
             for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
                 char var_tmp[30];
-                sprintf(var_tmp, "TF@%%%d", i);
+                sprintf(var_tmp, "%%%d", i);
                 // define var if it is not defined on begining
-                if(!def_var(TF_vars, var_tmp)) return false;
+                if(!def_var(TF_vars, var_tmp, COMPILER)) return false;
 
                 if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
-                add_code("POPS "); TF(var_tmp); endl();
+                add_code("POPS "); TF_ARGS(var_tmp); endl();
                 // add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
             }
             add_code("CALL $");
@@ -656,7 +666,12 @@ bool generate_code(astNode *ast){
     Defined_vars var_def;
     inint_def_vars(&var_def);
     if(!generate_header()) return false;
-    if(!code_generator(ast->next, &var_def)) return false;
+
+    ast = ast->next;
+    while(ast != NULL){
+        if(!code_generator(ast, &var_def)) return false;
+        ast = ast->next;
+    }
     if(!generate_footer()) return false;
     fprint_buffer(BUFFER, stdout);
     return true;

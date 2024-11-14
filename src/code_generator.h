@@ -27,6 +27,21 @@ typedef struct{
     int num_of_vars;
 } Defined_vars;
 
+
+
+#define DEBUG
+#ifdef DEBUG
+    #ifndef DEBPRINT(...) 
+    #define DEBPRINT(...) \
+        fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
+        fprintf(stderr, __VA_ARGS__);
+    #endif
+#else
+    #ifndef DEBPRINT(...) 
+    #define DEBPRINT(...) 
+    #endif
+#endif
+
 /**
  * @brief The header section of the code generation
  */
@@ -276,7 +291,7 @@ bool generate_header();
 
 
 void inint_def_vars(Defined_vars *vars);
-bool add_to_def_vars(Defined_vars *vars, char *name);
+bool def_var(Defined_vars *TF_vars, char *var_tmp, bool arg);
 bool is_in_def_vars(Defined_vars *vars, char *name);
 void delete_def_vars(Defined_vars *vars);
 void generate_label(char *label, LABEL_TYPES type, int number);
