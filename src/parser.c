@@ -910,6 +910,11 @@ bool after_id(char *id, astNode *block){
         DEBPRINT("KAKAKA %d %s\n", currentToken.type, id);
         astNode *newFCallNode = createAstNode();
         funCallHandle(id, newFCallNode, false);
+        GT
+        if(currentToken.type != tokentype_semicolon){
+            ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);
+        }
+
         connectToBlock(newFCallNode, block);
         correct = true;
         
@@ -949,14 +954,6 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
                 GT
                 if(expr_params(exprParamsArr, &paramCnt)){
                     if(currentToken.type == tokentype_rbracket){
-                        GT
-                        if(currentToken.type == tokentype_semicolon){
-                        }else{
-                            if(!inExpr){
-                            ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);
-                            }
-                        }
-                        GT
                     }
                 }
             }
