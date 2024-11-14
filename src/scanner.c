@@ -36,8 +36,7 @@ int is_keyword(const char *str, Token *token) {
 int init_value(char **buffer, int initial_size) {
     *buffer = malloc(initial_size);
     if (*buffer == NULL) {
-        fprintf(stderr, "Failed to allocate memory\n");
-        return -1;
+        ERRORLEX("Failed to allocate memory for token value."); //ERROR 99
     }
     return 0;
 }
@@ -46,8 +45,7 @@ int realloc_value(char **buffer, int *buffer_size) {
     *buffer_size *= 2;
     *buffer = realloc(*buffer, *buffer_size);
     if (*buffer == NULL) {
-        fprintf(stderr, "Failed to reallocate memory\n");
-        return -1;
+        ERRORLEX("Failed to reallocate memory for token value."); //ERROR 99
     }
     return 0;
 }
@@ -67,8 +65,7 @@ int cleanup_value(Token *token) {
 void add_value_pointer(char *value) {
     TokenValues *new_node = (TokenValues *) malloc(sizeof(TokenValues));
     if(new_node == NULL) {
-        fprintf(stderr, "Failed to allocate memory for TokenValues\n");
-        exit(1);
+        ERRORLEX("Failed to allocate memory for TokenValues."); //ERROR 99
     }
     new_node->value = value;
     new_node->next = head;
@@ -98,7 +95,7 @@ Token getToken() {
     char expected_char;
     Token current_token;
     current_token.value = NULL;
-    current_token.type = tokentype_invalid;
+    current_token.type = tokentype_EOF;
     
     here:
     while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
@@ -202,7 +199,7 @@ Token getToken() {
             }
             else {
                 ungetc(nextchar, input_file);
-                current_token.type = tokentype_invalid;
+                ERRORLEX("\nInvalid character on line %d", Line_Number);
             }
             break;
         
@@ -259,19 +256,14 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     int buffer_size = 2;
     int index = 0;
         
-    if(init_value(&current_token.value, buffer_size) == -1) {
-        current_token.type = tokentype_invalid;
-        return current_token;
-    }
+    init_value(&current_token.value, buffer_size);
 
     current_token.value[index++] = firstchar;
 
     if(firstchar == '0') {
         if(isdigit(nextchar = getc(input_file))) {
-            current_token.type = tokentype_invalid;
-            fprintf(stderr, "A whole number cannot start with 0\n");
             ungetc(nextchar, input_file);
-            return current_token;
+            ERRORLEX("A whole number cannot start with 0. Line: %d. ", Line_Number);
         }
         current_token.type = tokentype_zeroint;
         nextchar = getc(input_file);
@@ -282,10 +274,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         
         while(isdigit((nextchar = getc(input_file)))) {
             if (index >= buffer_size - 1) {
-                if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                    current_token.type = tokentype_invalid;
-                    return current_token;
-                }
+                realloc_value(&current_token.value, &buffer_size);
             }
             current_token.value[index++] = (char) nextchar;
         }
@@ -297,19 +286,14 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
             
         while(isdigit((nextchar = getc(input_file)))) {
             if (index >= buffer_size - 1) {
-                if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                    current_token.type = tokentype_invalid;
-                    return current_token;
-                }
+                realloc_value(&current_token.value, &buffer_size);
             }
             current_token.value[index++] = (char) nextchar;
         }
     }
     if(nextchar == 'e' || nextchar == 'E') {
         if(current_token.type == tokentype_zeroint) {
-            fprintf(stderr, "Number zero cannot have an exponent\n");
-            current_token.type = tokentype_invalid;
-            return current_token;
+            ERRORLEX("Number zero cannot have an exponent. Line: %d. ", Line_Number);
         }
         current_token.type = tokentype_exponentialnum;
         current_token.value[index++] = (char) nextchar;
@@ -322,10 +306,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
 
         while(isdigit(nextchar)) {
             if (index >= buffer_size - 1) {
-                if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                    current_token.type = tokentype_invalid;
-                    return current_token;
-                }
+                realloc_value(&current_token.value, &buffer_size);
             }
             current_token.value[index++] = (char) nextchar;
             nextchar = getc(input_file);
@@ -337,9 +318,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         current_token.value[index-1] == '-' ||
         current_token.value[index-1] == '+' )
         {
-        fprintf(stderr, "Number incomplete\n");
-        current_token.type = tokentype_invalid;
-        return current_token;
+        ERRORLEX("\nNumber incomplete on line %d. ", Line_Number);
     }       
     if(!isdigit(nextchar)) {
         ungetc(nextchar, input_file);
@@ -360,22 +339,15 @@ Token process_String_Token(FILE *input_file) {
 
     current_token.type = tokentype_string;
 
-    if(init_value(&current_token.value, buffer_size) == -1) {
-        current_token.type = tokentype_invalid;
-        return current_token;
-    }
+    init_value(&current_token.value, buffer_size);
+
         
     while((nextchar = getc(input_file)) != '"' && nextchar != '\n') {
         if (index >= buffer_size - 1) {
-            if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                current_token.type = tokentype_invalid;
-                return current_token;
-            }
+            realloc_value(&current_token.value, &buffer_size);
         }
         if(nextchar == EOF) {
-            fprintf(stderr, "String incorrect\n");
-            current_token.type = tokentype_invalid;
-            return current_token;
+            ERRORLEX("\nString incomplete on line %d. ", Line_Number);
         }
 
         if(nextchar == 92) {
@@ -408,26 +380,19 @@ Token process_String_Token(FILE *input_file) {
                     hex_str[i] = nextchar;
                     }
                     else {
-                        fprintf(stderr, "Hexadecimal number incorrect\n");
-                        current_token.type = tokentype_invalid;
-                        return current_token;
+                        ERRORLEX("\nHexadecimal number incorrect on line %d. ", Line_Number);
                     }
                 }
                 long dec_value = strtol(hex_str, NULL, 16);
                 
                 int chars_needed = snprintf(NULL, 0, "%ld", dec_value) + 1;
                 while (index + chars_needed >= buffer_size) {
-                    if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                        current_token.type = tokentype_invalid;
-                        return current_token;
-                    }
+                    realloc_value(&current_token.value, &buffer_size);
                 }
                 index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value);
             }
             else {
-                fprintf(stderr, "Escape sequence incorrect\n");
-                current_token.type = tokentype_invalid;
-                return current_token;
+                ERRORLEX("\nEscape sequence incorrect on line %d. ", Line_Number);
             }
         }
         else {
@@ -435,9 +400,7 @@ Token process_String_Token(FILE *input_file) {
         }
     }
     if(nextchar == '\n') {
-        current_token.type = tokentype_invalid;
-        Line_Number++;
-        return current_token;
+        ERRORLEX("\nString incorrect on line %d .", Line_Number);
     }
 
     current_token.value[index] = '\0';
@@ -454,28 +417,21 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     int buffer_size = 2;
     int index = 0;
 
-    if(init_value(&current_token.value, buffer_size) == -1) {
-        current_token.type = tokentype_invalid;
-        return current_token;
-    }
+    init_value(&current_token.value, buffer_size);
     
     if(isalpha(firstchar) || firstchar == '_') {
         current_token.type = tokentype_id;
     }
 
     else {
-        current_token.type = tokentype_invalid;
-        return current_token;
+        ERRORLEX("\nInvalid ID on line %d .", Line_Number);
     }
     
     current_token.value[index++] = firstchar;
 
     while((isalpha(nextchar = getc(input_file))) || isdigit(nextchar) || nextchar == '_') {
         if (index >= buffer_size - 1) {
-            if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                current_token.type = tokentype_invalid;
-                return current_token;
-            }
+            realloc_value(&current_token.value, &buffer_size);
         }
         current_token.value[index++] = nextchar;
     }
@@ -495,7 +451,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
 Token process_Import(FILE *input_file) {
     
     Token current_token;
-    current_token.type = tokentype_invalid;
+    current_token.type = tokentype_import;
 
     const char *keyword = "import";
     char nextchar;
@@ -505,11 +461,10 @@ Token process_Import(FILE *input_file) {
         nextchar = getc(input_file);
 
         if (nextchar != keyword[i]) {
-            return current_token;  
+            ERRORLEX("\nImport incorrect on line %d .", Line_Number);  
         }
         i++; 
     }
-    current_token.type = tokentype_import;
     
     //printf("%d\n", current_token.type);
     return current_token;
@@ -521,10 +476,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
     int index = 0;
     int buffer_size = 2;
 
-    if(init_value(&current_token.value, buffer_size) == -1) {
-        current_token.type = tokentype_invalid;
-        return current_token;
-    }
+    init_value(&current_token.value, buffer_size);
     
     if((nextchar = getc(input_file)) == '\\') {
         current_token.type = tokentype_string;
@@ -532,10 +484,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
         while(1) {
                 
             if (index >= buffer_size - 1) {
-                if (realloc_value(&current_token.value, &buffer_size) == -1) {
-                    current_token.type = tokentype_invalid;
-                    return current_token;
-                }
+                realloc_value(&current_token.value, &buffer_size);
             }
             nextchar = getc(input_file);
             
@@ -568,12 +517,11 @@ Token process_Multiline_String_Token(FILE *input_file) {
         current_token.value[index] = '\0';
     }
     else {
-        current_token.type = tokentype_invalid;
-        return current_token;
+        ERRORLEX("\nInvalid multiline string on line %d .", Line_Number);
     }
 
-    //printf("%s", current_token.value);
-    //printf("%d\n", current_token.type);
+ //   printf("%s", current_token.value);
+ //   printf("%d\n", current_token.type);
 
     return current_token;
 }

@@ -28,6 +28,11 @@
     exit(errNum); \
 } while (0)
 
+#define ERRORLEX(...) do{\
+    fprintf(stderr, "\nERROR NUMBER %d: ", ERR_LEX); \
+    fprintf(stderr, __VA_ARGS__); \
+    exit(ERR_LEX); \
+} while (0)
 
 /*
 controls all allocations in program and deletes everything

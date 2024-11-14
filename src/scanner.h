@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+#include "error.h"
 
 #define NUM_OF_KEYWORDS 13
 
@@ -50,8 +51,6 @@ typedef enum {
     tokentype_comma,
     tokentype_lsbracket,
     tokentype_rsbracket,
-
-    tokentype_invalid,
 
     tokentype_kw_const,
     tokentype_kw_else,
