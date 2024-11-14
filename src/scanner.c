@@ -36,7 +36,7 @@ int is_keyword(const char *str, Token *token) {
 int init_value(char **buffer, int initial_size) {
     *buffer = malloc(initial_size);
     if (*buffer == NULL) {
-        ERRORLEX("Failed to allocate memory for token value."); //ERROR 99
+        ERRORLEX(ERR_INTERNAL, "Failed to allocate memory for token value. Line: %d.\n", Line_Number);
     }
     return 0;
 }
@@ -45,7 +45,7 @@ int realloc_value(char **buffer, int *buffer_size) {
     *buffer_size *= 2;
     *buffer = realloc(*buffer, *buffer_size);
     if (*buffer == NULL) {
-        ERRORLEX("Failed to reallocate memory for token value."); //ERROR 99
+        ERRORLEX(ERR_INTERNAL, "Failed to reallocate memory for token value. Line: %d.\n", Line_Number);
     }
     return 0;
 }
@@ -65,7 +65,7 @@ int cleanup_value(Token *token) {
 void add_value_pointer(char *value) {
     TokenValues *new_node = (TokenValues *) malloc(sizeof(TokenValues));
     if(new_node == NULL) {
-        ERRORLEX("Failed to allocate memory for TokenValues."); //ERROR 99
+        ERRORLEX(ERR_INTERNAL, "Failed to allocate memory for TokenValues.\n");
     }
     new_node->value = value;
     new_node->next = head;
@@ -199,7 +199,7 @@ Token getToken() {
             }
             else {
                 ungetc(nextchar, input_file);
-                ERRORLEX("\nInvalid character on line %d", Line_Number);
+                ERRORLEX(ERR_LEX, "Invalid character on line %d.\n", Line_Number);
             }
             break;
         
@@ -263,7 +263,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     if(firstchar == '0') {
         if(isdigit(nextchar = getc(input_file))) {
             ungetc(nextchar, input_file);
-            ERRORLEX("A whole number cannot start with 0. Line: %d. ", Line_Number);
+            ERRORLEX(ERR_LEX, "A whole number cannot start with 0. Line: %d.\n", Line_Number);
         }
         current_token.type = tokentype_zeroint;
         nextchar = getc(input_file);
@@ -293,7 +293,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
     }
     if(nextchar == 'e' || nextchar == 'E') {
         if(current_token.type == tokentype_zeroint) {
-            ERRORLEX("Number zero cannot have an exponent. Line: %d. ", Line_Number);
+            ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line: %d.\n", Line_Number);
         }
         current_token.type = tokentype_exponentialnum;
         current_token.value[index++] = (char) nextchar;
@@ -318,7 +318,7 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         current_token.value[index-1] == '-' ||
         current_token.value[index-1] == '+' )
         {
-        ERRORLEX("\nNumber incomplete on line %d. ", Line_Number);
+        ERRORLEX(ERR_LEX, "Number incomplete on line %d.\n", Line_Number);
     }       
     if(!isdigit(nextchar)) {
         ungetc(nextchar, input_file);
@@ -347,7 +347,7 @@ Token process_String_Token(FILE *input_file) {
             realloc_value(&current_token.value, &buffer_size);
         }
         if(nextchar == EOF) {
-            ERRORLEX("\nString incomplete on line %d. ", Line_Number);
+            ERRORLEX(ERR_LEX, "String incomplete on line %d.\n", Line_Number);
         }
 
         if(nextchar == 92) {
@@ -380,7 +380,7 @@ Token process_String_Token(FILE *input_file) {
                     hex_str[i] = nextchar;
                     }
                     else {
-                        ERRORLEX("\nHexadecimal number incorrect on line %d. ", Line_Number);
+                        ERRORLEX(ERR_LEX, "Hexadecimal number incorrect on line %d.\n", Line_Number);
                     }
                 }
                 long dec_value = strtol(hex_str, NULL, 16);
@@ -392,7 +392,7 @@ Token process_String_Token(FILE *input_file) {
                 index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value);
             }
             else {
-                ERRORLEX("\nEscape sequence incorrect on line %d. ", Line_Number);
+                ERRORLEX(ERR_LEX, "Escape sequence incorrect on line %d.\n", Line_Number);
             }
         }
         else {
@@ -400,7 +400,7 @@ Token process_String_Token(FILE *input_file) {
         }
     }
     if(nextchar == '\n') {
-        ERRORLEX("\nString incorrect on line %d .", Line_Number);
+        ERRORLEX(ERR_LEX, "String incorrect on line %d.\n", Line_Number);
     }
 
     current_token.value[index] = '\0';
@@ -424,7 +424,7 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     }
 
     else {
-        ERRORLEX("\nInvalid ID on line %d .", Line_Number);
+        ERRORLEX(ERR_LEX, "Invalid ID on line %d.\n", Line_Number);
     }
     
     current_token.value[index++] = firstchar;
@@ -461,7 +461,7 @@ Token process_Import(FILE *input_file) {
         nextchar = getc(input_file);
 
         if (nextchar != keyword[i]) {
-            ERRORLEX("\nImport incorrect on line %d .", Line_Number);  
+            ERRORLEX(ERR_LEX, "Import incorrect on line %d.\n", Line_Number);  
         }
         i++; 
     }
@@ -517,11 +517,11 @@ Token process_Multiline_String_Token(FILE *input_file) {
         current_token.value[index] = '\0';
     }
     else {
-        ERRORLEX("\nInvalid multiline string on line %d .", Line_Number);
+        ERRORLEX(ERR_LEX, "Invalid multiline string on line %d.\n", Line_Number);
     }
 
- //   printf("%s", current_token.value);
- //   printf("%d\n", current_token.type);
+    //printf("%s", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;
 }
