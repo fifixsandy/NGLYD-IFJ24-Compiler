@@ -33,7 +33,7 @@ extern precedence precedence_table[14][14];
 
 typedef struct control_items{
     bool is_nullable;
-    bool var_litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
+    bool litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
     bool is_convertable;
     dataType type;
 } control_items;
