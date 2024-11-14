@@ -14,6 +14,20 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define DEBUG
+#ifdef DEBUG
+    #ifndef DEBPRINT(...) 
+    #define DEBPRINT(...) \
+        fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
+        fprintf(stderr, __VA_ARGS__);
+    #endif
+#else
+    #ifndef DEBPRINT(...) 
+    #define DEBPRINT(...) 
+    #endif
+#endif
+
+
 typedef struct Buffer_node{
     char *str;
     struct Buffer_node *next;

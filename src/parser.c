@@ -29,14 +29,10 @@ bool prog(bool firstTraverse){
 
     ASTree.root = createRootNode(); // initialize ASTree
 
-    // RULE 1 <prog> -> <prolog> <code> <next_code> // EOF MBY
+    // RULE 1 <prog> -> <prolog> <code> // EOF MBY
     if(currentToken.type == tokentype_kw_const){
         if(prolog()){
             code(firstTraverse);
-                DEBPRINT("%d HIER HOER HIER\n", currentToken.type);
-                if(next_code(firstTraverse)){
-                    correct = true;
-                }
         }
     }
     else if(currentToken.type == tokentype_EOF){
@@ -48,6 +44,7 @@ bool prog(bool firstTraverse){
         allUsed(funSymtable->rootPtr); // check if all functions defined were also used in program
     }
     
+    DEBPRINT("\n\nEND OF TRAVERSE %d\n\n", firstTraverse);
     return correct;
 }
 
@@ -99,30 +96,16 @@ bool prolog(){
 bool code(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d\n",currentToken.type);
-    // RULE 3 <code> -> <def_func>
+    // RULE 3 <code> -> <def_func> <code>
     if(currentToken.type == tokentype_kw_pub){
         correct = def_func(firstTraverse);
+        code(firstTraverse);
     }
-    else{
-        ERROR(ERR_SYNTAX, "Expected: \"pub\"\n");
-    }
-    DEBPRINT("%d %d\n", correct, currentToken.type);
-    return correct;
-}
-
-bool next_code(bool firstTraverse){
-    bool correct = false;
-    DEBPRINT("%d\n", currentToken.type);
-    // RULE 4 <next_code> -> <code>
-    if(currentToken.type == tokentype_kw_pub){ 
-        correct = code(firstTraverse);
-    }
-    // RULE 5 <next_code> -> ε
+    // RULE 4 <code> -> ε
     else if(currentToken.type == tokentype_EOF){
         correct = true;
-    }
-    else{ERROR(ERR_SYNTAX, "Expected: \"pub\" or EOF\n");}
-    DEBPRINT("%d\n", correct);
+    }else{ERROR(ERR_SYNTAX, "Expected: \"pub\"\n");}
+    DEBPRINT("%d %d\n", correct, currentToken.type);
     return correct;
 }
 
@@ -146,7 +129,7 @@ bool def_func(bool firstTraverse){
 
     symNode *functionEntry = NULL;
 
-    // RULE 6 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
+    // RULE 5 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
     if(currentToken.type != tokentype_kw_pub){
         ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");
     }
@@ -267,7 +250,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
     varData  entryVarData = {.inheritedType = 0, .isConst = 1}; // parameter has to be const and can't have inherited type
     symData  entryData    = {.varOrFun = 0};
 
-    // RULE 7 <params> -> id : <type> <params_n>
+    // RULE 6 <params> -> id : <type> <params_n>
     if(currentToken.type == tokentype_id){
         DEBPRINT("%s  %d\n", currentToken.value, currentToken.type);
 
@@ -298,7 +281,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
         
     }
 
-    // RULE 8 <params> -> ε
+    // RULE 7 <params> -> ε
     else if(currentToken.type == tokentype_rbracket){
         return true;
     }
@@ -310,12 +293,12 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
 // TODO CHECK THIS WHOLE FUNCTION
 bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
     bool correct = false;
-    // RULE 9 <params_n> -> , <params>
+    // RULE 8 <params_n> -> , <params>
     if(currentToken.type == tokentype_comma){
         GT
         correct = params(paramNum, paramTypes, paramNames);
     }
-    // RULE 10 <params_n> -> ε
+    // RULE 9 <params_n> -> ε
     else if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
@@ -342,7 +325,7 @@ bool def_variable(astNode *block){
     astNode *varAstNode = createAstNode(); // allocate new ast node with no representation yet
     astNode *exprNode   = createAstNode();
     
-    // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
+    // RULE 10 <def_variable> -> <varorconst> id <type_var_def> = expression ;
     if(currentToken.type != tokentype_kw_const && currentToken.type != tokentype_kw_var){
         ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");
     } 
@@ -386,19 +369,32 @@ bool def_variable(astNode *block){
 
         GT
         
-        if(variData.inheritedType == true){
-            if(exprNode->nodeRep.exprNode.exprTree->type == AST_NODE_LITERAL){
-                if(exprNode->nodeRep.exprNode.exprTree->nodeRep.literalNode.dataT == null_){
-                    ERROR(ERR_SEM_INHERIT, "Data type for variable \"%s\" cannot be deduced from \"null\".\n", varName);
-                }
+        bool literalIsNull = false;
+
+        if(exprNode->nodeRep.exprNode.exprTree->type == AST_NODE_LITERAL){
+            if(exprNode->nodeRep.exprNode.exprTree->nodeRep.literalNode.dataT == null_){
+                literalIsNull = true;
             }
-            variData.type = exprNode->nodeRep.exprNode.dataT;
+        }
+
+        if(variData.inheritedType == true){
+            if(literalIsNull){
+                ERROR(ERR_SEM_INHERIT, "Data type for variable \"%s\" cannot be deduced from \"null\".\n", varName);
+            }
+
+            variData.type          = exprNode->nodeRep.exprNode.dataT;
+            variData.isNullable    = exprNode->nodeRep.exprNode.isNullable;
             variData.inheritedType = false;
         }
         else{
-            if(variData.type != exprNode->nodeRep.exprNode.dataT){
+            if(!variData.isNullable && exprNode->nodeRep.exprNode.isNullable){
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.isNullable);
+            }
+            if(literalIsNull){}
+            else if(variData.type != exprNode->nodeRep.exprNode.dataT){
                 ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.dataT);
             }
+
         }
 
         entryData.data.vData = variData;
@@ -416,13 +412,13 @@ bool def_variable(astNode *block){
 bool varorconst(bool *isConst){
     bool correct = false;
     DEBPRINT("   %d\n", currentToken.type);
-    // RULE 12 <varorconst> -> const
+    // RULE 11 <varorconst> -> const
     if(currentToken.type == tokentype_kw_const){ 
         *isConst = 1;
             correct  = true;
         GT
     }
-    // RULE 13 <varorconst> -> var
+    // RULE 12 <varorconst> -> var
     else if(currentToken.type == tokentype_kw_var){ 
         *isConst = 0;
         correct = true;
@@ -442,7 +438,7 @@ bool unused_decl(astNode *block){
     astNode *newUnused = createAstNode();
     astNode *expr      = createAstNode();
 
-    // RULE 14 <unused_decl> -> _ = expression ;
+    // RULE 13 <unused_decl> -> _ = expression ;
     if(currentToken.type == tokentype_pseudovar){
         GT
         if(currentToken.type == tokentype_assign){
@@ -467,19 +463,19 @@ bool unused_decl(astNode *block){
 bool type_normal(dataType *datatype){
     bool correct = false;
     DEBPRINT("  %d\n", currentToken.type);
-    // RULE 15 <type_normal> -> i32
+    // RULE 14 <type_normal> -> i32
     if(currentToken.type == tokentype_kw_i32){ 
         *datatype = i32;
         correct = true;
         GT
     }
-    // RULE 16 <type_normal> -> f64
+    // RULE 15 <type_normal> -> f64
     else if(currentToken.type == tokentype_kw_f64){
         *datatype = f64;
         correct = true;
         GT
     }
-    // RULE 17 <type_normal> -> [ ] u8
+    // RULE 16 <type_normal> -> [ ] u8
     else if(currentToken.type == tokentype_lsbracket){
         GT
         if(currentToken.type == tokentype_rsbracket)
@@ -498,7 +494,7 @@ DEBPRINT(" %d\n", correct);
 
 bool type_null(dataType *datatype){
     bool correct = false;
-    // RULE 18 <type_null> -> ? <type_normal>
+    // RULE 17 <type_null> -> ? <type_normal>
     if(currentToken.type == tokentype_nullid){
         GT
         correct = type_normal(datatype);
@@ -509,14 +505,14 @@ bool type_null(dataType *datatype){
 
 bool type(bool *nullable, dataType *datatype){
     bool correct = false;
-    // RULE 19 <type> -> <type_normal>
+    // RULE 18 <type> -> <type_normal>
     if(currentToken.type == tokentype_kw_f64 || 
        currentToken.type == tokentype_kw_i32 ||
        currentToken.type == tokentype_lsbracket){ 
         correct = type_normal(datatype);
         *nullable = false;
     }
-    // RULE 20 <type> -> <type_null>
+    // RULE 19 <type> -> <type_null>
     else if(currentToken.type == tokentype_nullid){
         *nullable = true;
         correct = type_null(datatype);
@@ -527,7 +523,7 @@ bool type(bool *nullable, dataType *datatype){
 
 bool type_func_ret(bool *nullable, dataType *datatype){
     bool correct = false;
-    // RULE 21 <type_func_ret> -> <type>
+    // RULE 20 <type_func_ret> -> <type>
     DEBPRINT(" %d\n", currentToken.type);
     if(currentToken.type  == tokentype_kw_i32    ||
         currentToken.type == tokentype_kw_f64    ||
@@ -537,7 +533,7 @@ bool type_func_ret(bool *nullable, dataType *datatype){
         correct = type(nullable , datatype);
 
     }
-    // RULE 22 <type_func_ret> -> void
+    // RULE 21 <type_func_ret> -> void
     else if(currentToken.type == tokentype_kw_void){ 
         correct = true;
         *datatype = void_;
@@ -549,7 +545,7 @@ DEBPRINT(" %d\n", correct);
 
 bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
     bool correct = false;
-    // RULE 23 <type_var_def> -> : <type>
+    // RULE 22 <type_var_def> -> : <type>
     DEBPRINT(" %d\n", currentToken.type);
     if(currentToken.type == tokentype_colon){
         *inheritedDType = false;
@@ -561,7 +557,7 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
             correct = type(nullable, datatype);
         }
     }
-    // RULE 24 <type_var_def> -> ε
+    // RULE 23 <type_var_def> -> ε
     else if(currentToken.type == tokentype_assign){
         correct = true;
         *inheritedDType = true;
@@ -573,30 +569,30 @@ DEBPRINT(" %d\n", correct);
 
 bool st(dataType expReturnType, astNode *block){
     bool correct = false;
-    // RULE 34 <st> -> <def_variable>
+    // RULE 33 <st> -> <def_variable>
     if(currentToken.type == tokentype_kw_const ||
        currentToken.type == tokentype_kw_var){
 
         correct = def_variable(block);
     }
-    // RULE 35 <st> -> <assign_or_f_call>
+    // RULE 34 <st> -> <assign_or_f_call>
     else if(currentToken.type == tokentype_id){
         DEBPRINT("%s\n", currentToken.value);
         correct = assign_or_f_call(block);
     }
-    // RULE 36 <st> -> <unused_decl>
+    // RULE 35 <st> -> <unused_decl>
     else if(currentToken.type == tokentype_pseudovar){
         correct = unused_decl(block);
     }
-    // <st> RULE 37 -> <while_statement>
+    // <st> RULE 36 -> <while_statement>
     else if(currentToken.type == tokentype_kw_while){ 
         correct = while_statement(expReturnType, block);
     }
-    // <st> RULE 38 -> <if_statement>
+    // <st> RULE 37 -> <if_statement>
     else if(currentToken.type == tokentype_kw_if){ 
         correct = if_statement(expReturnType, block);
     }
-    // <st> RULE 39 -> <return>
+    // <st> RULE 38 -> <return>
     else if(currentToken.type == tokentype_kw_return){ 
         correct = return_(expReturnType, block);
     }
@@ -608,12 +604,12 @@ bool st(dataType expReturnType, astNode *block){
 
 bool body(dataType returnType, astNode *block){
     bool correct = false;
-    // RULE 40 <body> -> ε
+    // RULE 39 <body> -> ε
     DEBPRINT("   %d \n", currentToken.type);
     if(currentToken.type == tokentype_rcbracket){
         correct = true;
     }
-    // RULE 41 <body> -> <st> <body>
+    // RULE 40 <body> -> <st> <body>
     else if(currentToken.type == tokentype_kw_const  || 
             currentToken.type == tokentype_kw_var    ||
             currentToken.type == tokentype_kw_while  ||
@@ -638,7 +634,7 @@ bool return_(dataType expReturnType, astNode *block){
     astNode *exprNode   = createAstNode(); // allocate empty node
     astNode *returnNode = createAstNode(); 
 
-    // RULE 42 <return> -> return <exp_func_ret> ;
+    // RULE 41 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
         GT
         if(exp_func_ret(expReturnType, &exprNode)){
@@ -658,7 +654,7 @@ bool return_(dataType expReturnType, astNode *block){
 
 bool exp_func_ret(dataType expRetType, astNode **exprNode){
     bool correct = false;
-    // RULE 43 <exp_func_ret> -> ε
+    // RULE 42 <exp_func_ret> -> ε
     DEBPRINT("expected %d\n", expRetType);
     if(currentToken.type == tokentype_semicolon){
         if(expRetType == void_){
@@ -670,7 +666,7 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
         }
         
     }
-    // RULE 44 <exp_func_ret> -> expression
+    // RULE 43 <exp_func_ret> -> expression
     else{
         correct = expression(*exprNode); // TODO EXPRESSION
         dataType exprType = (*exprNode)->nodeRep.exprNode.dataT;
@@ -684,7 +680,7 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
 
 bool id_without_null(bool *withNull, char **id_wout_null){
     bool correct = false;
-    // RULE 45 <id_without_null> -> | id |
+    // RULE 44 <id_without_null> -> | id |
     if(currentToken.type == tokentype_vbar){
         GT
         if(currentToken.type == tokentype_id){
@@ -705,7 +701,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             GT
         }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
     }
-    // RULE 46 <id_without_null> -> ε
+    // RULE 45 <id_without_null> -> ε
     else if(currentToken.type == tokentype_lcbracket){
         *withNull     = false;
         *id_wout_null = NULL;
@@ -731,7 +727,7 @@ bool while_statement(dataType expRetType, astNode *block){
     symtable *whileSymTable = createSymtable();
     push(&symtableStack, whileSymTable);
 
-    // RULE 47 <while_statement> -> while ( expression ) <id_without_null> { <body> }
+    // RULE 46 <while_statement> -> while ( expression ) <id_without_null> { <body> }
     if(currentToken.type == tokentype_kw_while){ 
         GT
         if(currentToken.type == tokentype_lbracket){
@@ -794,7 +790,7 @@ bool if_statement(dataType expRetType, astNode *block){
     // create new scope for else, don't push it yet, will be pushed after IF is processed
     symtable *symtableForElse = createSymtable();
 
-    // RULE 48 <if_statement> -> if ( expression ) <id_without_null> { <body> } else { <body> } 
+    // RULE 47 <if_statement> -> if ( expression ) <id_without_null> { <body> } else { <body> } 
     if(currentToken.type == tokentype_kw_if){ 
             GT
         if(currentToken.type == tokentype_lbracket){
@@ -853,11 +849,11 @@ bool if_statement(dataType expRetType, astNode *block){
 bool expr_params(astNode **params, int *paramCnt){
     bool correct = false;
     astNode *expr = createAstNode();
-    // RULE 26 <expr_params> -> ε
+    // RULE 25 <expr_params> -> ε
     if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
-    // RULE 25 <expr_params> -> expression <expr_params_n>
+    // RULE 24 <expr_params> -> expression <expr_params_n>
     else if(expression(expr)){ // TODO EXPRESSION
 
         params[*paramCnt] = expr;
@@ -871,12 +867,12 @@ DEBPRINT(" %d\n", correct);
 
 bool expr_params_n(astNode **params, int *paramCnt){
     bool correct = false;
-    // RULE 27 <expr_params_n> -> , <expr_params> // TODO CHECK THIS
+    // RULE 26 <expr_params_n> -> , <expr_params> // TODO CHECK THIS
     if(currentToken.type == tokentype_comma){
         GT
         correct = expr_params(params, paramCnt);
     }
-    // RULE 28 <expr_params_n> -> ε 
+    // RULE 27 <expr_params_n> -> ε 
     else if(currentToken.type == tokentype_rbracket){
         correct = true;
     }else{ERROR(ERR_SYNTAX, "Expected: \",\" or \")\" .\n");}
@@ -886,7 +882,7 @@ bool expr_params_n(astNode **params, int *paramCnt){
 
 bool after_id(char *id, astNode *block){
     bool correct = false;
-    // RULE 29 <after_id> -> = expression ;
+    // RULE 28 <after_id> -> = expression ;
     if(currentToken.type == tokentype_assign){
         astNode *newAssNode    = createAstNode();
         astNode *newAssExpNode = createAstNode();
@@ -912,7 +908,7 @@ bool after_id(char *id, astNode *block){
         createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
         connectToBlock(newAssNode, block);
     }
-    // RULE 30 <after_id> -> <builtin> ( <expr_params> )  ; 
+    // RULE 29 <after_id> -> <builtin> ( <expr_params> )  ; 
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
         DEBPRINT("KAKAKA %d %s\n", currentToken.type, id);
         astNode *newFCallNode = createAstNode();
@@ -957,6 +953,11 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         int paramCnt            = 0;
         char *betterID = NULL;
         builtin(id, &entry, &builtinCall, &betterID);
+                
+        if(entry == NULL){
+            ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", id);
+        }
+
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params(exprParamsArr, &paramCnt)){
@@ -965,10 +966,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
                 }
             }
         
-        
-        if(entry == NULL){
-            ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", id);
-        }
+
         // already defined user function or builtin function was called, semantic check of the parameters and return type
         if(entry->data.data.fData.returnType != void_ && !inExpr){
             ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
@@ -995,7 +993,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
 
 bool assign_or_f_call(astNode *block){
     bool correct = false;
-    // RULE 31 <assign_or_f_call> -> id <after_id>
+    // RULE 30 <assign_or_f_call> -> id <after_id>
     DEBPRINT("AJ EM ID %d\n", currentToken.type);
     if(currentToken.type == tokentype_id){
         char *id = currentToken.value;
@@ -1009,7 +1007,7 @@ bool assign_or_f_call(astNode *block){
 
 bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterID){
     bool correct = false;
-    // RULE 32 <builtin> -> . id
+    // RULE 31 <builtin> -> . id
     DEBPRINT("NOT DOT %d\n", currentToken.type);
     if(currentToken.type == tokentype_dot){
         
@@ -1026,7 +1024,7 @@ bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterI
             GT
         }else{ERROR(ERR_SYNTAX, "Expected: builtin id.\n");}
     }
-    // RULE 33 <builtin> -> ε
+    // RULE 32 <builtin> -> ε
     else if(currentToken.type == tokentype_lbracket){
         *symtableNode = findSymNode(funSymtable->rootPtr, id);
         correct = true;

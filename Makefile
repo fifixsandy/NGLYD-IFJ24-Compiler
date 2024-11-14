@@ -76,12 +76,13 @@ run_tests: $(TESTBINS)
 	done
 
 # Run the main executable
-run: $(NAME) $(IFJCODE)
-	./$(NAME) > $(IFJCODE)
 
-# Run the main executable
-zig: $(IFJCODE)
-	./zig $(IFJCODE)
+ $(IFJCODE):
+	touch $(IFJCODE)
+
+run: $(NAME)
+	./$(NAME) > $(IFJCODE)
+	./ic24int $(IFJCODE)
 
 # Phony targets
 .PHONY: all clean test run_tests run
