@@ -358,6 +358,7 @@ bool def_variable(astNode *block){
 
         variData.isConst = isConst;
         entryData.used = false;
+        entryData.changed = false;
         entryData.varOrFun = 0;
 
         GT
@@ -730,6 +731,9 @@ bool while_statement(dataType expRetType, astNode *block){
                 if(currentToken.type == tokentype_rbracket){
                     GT
                     if(id_without_null(&withNull, &id_wout_null)){
+
+                        // TODO check correct expression in condExprNode
+
                         if(currentToken.type == tokentype_lcbracket){
                             GT
                             if(body(expRetType, bodyAstNode)){
@@ -785,9 +789,13 @@ bool if_statement(dataType expRetType, astNode *block){
         if(currentToken.type == tokentype_lbracket){
             GT
         if(expression(condExrpNode)){ // TODO EXPRESSION
+
         if(currentToken.type == tokentype_rbracket){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
+
+            // TODO check correct expression in condExprNode
+
         if(currentToken.type == tokentype_lcbracket){
             GT
         if(body(expRetType, ifNode)){
@@ -888,7 +896,8 @@ bool after_id(char *id, astNode *block){
         expressionDT = newAssExpNode->nodeRep.exprNode.dataT;
         if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\" %d.\n", id, expressionDT);}
 
-        entry->data.used = true;
+        entry->data.used    = true;
+        entry->data.changed = true;
         createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
         connectToBlock(newAssNode, block);
     }
@@ -1076,6 +1085,10 @@ void allUsed(symNode *root){
                 ERROR(ERR_SEM_UNUSED, "Function \"%s\" defined but not used in a program.\n", root->key);
             }
         }
+
+        if(root->data.varOrFun == 0 && !root->data.data.vData.isConst && !root->data.changed){
+            ERROR(ERR_SEM_UNUSED, "Modifiable variable \"%s\" has no chance of changing after initialization.\n", root->key);
+        }
         allUsed(root->l);
         allUsed(root->r);
     }
@@ -1203,34 +1216,6 @@ symNode *checkBuiltinId(char *id){
 
 }
 
-
-/**
- * @brief               Inserts incomplete description of a function to funSymtable.
- *         
- *                      This function should be used when function is used in a program before it is defined.
- * 
- * @param funID         Name of the function.
- * @param paramTypes    Array of expected dataTypes of parameters.
- * @param returnType    Expected dataType of return of the function.
- * @param nullableRType Flag, whether return value can be null.
- * @param paramNum      Number of parameters.
- */
-void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnType, bool nullableRType, int paramNum){
-
-    funData fData = {.defined = false,
-                     .nullableRType = nullableRType,
-                     .paramNames = NULL,
-                     .paramTypes = paramTypes,
-                     .paramNum = paramNum,
-                     .returnType = returnType,
-                     .tbPtr = NULL};
-
-    symData sData = {.data.fData = fData,
-                    .used = true,
-                    .varOrFun = 1};
-    insertSymNode(funSymtable, funID, sData);
-
-}
 
 
 /* EOF parser.c */

@@ -60,6 +60,7 @@ typedef struct varData{
 
     bool varOrFun; // 0 if var, 1 if fun
     bool used;
+    bool changed;
 
     union{
       funData fData;
