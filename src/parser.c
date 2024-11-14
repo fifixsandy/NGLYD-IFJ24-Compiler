@@ -392,7 +392,7 @@ bool def_variable(astNode *block){
         }
         else{
             if(variData.type != exprNode->nodeRep.exprNode.dataT){
-                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", varName);
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.dataT);
             }
         }
 
@@ -914,7 +914,7 @@ bool after_id(char *id, astNode *block){
         if(currentToken.type != tokentype_semicolon){
             ERROR(ERR_SYNTAX, "Expected: \";\" after calling function \"%s\".\n", id);
         }
-
+        GT
         connectToBlock(newFCallNode, block);
         correct = true;
         

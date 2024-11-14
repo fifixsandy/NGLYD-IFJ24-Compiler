@@ -138,6 +138,7 @@ bool expression(astNode *expr_node){
     exp_stack_push(estack, NULL, STOP);
 
     if(process_expr(estack)){
+        DEBPRINT("AHOJ MOJ typ JE %d a token %d\n ", estack->top->node->nodeRep.funcCallNode.retType, currentToken.type);
         astNode *final_exp = exp_stack_pop(estack);
         
         createExpressionNode(expr_node, what_type(final_exp), final_exp); 
@@ -203,12 +204,13 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control){
     }
     precedence compare = precedence_table[top_term][curr_symb];
     if(compare == LS || compare == EQ){
+        fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
         exp_stack_push(estack, curr_node, curr_symb);
         estack->top->control = control;
         return 0;
     }
     else if(compare == GR){
-        //fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
+        
         reduce(estack);
         return shift(estack, curr_node, control);
     }
@@ -388,6 +390,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
                     control->litconst = false;
+                    
                     return ID;
                 }
                 else{
@@ -422,6 +425,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->type = null_;
             control->litconst = true;
             control->is_convertable = false;
+            return ID;
 
 
         default:
@@ -437,6 +441,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
 dataType what_type(astNode *elemnt_node){
     switch(elemnt_node->type){
+        /*
         case AST_NODE_VAR :
             return elemnt_node->nodeRep.varNode.dataT;
 
@@ -446,8 +451,11 @@ dataType what_type(astNode *elemnt_node){
         case AST_NODE_BINOP :
             return elemnt_node->nodeRep.binOpNode.dataT;
 
+        case AST_NODE_FUNC_CALL:
+            return elemnt_node->nodeRep.funcCallNode.retType;
+*/
         default:
-            return void_;
+            return i32 ;
 
     }
 }
