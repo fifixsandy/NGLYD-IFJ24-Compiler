@@ -19,6 +19,9 @@
 extern Token currentToken;
 extern AST   ASTree;
 
+
+astNode *parser();
+
 bool prog(bool firstTraverse);
 bool prolog();
 bool code(bool firstTraverse);

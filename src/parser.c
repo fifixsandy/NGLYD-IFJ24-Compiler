@@ -23,6 +23,7 @@
 
 
 bool prog(bool firstTraverse){
+    GT
     bool correct = false;
     DEBPRINT("%d\n", currentToken.type);
 
@@ -206,7 +207,6 @@ bool def_func(bool firstTraverse){
         }
     }
     else{
-        printf("HEREHEHEHEHEHEHEHEHEHE\n");
         body(returnType, bodyAstRoot);
         if(currentToken.type != tokentype_rcbracket){
             ERROR(ERR_SYNTAX, "aExpected: %d\"}\".\n",currentToken.type);
@@ -1231,6 +1231,17 @@ symNode *checkBuiltinId(char *id){
 
 }
 
+astNode *parser(){
+    initStack(&symtableStack);
+    prepareBuiltinSymtable();
+    funSymtable = createSymtable();
+
+    prog(true);
+    reset_scanner();
+    prog(false);
+
+    return ASTree.root;
+}
 
 
 /* EOF parser.c */
