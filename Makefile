@@ -78,9 +78,6 @@ run_tests: $(TESTBINS)
 # Run the main executable
 run: $(NAME) $(IFJCODE)
 	./$(NAME) > $(IFJCODE)
-
-# Run the main executable
-ic: $(IFJCODE)
 	./ic24int $(IFJCODE)
 
 # Phony targets
