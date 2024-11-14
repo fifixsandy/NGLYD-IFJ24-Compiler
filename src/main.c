@@ -11,13 +11,19 @@ int main(){
     initStack(&symtableStack);
     funSymtable = createSymtable();
     input_file = fopen("file.txt", "r");
+    prepareBuiltinSymtable();
     GT
     //prog();
-    DEBPRINT("%d\n", prog());
+    DEBPRINT("%d\n", prog(true));
+    printf("INHERE %d\n", findSymNode(funSymtable->rootPtr, "main") == NULL);
+    fclose(input_file);
+    input_file = fopen("file.txt", "r");
+    GT
+    DEBPRINT("%d\n", prog(false));
     //DEBPRINT("\n\n");
-    astNode * rootTree = ASTree.root;
+    //astNode * rootTree = ASTree.root;
     //printf("\n\nHERE WE GO\n\n");
-    printf("%s \n",rootTree->next->next->nodeRep.defFuncNode.body->next->nodeRep.funcCallNode.id);
+    //printf("here boy%d \n",rootTree->next->next->nodeRep.defFuncNode.body->next->nodeRep.funcCallNode.paramNum);
 
     //generate_code(rootTree);
 }
