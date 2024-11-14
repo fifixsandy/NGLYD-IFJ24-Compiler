@@ -113,4 +113,6 @@ void add_value_pointer(char *value);
 
 void free_all_values();
 
+void reset_scanner();
+
 #endif

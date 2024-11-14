@@ -16,8 +16,7 @@ int main(){
     //prog();
     DEBPRINT("%d\n", prog(true));
     printf("INHERE %d\n", findSymNode(funSymtable->rootPtr, "main") == NULL);
-    fclose(input_file);
-    input_file = fopen("file.txt", "r");
+    reset_scanner();
     GT
     DEBPRINT("%d\n", prog(false));
     //DEBPRINT("\n\n");
