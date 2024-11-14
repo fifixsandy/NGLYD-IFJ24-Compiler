@@ -220,8 +220,6 @@ bool def_func(bool firstTraverse){
         allUsed(symtableFun->rootPtr); // perform semantic check of used variables
     }
 
-    // to avoid error raised by allUsed() that main was not used
-
     if(firstTraverse){
 
         entryData.tbPtr         = symtableFun;
@@ -253,8 +251,8 @@ bool def_func(bool firstTraverse){
         connectToBlock(funcAstNode, ASTree.root);
     }
 
-    symNode *test = findSymNode(funSymtable->rootPtr, funID);
-    DEBPRINT(" %s WAS USED %d\n",funID, test->data.used);
+    //symNode *test = findSymNode(funSymtable->rootPtr, funID);
+    //DEBPRINT(" %s WAS USED %d\n",funID, test->data.used);
     return correct;
 }
 
@@ -278,29 +276,32 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
         if(entry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",paramID);} // TODO SEMANTIC ERROR 5
         
         GT
-        if(currentToken.type == tokentype_colon){
-            GT
 
-            if(type(&nullable, &paramType)){
-          
-                // all information are known, set them accordingly
-                (*paramNames)[*paramNum]  = paramID;
-                (*paramTypes)[*paramNum]  = paramType;
-                entryVarData.type       = paramType;
-                entryVarData.isNullable = nullable;
-                (*paramNum)++;
-                entryData.data.vData    = entryVarData,
-                insertSymNode(symtableStack.top->tbPtr, paramID, entryData);
-
-                correct = params_n(paramNum, paramTypes, paramNames);
-            }
+        if(currentToken.type != tokentype_colon){
+            ERROR(ERR_SYNTAX, "Expected: \":\"\n");
         }
+
+        GT
+
+        type(&nullable, &paramType) ;       
+        // all information are known, set them accordingly
+        (*paramNames)[*paramNum]  = paramID;
+        (*paramTypes)[*paramNum]  = paramType;
+        entryVarData.type       = paramType;
+        entryVarData.isNullable = nullable;
+        (*paramNum)++;
+        entryData.data.vData    = entryVarData,
+        insertSymNode(symtableStack.top->tbPtr, paramID, entryData);
+
+        correct = params_n(paramNum, paramTypes, paramNames);
+        
     }
 
     // RULE 8 <params> -> ε
     else if(currentToken.type == tokentype_rbracket){
-        correct = true; 
-    }else{ERROR(ERR_SYNTAX, "Expected: id or \")\".\n");}
+        return true;
+    }
+    else{ERROR(ERR_SYNTAX, "Expected: id or \")\".\n");}
     DEBPRINT(" %d\n", correct);
     return correct;
 }
@@ -317,7 +318,9 @@ bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
     else if(currentToken.type == tokentype_rbracket){
         correct = true;
     }
-    else{ERROR(ERR_SYNTAX, "Expected: \",\" or \")\".\n");}
+    else{
+        ERROR(ERR_SYNTAX, "Expected: \",\" or \")\".\n");
+    }
     DEBPRINT("%d\n", correct);
     return correct;
 }
@@ -339,63 +342,68 @@ bool def_variable(astNode *block){
     astNode *exprNode   = createAstNode();
     
     // RULE 11 <def_variable> -> <varorconst> id <type_var_def> = expression ;
-    if(currentToken.type == tokentype_kw_const || currentToken.type == tokentype_kw_var){ 
+    if(currentToken.type != tokentype_kw_const && currentToken.type != tokentype_kw_var){
+        ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");
+    } 
         
-        if(varorconst(&isConst)){
-            DEBPRINT(" %d %s\n", currentToken.type, currentToken.value);
-            if(currentToken.type == tokentype_id){
+    varorconst(&isConst);
+    DEBPRINT(" %d %s\n", currentToken.type, currentToken.value);
+    if(currentToken.type != tokentype_id){
+        ERROR(ERR_SYNTAX, "Expected id.\n");
+    }
 
-                varName = currentToken.value;
-                symNode *varEntry = findInStack(&symtableStack, varName);
-                if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);} // TODO SEMANTIC error 5 redefinition
+        varName = currentToken.value;
+        symNode *varEntry = findInStack(&symtableStack, varName);
+        if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);} // TODO SEMANTIC error 5 redefinition
 
-                variData.isConst = isConst;
-                entryData.used = false;
-                entryData.varOrFun = 0;
+        variData.isConst = isConst;
+        entryData.used = false;
+        entryData.varOrFun = 0;
+
+        GT
+
+        type_var_def(&nullable, &varType, &inheritedType);
+
+        DEBPRINT("%d \n", currentToken.type); 
+
+        variData.inheritedType = inheritedType;
+        variData.isNullable    = nullable;
+        variData.type          = varType;
+
+        if(currentToken.type != tokentype_assign){
+            ERROR(ERR_SYNTAX, "Expected: \"=\".\n");
+        }
         
-                GT
+        GT
 
-                type_var_def(&nullable, &varType, &inheritedType);
-                    DEBPRINT("%d \n", currentToken.type); 
+        expression(exprNode); // TODO EXPRESSION
 
-                    variData.inheritedType = inheritedType;
-                    variData.isNullable    = nullable;
-                    variData.type          = varType;
+        if(currentToken.type != tokentype_semicolon){
+            ERROR(ERR_SYNTAX, "Expected \";\".\n");
+        }
 
-                if(currentToken.type == tokentype_assign){
-                    GT
-                    if(expression(exprNode)){ // TODO EXPRESSION
-                        //DEBPRINT("KIUFHWIUHEFUI %d, %d, %d, %f\n",exprNode->type, exprNode->nodeRep.exprNode.exprTree->type, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.op, exprNode->nodeRep.exprNode.exprTree->nodeRep.binOpNode.left->nodeRep.literalNode.value.floatData);
-                        if(currentToken.type == tokentype_semicolon){
-                            correct = true;
-                        }else{ERROR(ERR_SYNTAX, "Expected \";\".\n");}
-                        GT
-                    }
-                }
+        GT
+        
+        if(variData.inheritedType == true){
+            variData.type = exprNode->nodeRep.exprNode.dataT;
+            variData.inheritedType = false;
+        }
+        else{
+            if(variData.type != exprNode->nodeRep.exprNode.dataT){
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", varName);
+            }
+        }
 
-                
-                if(variData.inheritedType == true){
-                    variData.type = exprNode->nodeRep.exprNode.dataT;
-                    variData.inheritedType = false;
-                }
-                else{
-                    if(variData.type != exprNode->nodeRep.exprNode.dataT){
-                        ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", varName);
-                    }
-                }
-                entryData.data.vData = variData;
-                insertSymNode(symtableStack.top->tbPtr, varName, entryData);
+        entryData.data.vData = variData;
+        insertSymNode(symtableStack.top->tbPtr, varName, entryData);
 
-                varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
+        varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
 
-                createDefVarNode(varAstNode ,varName, exprNode, varEntry, block); // create the correct representation
-                connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
+        createDefVarNode(varAstNode ,varName, exprNode, varEntry, block); // create the correct representation
+        connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
 
-                }
-                }else{ERROR(ERR_SYNTAX, "Expected: id .\n");}
-                }else{ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");}
     DEBPRINT(" %d\n", correct);
-    return correct;
+    return true;
 }
 
 bool varorconst(bool *isConst){
@@ -412,7 +420,10 @@ bool varorconst(bool *isConst){
         *isConst = 0;
         correct = true;
         GT
-    }else{ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");}
+    }
+    else{
+        ERROR(ERR_SYNTAX, "Expected: \"const\" or \"var\".\n");
+    }
     DEBPRINT(" %d %s\n", correct, currentToken.value);
     return correct;
 }
@@ -1181,6 +1192,7 @@ bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, in
 }
 
 symNode *checkBuiltinId(char *id){
+    printf("hjehehehe %d \n", id==NULL);
     symNode *symtableNode = findSymNode(builtinSymtable->rootPtr, id);
     if(symtableNode == NULL){
         ERROR(ERR_SEM_UNDEF, "Builtin function with id \"%s\" does not exist.", id);
