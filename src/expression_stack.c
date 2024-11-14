@@ -369,7 +369,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 GT
                 if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
                     
-                    funCallHandle(id, node);
+                    funCallHandle(id, node, true);
                 }
                 else{
                     ERROR(ERR_SYNTAX, ("Unexpected Token\n")); //TODO ERRROR

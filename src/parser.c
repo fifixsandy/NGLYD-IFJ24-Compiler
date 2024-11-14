@@ -867,7 +867,7 @@ bool after_id(char *id, astNode *block){
             GT
         }
         expressionDT = newAssExpNode->nodeRep.exprNode.dataT;
-        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", id);}
+        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\" %d.\n", id, expressionDT);}
 
         entry->data.used = true;
         createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
@@ -877,7 +877,7 @@ bool after_id(char *id, astNode *block){
     else if(currentToken.type == tokentype_dot || currentToken.type == tokentype_lbracket){
 
         astNode *newFCallNode = createAstNode();
-        funCallHandle(id, newFCallNode);
+        funCallHandle(id, newFCallNode, false);
         connectToBlock(newFCallNode, block);
         
         DEBPRINT("Created call %s %s\n",id, block->nodeRep.defFuncNode.id);
