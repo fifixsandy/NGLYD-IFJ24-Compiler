@@ -982,7 +982,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
         }
         DEBPRINT("BETTER %s\n", betterID);
-        createFuncCallNode(node, betterID, void_, builtinCall, entry, NULL, exprParamsArr, paramCnt);
+        createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt);
         DEBPRINT("DEBAG %s\n", node->nodeRep.funcCallNode.id);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
