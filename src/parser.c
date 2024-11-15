@@ -8,15 +8,17 @@
  *         
  *         Functionalities: 
  *                          - checking correct order of tokens created from input by scanner
- *                          - building abstract semantic tree described in ast.h for code generator
+ *                          - building abstract syntactic tree described in ast.h for code generator
  *                          - performing semantic checks (such as undefined variable, correctness of main function...)
  * 
  *         When an expression is encountered, control is given to expression parser.
+ *         When an error occurs, ERROR(...) defined in error.h is called and the program exits
+ *         with given error code.
  *         
  * @see    scanner.h ast.h
  * 
  * @author xnovakf00
- * @date   11.11.2024
+ * @date   15.11.2024
 */
 
 #include "parser.h"
@@ -116,7 +118,7 @@ bool def_func(bool firstTraverse){
     symData   entrySymData;
     dataType *paramTypes    = malloc(sizeof(dataType)*MAX_PARAM_NUM);
     char    **paramNames    = malloc(sizeof(char *)*MAX_PARAM_NUM);
-    bool    *paramNullable = malloc(sizeof(bool)*MAX_PARAM_NUM);
+    bool    *paramNullable  = malloc(sizeof(bool)*MAX_PARAM_NUM);
     if(paramTypes == NULL || paramNames == NULL || paramNullable == NULL){
         ERROR(ERR_INTERNAL,"Malloc fail in def_func.\n");
     }
@@ -190,7 +192,8 @@ bool def_func(bool firstTraverse){
         }
     }
     else{
-        body(returnType, bodyAstRoot);
+        bool inMain = (strcmp(funID, "main") == 0); 
+        body(returnType, bodyAstRoot, inMain);
         if(currentToken.type != tokentype_rcbracket){
             ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
         }
@@ -582,7 +585,7 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool st(dataType expReturnType, astNode *block){
+bool st(dataType expReturnType, astNode *block, bool inMain){
     bool correct = false;
     // RULE 33 <st> -> <def_variable>
     if(currentToken.type == tokentype_kw_const ||
@@ -601,15 +604,15 @@ bool st(dataType expReturnType, astNode *block){
     }
     // <st> RULE 36 -> <while_statement>
     else if(currentToken.type == tokentype_kw_while){ 
-        correct = while_statement(expReturnType, block);
+        correct = while_statement(expReturnType, block, inMain);
     }
     // <st> RULE 37 -> <if_statement>
     else if(currentToken.type == tokentype_kw_if){ 
-        correct = if_statement(expReturnType, block);
+        correct = if_statement(expReturnType, block, inMain);
     }
     // <st> RULE 38 -> <return>
     else if(currentToken.type == tokentype_kw_return){ 
-        correct = return_(expReturnType, block);
+        correct = return_(expReturnType, block, inMain);
     }
     else{ERROR(ERR_SYNTAX, "Unexpected start of a statement.\n");}
 
@@ -617,7 +620,7 @@ bool st(dataType expReturnType, astNode *block){
     return correct;
 }
 
-bool body(dataType returnType, astNode *block){
+bool body(dataType returnType, astNode *block, bool inMain){
     bool correct = false;
     // RULE 39 <body> -> ε
     DEBPRINT("   %d \n", currentToken.type);
@@ -633,8 +636,8 @@ bool body(dataType returnType, astNode *block){
             currentToken.type == tokentype_id        ||
             currentToken.type == tokentype_pseudovar){
         DEBPRINT("%s\n", currentToken.value);
-        st(returnType, block);
-        correct = body(returnType, block);
+        st(returnType, block, inMain);
+        correct = body(returnType, block, inMain);
         
     }else if(currentToken.type == tokentype_EOF){ERROR(ERR_SYNTAX, "Unexpected EOF, source code unfinished.\n");}
     else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
@@ -643,7 +646,7 @@ bool body(dataType returnType, astNode *block){
     return correct;
 }
 
-bool return_(dataType expReturnType, astNode *block){
+bool return_(dataType expReturnType, astNode *block, bool inMain){
     bool correct = false;
 
     astNode *exprNode   = createAstNode(); // allocate empty node
@@ -660,7 +663,7 @@ bool return_(dataType expReturnType, astNode *block){
         }
     }else{ERROR(ERR_SYNTAX, "Expected: \"return\".\n");}
 
-    createReturnNode(returnNode, exprNode, expReturnType, block);
+    createReturnNode(returnNode, exprNode, expReturnType, block, inMain);
     connectToBlock(returnNode, block);
     
     DEBPRINT(" %d\n", correct);
@@ -727,7 +730,7 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool while_statement(dataType expRetType, astNode *block){
+bool while_statement(dataType expRetType, astNode *block, bool inMain){
     bool correct = false;
 
     // prepare empty nodes
@@ -767,7 +770,7 @@ bool while_statement(dataType expRetType, astNode *block){
 
                         if(currentToken.type == tokentype_lcbracket){
                             GT
-                            if(body(expRetType, bodyAstNode)){
+                            if(body(expRetType, bodyAstNode, inMain)){
                                 if(currentToken.type == tokentype_rcbracket){
                                     correct = true;
                                 }else{ERROR(ERR_SYNTAX, "Expected: \"}\" at the end of \"while\" .\n");}
@@ -794,7 +797,7 @@ DEBPRINT(" %d\n", correct);
     return correct;
 }
 
-bool if_statement(dataType expRetType, astNode *block){
+bool if_statement(dataType expRetType, astNode *block, bool inMain){
     bool correct = false;
     
     // prepare empty nodes
@@ -841,7 +844,7 @@ bool if_statement(dataType expRetType, astNode *block){
 
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, bodyIfNode)){
+        if(body(expRetType, bodyIfNode, inMain)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_kw_else){ 
@@ -851,7 +854,7 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, bodyElseNode)){
+        if(body(expRetType, bodyElseNode, inMain)){
         if(currentToken.type == tokentype_rcbracket){
             correct = true;
         }else{ERROR(ERR_SYNTAX, "cExpected: \"}\" .\n");}

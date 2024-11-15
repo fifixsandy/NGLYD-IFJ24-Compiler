@@ -131,6 +131,7 @@ typedef struct astReturn {
 
     astNode *returnExp;
     dataType returnType;
+    bool inMain;
 
 }astReturn;
 
@@ -237,7 +238,7 @@ void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode 
 void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT);
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
 void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum, dataType returnType);
-void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain);
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);

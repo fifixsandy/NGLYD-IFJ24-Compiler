@@ -115,10 +115,11 @@ void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *
     dest->nodeRep.defFuncNode = newDefFunc;
 }
 
-void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent) {
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain) {
     astReturn newReturn = {
         .returnExp = returnExp,
-        .returnType = returnType
+        .returnType = returnType,
+        .inMain    = inMain
     };
 
     dest->next = NULL;
