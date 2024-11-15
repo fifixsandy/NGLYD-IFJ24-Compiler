@@ -808,6 +808,7 @@ bool if_statement(dataType expRetType, astNode *block){
                 }
             }
             else{
+                findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExrpNode->nodeRep.exprNode.dataT;
                 if(!checkIfNullable(condExrpNode)){
                     ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
                 }
