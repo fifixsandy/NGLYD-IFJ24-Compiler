@@ -64,13 +64,14 @@ void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op){
 
 
 
-astNode *exp_stack_pop(exp_stack *estack){
+astNode *exp_stack_pop_node(exp_stack *estack){
     if (estack->top == NULL){
         return NULL;
     }
     astNode *top_node = estack->top->node;
     stack_item *top_to_delete = estack->top;
     estack->top = estack->top->next;
+    free(top_to_delete->control);
     free(top_to_delete);
     estack->count--;
     return top_node;
@@ -118,6 +119,12 @@ bool exp_stack_find_lbr(exp_stack *estack){
     return false;
 }
 
+stack_item *exp_stack_pop(exp_stack *estack){
+    stack_item *popped_item = estack->top;
+    estack->top = estack->top->next;
+    estack->count--;
+    return popped_item;
+}
 
 /****************************************************************************************** */
 /*                              veci stade napchaj potom inde                               */
@@ -130,6 +137,7 @@ bool exp_stack_find_lbr(exp_stack *estack){
 * @return True if build was successful; False if build wasn't successful
 */
 bool expression(astNode *expr_node){
+    bool *known_upon_compilation;
     //fprintf(stderr, "\nDOSTAL SOM SA DO EXPRESSION ČASTI!!\n");
     exp_stack *estack = exp_stack_create();
         if(estack == NULL){
@@ -141,7 +149,7 @@ bool expression(astNode *expr_node){
         DEBPRINT("AHOJ MOJ typ JE %d a token %d\n ", estack->top->node->nodeRep.funcCallNode.retType, currentToken.type);
         astNode *final_exp = exp_stack_pop(estack);
         
-        createExpressionNode(expr_node, what_type(final_exp), final_exp); 
+        createExpressionNode(expr_node, what_type(final_exp, known_upon_compilation, true), final_exp, false); 
         exp_stack_free_stack(estack);
         
         return true;
@@ -239,13 +247,13 @@ void reduce(exp_stack *stack){
             break;
  
         case RBR :
-            astNode *rbr = exp_stack_pop(stack);
+            astNode *rbr = exp_stack__node(stack);
             free(rbr);
-            astNode *expr = exp_stack_pop(stack);
+            astNode *expr = exp_stack_pop_node(stack);
             if(stack->top->expr != LBR){
                 ERROR(ERR_SYNTAX, "Invalid Token");
             }
-            astNode *lbr = exp_stack_pop(stack);
+            astNode *lbr = exp_stack_pop_node(stack);
             free(lbr);
             exp_stack_push(stack, expr, NO_TERMINAL);
             return;
@@ -262,7 +270,7 @@ void reduce(exp_stack *stack){
         case GREATER:
         case LOWER_OR_EQUAL:
         case GREATER_OR_EQUAL:
-            if(stack->count < 4 ){
+            if(stack->count < 4 ){  //môže sa toto vykonať validne ked je na stacku menej ako 3 položky, jeden stop operand operator operand
                 ERROR(ERR_SYNTAX, "Invalid token\n");
             }
             if(stack->top->control->is_nullable == true){
@@ -279,21 +287,9 @@ void reduce(exp_stack *stack){
             }
             
             dataType data_type_buffer;  // semanticke pravidlo pretypovania alebo erroru, treba urobiť porovnanie oboch výrazo a prípadne pritypovanie
-            astNode *right_elem = exp_stack_pop(stack);
-            astNode *operator = exp_stack_pop(stack);
-            astNode *left_elem = exp_stack_pop(stack);
+            
 
-            dataType dtype_of_r_e = what_type(right_elem);
-            dataType dtype_of_l_e = what_type(left_elem);
-
-            if(dtype_of_r_e == dtype_of_l_e){
-                data_type_buffer = dtype_of_r_e;
-            }
-            //pretypovanie
-
-            right_elem->parent = operator;
-            left_elem->parent = operator;
-            createBinOpNode(operator, top_term, left_elem, right_elem, data_type_buffer, NULL);
+            //createBinOpNode(operator, top_term, left_elem, right_elem, data_type_buffer, NULL);
             exp_stack_push(stack, operator, NO_TERMINAL);
             return;
     }
@@ -386,6 +382,9 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
                     
                     funCallHandle(id, node, true);
+                    if(node->nodeRep.funcCallNode.retType == void_){
+                        ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression\n");
+                    }
                     control->is_nullable = false; //alebo može byť null??
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
@@ -439,27 +438,84 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
 
 
-dataType what_type(astNode *elemnt_node){
-    switch(elemnt_node->type){
-        /*
+dataType what_type(astNode *element_node, bool *known_value, bool check_if_known){
+    switch(element_node->type){
         case AST_NODE_VAR :
-            return elemnt_node->nodeRep.varNode.dataT;
+            if(check_if_known == true){
+                if(1){ //dorobiť vyhodnocovanie flagu
+                    known_value = true;
+                }
+                else{
+                    known_value = false;
+                }
+            }
+            return element_node->nodeRep.varNode.dataT;
 
         case AST_NODE_LITERAL :
-            return elemnt_node->nodeRep.literalNode.dataT;
+            known_value = true;
+            return element_node->nodeRep.literalNode.dataT;
 
         case AST_NODE_BINOP :
-            return elemnt_node->nodeRep.binOpNode.dataT;
+            known_value = false;
+            return element_node->nodeRep.binOpNode.dataT;
 
         case AST_NODE_FUNC_CALL:
-            return elemnt_node->nodeRep.funcCallNode.retType;
-*/
-        default:
+            known_value =  false;
+            return element_node->nodeRep.funcCallNode.retType;
+
+        
+
+        default :
             return i32 ;
 
     }
 }
 
-bool retype_literals(astNode *left_element, astNode *right_element){
-    
+
+void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control){
+    if(left_operand->expr != NO_TERMINAL || left_operand->expr != NO_TERMINAL){
+        ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
+    }
+
+    control->is_nullable = false;
+    control->litconst = false;
+
+    if(left_operand->control->type == right_operand->control->type){
+        control->type = left_operand->control->type;
+        if(left_operand->control->is_convertable == true && right_operand->control->is_convertable == true){
+            control->is_convertable = true;
+        }
+        else{
+            control->is_convertable = false;
+        }
+        return;//všetko vpohode nerieš
+
+    }
+    else if(left_operand->control->is_convertable == true){
+        control->type = right_operand->control->type;
+
+        if(right_operand->control->is_convertable == true){
+            control->is_convertable = true;
+        }
+        else{
+            control->is_convertable = false;
+        }
+        return;
+
+    }
+    else if(right_operand->control->is_convertable == true){
+        control->type = left_operand->control->type;
+        if(left_operand->control->is_convertable == true){
+            control->is_convertable = true;
+        }
+        else{
+            control->is_convertable = false;
+        }
+        return;
+
+    }
+    else{
+        ERROR(ERR_SEM_TYPE, "types of operands in expresions don't match");
+    }
+
 }
