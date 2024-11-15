@@ -14,6 +14,7 @@
 
 #define BUFFER buf
 #define RETVAL "GF@retval"
+#define NIL "nil@nil"
 #define TMP1 "tmp_1"
 #define TMP2 "tmp_2"
 #define COMPILER true
@@ -328,13 +329,17 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
                 add_code("POPS "); TF(ast->nodeRep.whileNode.id_without_null); endl();
 
-                add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.whileNode.id_without_null); endl();
+                //add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.whileNode.id_without_null); endl();
+
+                add_code("JUMPIFEQ "); add_code(end_label); space(); add_null(); space(); TF(ast->nodeRep.whileNode.id_without_null); endl();
             }
             else{
                 add_code("POPS TF@tmp_bool"); endl();
+
+                add_code("JUMPIFNEQ "); add_code(end_label); add_code(" TF@tmp_bool bool@true"); endl();
             }
 
-            add_code("JUMPIFNEQ "); add_code(end_label); add_code(" TF@tmp_bool bool@true"); endl();
+            
 
             if(!code_generator(ast->nodeRep.whileNode.body, TF_vars)) return false;
             
@@ -356,13 +361,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 def_var(TF_vars, ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null, USER);
                 add_code("POPS "); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
 
-                add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
+                //add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
+
+                add_code("JUMPIFEQ "); add_code(else_label); space(); add_null(); space(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
             }
             else{
                 add_code("POPS TF@tmp_bool"); endl();
+                add_code("JUMPIFNEQ "); add_code(else_label); add_code(" TF@tmp_bool bool@true"); endl();
             }
 
-            add_code("JUMPIFNEQ "); add_code(else_label); add_code(" TF@tmp_bool bool@true"); endl();
 
             if(!code_generator(ast->nodeRep.ifElseNode.ifPart, TF_vars)) return false;
             add_code("JUMP "); add_code(end_label); endl();
