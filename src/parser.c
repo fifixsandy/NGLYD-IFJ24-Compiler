@@ -188,7 +188,7 @@ bool def_func(bool firstTraverse){
     else{
         body(returnType, bodyAstRoot);
         if(currentToken.type != tokentype_rcbracket){
-            ERROR(ERR_SYNTAX, "aExpected: %d\"}\".\n",currentToken.type);
+            ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
         }
 
         GT
@@ -198,6 +198,11 @@ bool def_func(bool firstTraverse){
     symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
     if(!firstTraverse){
         allUsed(symtableFun->rootPtr); // perform semantic check of used variables
+        if(returnType != void_){
+            if(!allReturns(bodyAstRoot)){
+                ERROR(ERR_SEM_RETURN, "Function \"%s\" include path with no \"return\" statement.", funID);
+            }
+        }
     }
 
     if(firstTraverse){
@@ -1355,6 +1360,53 @@ void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData
         }
     }
 
+}
+
+
+
+// TODO POSSIBLE OPTIMISATION 
+
+/**
+ * @brief  Validating that body has always-reachable return statement.
+ *         
+ *         Using depth first traversal through AST 
+ *         recursively checks whether every possible execution
+ *         path in given body contains return statement.
+ * 
+ * @param statement Statement to traverse through.
+ * 
+ * @return True if in all (sub)bodies return statement appears.
+ */
+bool allReturns(astNode *statement){
+
+    if(statement == NULL){ // end of body
+        return 0; // no return statement found in (sub)body
+    }
+
+    switch(statement->type){
+
+        case AST_NODE_RETURN:  // return statement found, propagating the information upstream
+            return true;
+        
+        case AST_NODE_IFELSE: // two possible execution paths, both need to contain return statement
+
+            bool ifB = allReturns(statement->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.body); // traversing if body
+            bool elseB = allReturns(statement->nodeRep.ifElseNode.ifPart->nodeRep.elseNode.body); // traversing else body
+
+            if(ifB && elseB){ // both contain return, (sub)body contains return
+                return true;
+            }
+            else{
+                return allReturns(statement->next); // at least one does not contain return, we have to traverse next statements
+                                                    // after the ifElse statement
+            }
+
+        case AST_NODE_WHILE: // one possible execution path
+            return allReturns(statement->nodeRep.whileNode.body); // traverse while body
+        
+        default: // any other statement cannot have return, moving to the next statement
+            return allReturns(statement->next);
+    }
 }
 
 

@@ -62,5 +62,6 @@ bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, in
 bool checkIfNullable(astNode *expr);
 bool checkIfExprLogic(astNode *expr);
 void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData);
+bool allReturns(astNode *statement);
 
 #endif
