@@ -58,7 +58,7 @@ bool buf_push(Buffer_ll *buf){
     else{
         buf->last->next = new;
     }
-    DEBPRINT("push: %s\n", buf->tmp);
+    //DEBPRINT("push: %s\n", buf->tmp);
     buf->last = new;
     new->str = buf->tmp;
     buf->tmp = NULL;

@@ -310,6 +310,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
     char cond_label[52];
     char else_label[52];
     char end_label[52];
+    DEBPRINT("------%d\n", ast->type);
     switch (ast->type){
         case AST_NODE_WHILE:
             count++;
@@ -376,8 +377,10 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         case AST_NODE_EXPR:
             // Expresion evaluation
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
-            if(ast->nodeRep.exprNode.exprTree != NULL && ast->nodeRep.exprNode.exprTree->type == AST_NODE_FUNC_CALL){
-                add_code("PUSHS "); GF(); endl();
+            if(ast->nodeRep.exprNode.exprTree != NULL){
+                if(ast->nodeRep.exprNode.exprTree->type == AST_NODE_FUNC_CALL){
+                    add_code("PUSHS "); GF(); endl();
+                }
             }
             break;
         
@@ -653,7 +656,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("CALL $");
             if(ast->nodeRep.funcCallNode.builtin) add_code("$");        // adding second $, because builin functions have $$ before name
             add_code(ast->nodeRep.funcCallNode.id);endl();
-
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_INVALID:
