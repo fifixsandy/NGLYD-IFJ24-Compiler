@@ -139,6 +139,7 @@ typedef struct astExpr {
     dataType dataT;
     astNode *exprTree;
     bool isNullable;
+    bool knownDuringCompile;
 
 }astExpr;
 

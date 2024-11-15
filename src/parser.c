@@ -396,6 +396,13 @@ bool def_variable(astNode *block){
 
         }
 
+        if(isConst){
+            variData.knownDuringCompile = exprNode->nodeRep.exprNode.knownDuringCompile;
+        }
+        else{
+            variData.knownDuringCompile = false;
+        }
+
         entryData.data.vData = variData;
         insertSymNode(symtableStack.top->tbPtr, varName, entryData);
 
