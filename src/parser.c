@@ -124,8 +124,7 @@ bool def_func(bool firstTraverse){
     bool      nullable;
 
     astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
-    astNode  *bodyAstRoot = createAstNode(); // create root node for body (statements in body will be connected to this)
-    bodyAstRoot->type = AST_NODE_ROOT;
+    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
 
     symNode *functionEntry = NULL;
 
@@ -785,8 +784,8 @@ bool if_statement(dataType expRetType, astNode *block){
     astNode *ifElseNode   = createAstNode();
     astNode *ifNode       = createAstNode();
     astNode *elseNode     = createAstNode();
-    astNode *bodyIfNode   = createAstNode();
-    astNode *bodyElseNode = createAstNode(); 
+    astNode *bodyIfNode   = createRootNode();
+    astNode *bodyElseNode = createRootNode(); 
     astNode *condExrpNode = createAstNode();
 
     // prepare information
