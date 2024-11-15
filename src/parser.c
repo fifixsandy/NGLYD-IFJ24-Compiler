@@ -117,6 +117,9 @@ bool def_func(bool firstTraverse){
     dataType *paramTypes    = malloc(sizeof(dataType)*MAX_PARAM_NUM);
     char    **paramNames    = malloc(sizeof(char *)*MAX_PARAM_NUM);
     bool    *paramNullable = malloc(sizeof(bool)*MAX_PARAM_NUM);
+    if(paramTypes == NULL || paramNames == NULL || paramNullable == NULL){
+        ERROR(ERR_INTERNAL,"Malloc fail in def_func.\n");
+    }
     int       paramNum = 0;
     dataType  returnType;
     bool      nullable;
@@ -234,7 +237,7 @@ bool def_func(bool firstTraverse){
 
     // add correct data to astnode previously created
     if(!firstTraverse){
-        createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum); 
+        createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType); 
         connectToBlock(funcAstNode, ASTree.root);
     }
 

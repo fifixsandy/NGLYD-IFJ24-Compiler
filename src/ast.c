@@ -99,13 +99,14 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
     dest->nodeRep.defVarNode = newDefVar;
 }
 
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum) {
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum, dataType returnType) {
     astDefFunc newDefFunc = {
         .id          = id,
         .symtableFun = symtableFun,
         .body        = body,
         .paramNames  = paramNames,
-        .paramNum    = paramNum
+        .paramNum    = paramNum,
+        .returnType  = returnType
     };
 
     dest->next = NULL;
