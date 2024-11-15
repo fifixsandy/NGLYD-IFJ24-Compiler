@@ -174,6 +174,7 @@ bool add_null(){
 // Genarate built in funciton ifj.read
 bool add_read(char *var, Types type){
     add_code("READ");
+    add_param(var);  
     switch (type){
     case INT:
         add_param("int");
@@ -184,7 +185,6 @@ bool add_read(char *var, Types type){
     case STRING:
         add_param("string");
     }
-    add_param(var);  
     endl();
     return true;
 }
@@ -603,40 +603,40 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(ast->nodeRep.funcCallNode.builtin){
                 if(strcmp(ast->nodeRep.funcCallNode.id, "readstr") == 0){
                     if(!add_read(RETVAL, STRING)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readi32") == 0){
                     if(!add_read(RETVAL, INT)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readf64") == 0){
                     if(!add_read(RETVAL, FLOAT)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "write") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_write(RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_i2f(RETVAL, RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_f2i(RETVAL, RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 // TODO String
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_str_len(RETVAL, RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "concat") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
@@ -651,13 +651,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
                     add_code("POPS "); GF(); endl();
                     if(!add_str_concat(RETVAL, var_tmp, RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();
                     if(!add_chr(RETVAL, RETVAL)) return false;
-                    break;
+                    goto code_generator_end;
                 }
             }
             for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
@@ -673,11 +673,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("CALL $");
             if(ast->nodeRep.funcCallNode.builtin) add_code("$");        // adding second $, because builin functions have $$ before name
             add_code(ast->nodeRep.funcCallNode.id);endl();
+            
+        code_generator_end:
             if(!code_generator(ast->next, TF_vars)) return false;
             break;
         
         case AST_INVALID:
-            return false;
+            return false;   //TODO just to run it till its fixed
             break;
     
     }
