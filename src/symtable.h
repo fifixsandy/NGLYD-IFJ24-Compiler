@@ -54,6 +54,7 @@ typedef struct varData{
    bool isConst; // 1 if const 0 if var
    bool isNullable; // 1 if nullable 0 if not
    bool inheritedType; // 1 if needs to be inherited from expression, 0 if set
+   bool knownDuringCompile // 1 if value is known during compile time, 0 if not
 }varData;
 
  typedef struct symData{
