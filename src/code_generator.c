@@ -588,7 +588,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(strcmp(ast->nodeRep.defFuncNode.id, "main") == 0){
                 add_code("JUMP $$end"); endl();
             }
-            else{
+            else if(ast->nodeRep.defFuncNode.returnType == void_){
                 add_code("POPFRAME"); endl();
                 add_code("RETURN"); endl();
             }
@@ -602,6 +602,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(ast->nodeRep.returnNode.returnType != void_){
                 add_code("POPS "); GF(); endl();
             }
+            add_code("POPFRAME"); endl();
+            add_code("RETURN"); endl();
             break;
         
         case AST_NODE_ROOT:
