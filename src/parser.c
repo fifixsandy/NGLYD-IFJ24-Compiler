@@ -604,6 +604,7 @@ bool st(dataType expReturnType, astNode *block, bool inMain){
     }
     // <st> RULE 36 -> <while_statement>
     else if(currentToken.type == tokentype_kw_while){ 
+        DEBPRINT("WHILE CAME -------------------------------------------\n");
         correct = while_statement(expReturnType, block, inMain);
     }
     // <st> RULE 37 -> <if_statement>
@@ -731,9 +732,7 @@ DEBPRINT(" %d\n", correct);
 }
 
 bool while_statement(dataType expRetType, astNode *block, bool inMain){
-    bool correct = false;
-
-    // prepare empty nodes
+    bool correct = false;    // prepare empty nodes
     astNode *whileAstNode = createAstNode(); 
     astNode *condExprNode = createAstNode();
     astNode *bodyAstNode  = createRootNode();
@@ -1388,10 +1387,8 @@ bool allReturns(astNode *statement){
             return true;
         
         case AST_NODE_IFELSE: // two possible execution paths, both need to contain return statement
-
             bool ifB = allReturns(statement->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.body); // traversing if body
-            bool elseB = allReturns(statement->nodeRep.ifElseNode.ifPart->nodeRep.elseNode.body); // traversing else body
-
+            bool elseB = allReturns(statement->nodeRep.ifElseNode.elsePart->nodeRep.elseNode.body); // traversing else body
             if(ifB && elseB){ // both contain return, (sub)body contains return
                 return true;
             }
