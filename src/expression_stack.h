@@ -32,6 +32,7 @@ typedef enum{
 extern precedence precedence_table[14][14];
 
 typedef struct control_items{
+    bool known_during_compile;
     bool is_nullable;
     bool litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
     bool is_convertable;

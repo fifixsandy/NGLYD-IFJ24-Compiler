@@ -155,8 +155,8 @@ bool expression(astNode *expr_node){
        
         astNode *final_exp = exp_stack_pop_node(estack);
         
-
-        createExpressionNode(expr_node, expr_items->type, final_exp, expr_items->is_nullable);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
+        DEBPRINT("IS EXPRESSION KNOWN DURING COMPILATION: %d\n", expr_items->known_during_compile);
+        createExpressionNode(expr_node, expr_items->type, final_exp, expr_items->is_nullable, expr_items->known_during_compile);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
         
         exp_stack_free_stack(estack);
         
@@ -185,7 +185,7 @@ bool process_expr(exp_stack *estack){
     control->is_nullable = false;
     control->litconst = false;
     control->type = void_;
-
+    control->known_during_compile = false;
 
     symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node, control);
     DEBPRINT("evaluated current token as %d (symbol_number)\n", curr_symb);       
@@ -383,20 +383,30 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
                     control->litconst = node->nodeRep.varNode.symtableEntry->data.data.vData.isConst;
                     if(control->litconst == true){
-                        if(symnode->data.data.vData.type == f64){
-                            control->is_convertable = false;    // storing value issue
+                        
+                        if(node->nodeRep.varNode.symtableEntry->data.data.vData.knownDuringCompile == true){
+                            control->known_during_compile = true;
 
-                        }else if(symnode->data.data.vData.type == i32){
-                                control->is_convertable = true;
-                        }else if(symnode->data.data.vData.type == u8){
-                            control->is_convertable = false;
-                        }else{
-                             ERROR(ERR_SYNTAX, (" incompatible type in expression\n")); 
+                            if(symnode->data.data.vData.type == f64){
+                                control->is_convertable = false;    // storing value issue
+
+                            }else if(symnode->data.data.vData.type == i32){
+                                    control->is_convertable = true;
+
+                            }else if(symnode->data.data.vData.type == u8){
+                                control->is_convertable = false;
+
+                            }else{
+                                ERROR(ERR_SYNTAX, (" incompatible type in expression\n")); 
+                            }
                         }
                     }
+
                     else{   //vo výraze môže byť premenná len typu f64 alebo i32 ostatné typy (zamerané presnejšie na []u8 je nepodoporvaný)
                         control->is_convertable = false;
+                        control->known_during_compile = false;
                     }
+
                     control->is_nullable = node->nodeRep.varNode.isNullable;
                     control->type = symnode->data.data.vData.type;
                 return ID;
@@ -410,6 +420,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     if(node->nodeRep.funcCallNode.retType == void_){
                         ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression\n");
                     }
+                    control->known_during_compile = false;
                     control->is_nullable = false; //alebo može byť null??
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
@@ -428,6 +439,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->type = i32;
             control->litconst = true;
             control->is_convertable = true;
+            control->known_during_compile = true;
             return ID;
 
         case tokentype_float :
@@ -435,6 +447,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_nullable = false;
             control->type = f64;
             control->litconst = true;
+            control->known_during_compile = true;
             if((int) node->nodeRep.literalNode.value.floatData == node->nodeRep.literalNode.value.floatData ){
                 control->is_convertable = true;
             }
@@ -445,6 +458,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_kw_null :
             createLiteralNode(node, null_, NULL, NULL );
+            control->known_during_compile = true;
             control->is_nullable = true;
             control->type = null_;
             control->litconst = true;
@@ -453,6 +467,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_zeroint :
             createLiteralNode(node, i32, token.value, NULL);
+            control->known_during_compile = true;
             control->is_nullable = false;
             control->type = i32;
             control->litconst = true;
@@ -461,6 +476,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_string:
             createLiteralNode(node, u8, token.value, NULL);
+            control->known_during_compile = true;
             control->is_convertable = false;
             control->is_nullable = false;
             control->litconst = true;
@@ -487,6 +503,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
     if(left_operand->control->type == u8 || left_operand->control->type == u8){
         ERROR(ERR_SEM_TYPE, ("Cannont use u8 type in arithmetical or logical operations\n"));
     }
+    control->known_during_compile = false;
     control->is_nullable = false;
     control->litconst = false;
 

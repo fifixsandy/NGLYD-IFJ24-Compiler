@@ -208,13 +208,14 @@ void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
 
 }
 
-void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable){
+void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool DuringCompile){
     astExpr newExpr = {
         .dataT = type,
         .exprTree = exprRoot,
-        .isNullable = isNullable
+        .isNullable = isNullable,
+        .knownDuringCompile = DuringCompile
     };
-    
+
     dest->next               = NULL;
     dest->type               = AST_NODE_EXPR;
     dest->parent             = NULL;

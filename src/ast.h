@@ -241,7 +241,7 @@ void createLiteralNode(astNode *dest, dataType dataT, char *value, astNode *pare
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **exprParams, int paramNum);
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
-void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable);
+void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool DuringCompile);
 astNode *createRootNode();
 
 void connectToBlock(astNode *toAdd, astNode *blockRoot);
