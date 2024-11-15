@@ -690,7 +690,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}// TODO ERROR 5 redefinition
 
             // add the ID_WITHOUT_NULL to symtable for if/while
-            varData variData = {.inheritedType = true, .isConst = false, .isNullable = false}; // TODO CHECK THIS
+            varData variData = {.inheritedType = true, .isConst = true, .isNullable = false}; // TODO CHECK THIS
             symData data = {.varOrFun = 0, .used = false, .data.vData = variData};
             insertSymNode(symtableStack.top->tbPtr, currentToken.value, data);
 
@@ -795,13 +795,23 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         if(currentToken.type == tokentype_lbracket){
             GT
-        if(expression(condExrpNode)){ // TODO EXPRESSION
+        if(expression(condExrpNode)){ 
+
 
         if(currentToken.type == tokentype_rbracket){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
 
-            // TODO check correct expression in condExprNode
+            if(withNull){
+                if(!checkIfExprLogic(condExrpNode)){
+                    ERROR(ERR_SEM_TYPE, "Expression in if statement is not of logic type.\n");
+                }
+            }
+            else{
+                if(!checkIfNullable(condExrpNode)){
+                    ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
+                }
+            }
 
         if(currentToken.type == tokentype_lcbracket){
             GT
@@ -1232,6 +1242,38 @@ symNode *checkBuiltinId(char *id){
         return symtableNode;
     }
 
+}
+
+bool checkIfExprLogic(astNode *expr){
+    if(expr->type == AST_NODE_EXPR){ // is it even expression?
+        astExpr repr = expr->nodeRep.exprNode;
+
+        //EQUAL,                  // 4
+        //NOT_EQUAL,              // 5
+        //LOWER,                  // 6
+        //GREATER,                // 7
+        //LOWER_OR_EQUAL,         // 8
+        //GREATER_OR_EQUAL,       // 9
+
+        if(repr.exprTree->type == AST_NODE_BINOP){ // is it even binary operator on top?
+            if(repr.exprTree->nodeRep.binOpNode.op >= EQUAL && 
+               repr.exprTree->nodeRep.binOpNode.op <= GREATER_OR_EQUAL){ // is the binary operator logical operator?
+                    return true;
+               }
+        }
+
+    }
+
+    return false;
+}
+
+bool checkIfNullable(astNode *expr){
+    if(expr->type == AST_NODE_EXPR){ // is even expression
+        if(expr->nodeRep.exprNode.isNullable){ 
+            return true;
+        }
+    }
+    return false;
 }
 
 astNode *parser(){
