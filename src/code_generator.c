@@ -641,7 +641,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     if(!add_f2i(RETVAL, RETVAL)) return false;
                     goto code_generator_end;
                 }
-                // TODO String
+                 else if(strcmp(ast->nodeRep.funcCallNode.id, "string") == 0){
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
+                    add_code("POPS "); GF(); endl();
+                    goto code_generator_end;
+                }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS "); GF(); endl();

@@ -110,23 +110,19 @@ typedef struct TokenValues {
 //FUNCTION DECLARATIONS
 extern const char *keywords[NUM_OF_KEYWORDS];
 
-extern FILE *input_file;
-
 Token getToken();
 
-Token process_Number_Token(char firstchar, FILE *input_file);
+Token process_Number_Token(char firstchar);
 
-Token process_String_Token(FILE *input_file);
+Token process_String_Token();
 
-Token process_ID_Token(char firstchar, FILE *input_file);
+Token process_ID_Token(char firstchar);
 
-Token process_Char_Arr(FILE *input_file);
+Token process_Import();
 
-Token process_Import(FILE *input_file);
+Token process_Multiline_String_Token();
 
-Token process_Multiline_String_Token(FILE *input_file);
-
-token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1, token_types type2);
+token_types is_next_token(Token *token, char expected_char, token_types type1, token_types type2);
 
 int is_keyword(const char *str, Token *token);
 
