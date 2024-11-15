@@ -387,11 +387,11 @@ bool def_variable(astNode *block){
         }
         else{
             if(!variData.isNullable && exprNode->nodeRep.exprNode.isNullable){
-                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.isNullable);
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to A \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.isNullable);
             }
             if(literalIsNull){}
             else if(variData.type != exprNode->nodeRep.exprNode.dataT){
-                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.dataT);
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to B \"%s\". %d\n", varName , exprNode->nodeRep.exprNode.dataT);
             }
 
         }
@@ -721,9 +721,9 @@ bool while_statement(dataType expRetType, astNode *block){
     bool correct = false;
 
     // prepare empty nodes
-    astNode *whileAstNode    = createAstNode(); 
+    astNode *whileAstNode = createAstNode(); 
     astNode *condExprNode = createAstNode();
-    astNode *bodyAstNode     = createRootNode();
+    astNode *bodyAstNode  = createRootNode();
 
     // prepare info needed for correct construction of ast node while
     bool withNull;
@@ -751,7 +751,7 @@ bool while_statement(dataType expRetType, astNode *block){
                         else{
                             findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExprNode->nodeRep.exprNode.dataT;
                             if(!checkIfNullable(condExprNode)){
-                            ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
+                                ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
                             }
                         }
 
@@ -910,24 +910,38 @@ bool after_id(char *id, astNode *block){
     bool correct = false;
     // RULE 28 <after_id> -> = expression ;
     if(currentToken.type == tokentype_assign){
-        astNode *newAssNode    = createAstNode();
-        astNode *newAssExpNode = createAstNode();
-        dataType varDataType   = unknown;
-        dataType expressionDT  = unknown;
-        symNode *entry         = findInStack(&symtableStack, id);
+        astNode *newAssNode           = createAstNode();
+        astNode *newAssExpNode        = createAstNode();
+        dataType varDataType          = unknown;
+        bool     isNullable           = false;
+        dataType expressionDT         = unknown;
+        symNode *entry                = findInStack(&symtableStack, id);
 
         if(entry == NULL){ERROR(ERR_SEM_UNDEF, "Assigning to undefined variable \"%s\".\n",id);}
         if(entry->data.data.vData.isConst){ERROR(ERR_SEM_REDEF, "Assigning to unmodifiable (const) variable \"%s\".\n", id);}
 
         varDataType = entry->data.data.vData.type;
+        isNullable  = entry->data.data.vData.isNullable;
 
         GT
-        if(expression(newAssExpNode)){// TODO EXPRESSION
-            correct = (currentToken.type == tokentype_semicolon);
+        if(expression(newAssExpNode)){
+            if(currentToken.type != tokentype_semicolon){
+                ERROR(ERR_SYNTAX, "Expected \";\"");
+            };
             GT
         }
+        
         expressionDT = newAssExpNode->nodeRep.exprNode.dataT;
-        if(expressionDT != varDataType){ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\".\n", id);}
+        if(!isNullable && checkIfNullable(newAssExpNode) ){ // nullable expression cannot be assigned to nonullable variable
+            ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to \"%s\". \"%s\" is not nullable.\n", id, id);
+        }
+
+        if(!(isNullable && expressionDT == null_)){ // this condition is here to avoid datatype mismatch by next if condition
+                                                    // null_ is a different dataType and it would give false error
+            if(expressionDT != varDataType){       
+                ERROR(ERR_SEM_TYPE, "Incompatible data types when assigning to  \"%s\" %d %d.\n", id, expressionDT, varDataType);
+            }
+        }        
 
         entry->data.used    = true;
         entry->data.changed = true;
@@ -1011,7 +1025,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
         }
         DEBPRINT("BETTER %s\n", betterID);
-        createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt);
+        createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt, entry->data.data.fData.nullableRType);
         DEBPRINT("DEBAG %s\n", node->nodeRep.funcCallNode.id);
         DEBPRINT("Made %d\n ", entry->data.used );
 }
@@ -1289,7 +1303,7 @@ bool checkIfNullable(astNode *expr){
             return true;
         }
     }
-    return true; // TODO FIX
+    return false;
 }
 
 astNode *parser(){
