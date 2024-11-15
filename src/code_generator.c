@@ -462,8 +462,8 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 // Handle <= comparison by combining LTS and EQS
                 if(!def_var(TF_vars, TMP1, COMPILER)) return false;
                 if(!def_var(TF_vars, TMP2, COMPILER)) return false;
-                add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
+                add_code("POPS TF@tmp_1"); endl();
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
@@ -473,14 +473,14 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 add_code("PUSHS TF@tmp_2"); endl();
                 add_code("EQS");endl();  // Check if tmp_2 == tmp_1
                 
-                add_code("OR");endl(); // Combine LTS and EQS results                            
+                add_code("ORS");endl(); // Combine LTS and EQS results                            
                 break;
             case GREATER_OR_EQUAL:
                 // Handle >= comparison by combining GTS and EQS
                 if(!def_var(TF_vars, TMP1, COMPILER)) return false;
                 if(!def_var(TF_vars, TMP2, COMPILER)) return false;
-                add_code("POPS TF@tmp_1"); endl();
                 add_code("POPS TF@tmp_2"); endl();
+                add_code("POPS TF@tmp_1"); endl();
 
                 add_code("PUSHS TF@tmp_1"); endl();
                 add_code("PUSHS TF@tmp_2"); endl();
@@ -490,7 +490,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 add_code("PUSHS TF@tmp_2"); endl();
                 add_code("EQS");endl();     // Check if tmp_2 == tmp_1
 
-                add_code("OR");endl();      // Combine GTS and EQS results
+                add_code("ORS");endl();      // Combine GTS and EQS results
                 break;
             default:
                 //code
