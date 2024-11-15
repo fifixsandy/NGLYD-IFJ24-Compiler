@@ -421,7 +421,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                         ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression\n");
                     }
                     control->known_during_compile = false;
-                    control->is_nullable = false; //alebo može byť null??
+                    control->is_nullable = node->nodeRep.funcCallNode.nullableRetType;
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
                     control->litconst = false;
