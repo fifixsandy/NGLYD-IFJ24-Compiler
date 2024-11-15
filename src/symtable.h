@@ -55,6 +55,13 @@ typedef struct varData{
    bool isNullable; // 1 if nullable 0 if not
    bool inheritedType; // 1 if needs to be inherited from expression, 0 if set
    bool knownDuringCompile; // 1 if value is known during compile time, 0 if not
+  
+   union{
+      float floatData;
+      int   intData;
+      char *charData;
+   }value; // value in case it is known during compile time, used in expression parsing
+    bool nullValue; // if it holds null
 }varData;
 
  typedef struct symData{

@@ -29,14 +29,11 @@ bool prog(bool firstTraverse){
 
     ASTree.root = createRootNode(); // initialize ASTree
 
-    // RULE 1 <prog> -> <prolog> <code> // EOF MBY
+    // RULE 1 <prog> -> <prolog> <code> EOF
     if(currentToken.type == tokentype_kw_const){
         if(prolog()){
             code(firstTraverse);
         }
-    }
-    else if(currentToken.type == tokentype_EOF){
-        return true;
     }
     else{ERROR(ERR_SYNTAX, "Expected: \"const\".\n");}
     correct = mainDefined(); // check if main function is defined and has correct data
@@ -360,7 +357,7 @@ bool def_variable(astNode *block){
         
         GT
 
-        expression(exprNode); // TODO EXPRESSION
+        expression(exprNode);
 
         if(currentToken.type != tokentype_semicolon){
             ERROR(ERR_SYNTAX, "Expected \";\".\n");
@@ -396,8 +393,8 @@ bool def_variable(astNode *block){
 
         }
 
-        if(isConst){
-            variData.knownDuringCompile = exprNode->nodeRep.exprNode.knownDuringCompile;
+        if(isConst && exprNode->nodeRep.exprNode.knownDuringCompile){ // TODO PRETIFY
+            extractValueToConst(exprNode->nodeRep.exprNode.dataT, exprNode->nodeRep.exprNode.exprTree, &variData);
         }
         else{
             variData.knownDuringCompile = false;
@@ -692,6 +689,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
         if(currentToken.type == tokentype_id){
             *withNull     = true;
             *id_wout_null = currentToken.value;
+            DEBPRINT("inhere %s ------------------------------,\n", currentToken.value);
             symNode *symEntry = findInStack(&symtableStack, currentToken.value);
             if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}// TODO ERROR 5 redefinition
 
@@ -1265,7 +1263,7 @@ symNode *checkBuiltinId(char *id){
     DEBPRINT("hjehehehe %d \n", id==NULL);
     symNode *symtableNode = findSymNode(builtinSymtable->rootPtr, id);
     if(symtableNode == NULL){
-        ERROR(ERR_SEM_UNDEF, "Builtin function with id \"%s\" does not exist.", id);
+        ERROR(ERR_SEM_UNDEF, "Builtin function with id \"%s\" does not exist.\n", id);
     }
     else{
         
@@ -1305,6 +1303,60 @@ bool checkIfNullable(astNode *expr){
     }
     return false;
 }
+
+/**
+ * @brief          Extracts value from expression and assigns it to value of variable in it's symNode.
+ * 
+ * @param exprType Type of expression we are extracting the value from.
+ * @param exprTree Root of the tree of the expression (should only be one astNode).
+ * @param variData Pointer to variable data to put into symtable.
+ */
+void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData){
+
+    if(exprTree->type == AST_NODE_LITERAL){
+        astLiteral literal = exprTree->nodeRep.literalNode;
+        switch(exprType){
+            case f64:
+                variData->value.floatData = literal.value.floatData;
+                variData->nullValue = false;
+                break;
+
+            case i32:
+                variData->value.intData = literal.value.intData;
+                variData->nullValue = false;
+                break;
+            
+            case null_:
+                variData->nullValue = true;
+                break;
+            default:
+                break;
+        }
+
+    }
+    else if(exprTree->type == AST_NODE_VAR){
+        varData vData = exprTree->nodeRep.varNode.symtableEntry->data.data.vData;
+        switch(exprType){
+            case f64:
+                variData->value.floatData = vData.value.floatData;
+                variData->nullValue = false;
+                break;
+
+            case i32:
+                variData->value.intData = vData.value.intData;
+                variData->nullValue = false;
+                break;
+            
+            case null_:
+                variData->nullValue = true;
+                break;
+            default:
+                    break;
+        }
+    }
+
+}
+
 
 astNode *parser(){
     initStack(&symtableStack);

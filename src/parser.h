@@ -61,5 +61,6 @@ symNode *checkBuiltinId(char *id);
 bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex);
 bool checkIfNullable(astNode *expr);
 bool checkIfExprLogic(astNode *expr);
+void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData);
 
 #endif
