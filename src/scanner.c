@@ -163,16 +163,19 @@ Token getToken() {
     while((c = getc(stdin)) == ' ' || c == '\t' || c == '\n') { //Skipping every white character
         Column_Number++;
         if(c == '\n') {             
-            Line_Number++;;         //incrementing line number when next line character was found
+            Line_Number++;         //incrementing line number when next line character was found
             Column_Number = 0;      //resetting column on new line
         }
     }
+
     Column_Number++;
+    current_token.column = Column_Number;       //Assigning column number to token.
+    //printf("first token: Column_Number = %d\n", current_token.column);
 
     if(c == EOF) {                              //We reached the end of file
         current_token.type = tokentype_EOF;     //set the type to EOF
         current_token.line = Line_Number;       //and assign the line number 
-        current_token.column = Column_Number;   //and column number to token
+        //current_token.column = Column_Number;   //and column number to token
         return current_token;
     }
     switch(c) {       //switch for making decisions based on the first character read
@@ -318,9 +321,9 @@ Token getToken() {
     }
 
     current_token.line = Line_Number;           //Assigning line number to token.
-    current_token.column = Column_Number;       //Assigning column number to token.
     
     //printf("L: %d, C: %d\n", current_token.line, current_token.column);
+    //printf("%d\n", Column_Number);
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
 
@@ -661,7 +664,7 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
- // int main() {
+//  int main() {
 
  //     for(int i = 0; i < 10; i++) {
  //         getToken();
@@ -674,7 +677,7 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
  //   }
  //   free_all_values();
 
-  //  return 0;
-  //}
+ //   return 0;
+ // }
 
 /* END OF FILE scanner.c */
