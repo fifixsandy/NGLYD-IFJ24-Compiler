@@ -723,7 +723,7 @@ bool while_statement(dataType expRetType, astNode *block){
     // prepare empty nodes
     astNode *whileAstNode    = createAstNode(); 
     astNode *condExprNode = createAstNode();
-    astNode *bodyAstNode     = createAstNode();
+    astNode *bodyAstNode     = createRootNode();
 
     // prepare info needed for correct construction of ast node while
     bool withNull;
