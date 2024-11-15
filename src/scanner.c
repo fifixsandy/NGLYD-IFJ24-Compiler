@@ -175,6 +175,7 @@ Token getToken() {
     if(c == EOF) {                              //We reached the end of file
         current_token.type = tokentype_EOF;     //set the type to EOF
         current_token.line = Line_Number;       //and assign the line number 
+        current_token.column = Column_Number;
         //current_token.column = Column_Number;   //and column number to token
         return current_token;
     }
@@ -183,6 +184,11 @@ Token getToken() {
             if((c = getc(stdin)) == '/') {  //If the first two characters are "//"
                 Column_Number++;
                 while(c != '\n') {               //skip until you reach end of line.
+                    if(c == EOF) {
+                        current_token.type = tokentype_EOF;
+                        current_token.line = Line_Number;
+                        return current_token;
+                    }
                     c = getc(stdin);
                     continue;
                 }
@@ -664,18 +670,18 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
 
 //  int main() {
 
-//      for(int i = 0; i < 10; i++) {
-//          getToken();
-//      }
+    //  for(int i = 0; i < 10; i++) {
+     //     getToken();
+     // }
 //    free_all_values();
 //    reset_scanner();
  //   printf("\nEND\n");
  //   for(int i = 0; i < 10; i++) {
  //       getToken();
  //   }
- //   free_all_values();
+   // free_all_values();
 
-//    return 0;
-//  }
+    //return 0;
+ // }
 
 /* END OF FILE scanner.c */
