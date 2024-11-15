@@ -54,7 +54,7 @@ typedef struct exp_stack{
 exp_stack *exp_stack_create();
 void exp_stack_init(exp_stack *estack);
 void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op);
-astNode *exp_stack_pop(exp_stack *estack);
+astNode *exp_stack_pop_node(exp_stack *estack);
 symbol_number exp_stack_top_term_symb(exp_stack *estack); //toto musí niečo vraciať s čím sa bude dať porovnavať, UPDATE: poriešil som to v hlave
 bool exp_stack_is_empty(exp_stack *estack);
 void exp_stack_free_stack(exp_stack *estack);
@@ -70,7 +70,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control);
 
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
-dataType what_type(astNode *elemnt_node);
+dataType what_type(astNode *elemnt_node, bool *known_value, bool check_if_known);
 
 
 #endif
