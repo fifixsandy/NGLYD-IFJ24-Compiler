@@ -291,6 +291,7 @@ void reduce(exp_stack *stack){
             if(stack->count < 4 ){  //môže sa toto vykonať validne ked je na stacku menej ako 3 položky, jeden stop operand operator operand
                 ERROR(ERR_SYNTAX, "Invalid token\n");
             }
+            /*
             if(stack->top->control->is_nullable == true){
                 ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
             }
@@ -298,7 +299,7 @@ void reduce(exp_stack *stack){
                 ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
             }
             //ked jedna je nulovacia error
-
+            */
         default :
             if(stack->count < 4 ){
                 ERROR(ERR_SYNTAX, "Invalid token in expression\n");
@@ -380,35 +381,42 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         case tokentype_id :
         //doriešiť funkcie
             if(wasDefined(token.value, &symnode)){
-                    createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
-                    control->litconst = node->nodeRep.varNode.symtableEntry->data.data.vData.isConst;
-                    if(control->litconst == true){
-                        
-                        if(node->nodeRep.varNode.symtableEntry->data.data.vData.knownDuringCompile == true){
-                            control->known_during_compile = true;
 
-                            if(symnode->data.data.vData.type == f64){
-                                control->is_convertable = false;    // storing value issue
+                if(symnode->data.data.vData.knownDuringCompile == true){    //if variable has value known during compile check if it can be converted to different type and set flag in control struct
+                    control->known_during_compile = true;
+                    control->litconst = true;   // prolly gonna delete soon
 
-                            }else if(symnode->data.data.vData.type == i32){
+                    if(symnode->data.data.vData.isNullable == false){   // Nullable variable has to be checked for possible null value by user (in other case this check needs to be redone) 
+
+                        dataType type = symnode->data.data.vData.type;
+
+                        if(type == f64){   // when value of node is float
+                            float fdata = symnode->data.data.vData.value.floatData;
+                            if((int) fdata == fdata){ //can be converted into int
+                                    createLiteralNode(node, f64, &fdata, NULL);
                                     control->is_convertable = true;
-
-                            }else if(symnode->data.data.vData.type == u8){
-                                control->is_convertable = false;
-
-                            }else{
-                                ERROR(ERR_SYNTAX, (" incompatible type in expression\n")); 
+                                    control->is_nullable = false;
+                                    control->type = f64;
+                                    return ID;
                             }
                         }
-                    }
 
-                    else{   //vo výraze môže byť premenná len typu f64 alebo i32 ostatné typy (zamerané presnejšie na []u8 je nepodoporvaný)
-                        control->is_convertable = false;
-                        control->known_during_compile = false;
+                        if(type == i32){
+                            int idata = symnode->data.data.vData.value.intData;
+                            createLiteralNode(node, i32, &idata, NULL);
+                            control->is_convertable = true;
+                            control->is_nullable = false;
+                            control->type = i32;
+                            return ID;
+                        }
                     }
-
-                    control->is_nullable = node->nodeRep.varNode.isNullable;
-                    control->type = symnode->data.data.vData.type;
+                }
+                
+                createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
+                control->is_convertable = false;
+                control->litconst = false;
+                control->type = symnode->data.data.vData.type;
+                control->is_nullable = symnode->data.data.vData.isNullable;
                 return ID;
             }
             else{
@@ -418,23 +426,24 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     
                     funCallHandle(id, node, true);
                     if(node->nodeRep.funcCallNode.retType == void_){
-                        ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression\n");
+                        ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression.\n");
                     }
+
                     control->known_during_compile = false;
                     control->is_nullable = node->nodeRep.funcCallNode.nullableRetType;
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
                     control->litconst = false;
-                    
                     return ID;
                 }
                 else{
-                    ERROR(ERR_SYNTAX, ("Unexpected Token\n")); //TODO ERRROR
+                    ERROR(ERR_SEM_UNDEF, ("Variable or function undefined.\n")); //TODO ERRROR
                 }
             }
 
         case tokentype_int :
-            createLiteralNode(node, i32, token.value, NULL);
+            int ivalue = atoi(token.value);
+            createLiteralNode(node, i32, &ivalue,  NULL);
             control->is_nullable = false;
             control->type = i32;
             control->litconst = true;
@@ -443,11 +452,14 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return ID;
 
         case tokentype_float :
-            createLiteralNode(node, f64, token.value, NULL);
+            float fvalue = atof(token.value);
+            createLiteralNode(node, f64, &fvalue, NULL);
+
             control->is_nullable = false;
             control->type = f64;
             control->litconst = true;
             control->known_during_compile = true;
+
             if((int) node->nodeRep.literalNode.value.floatData == node->nodeRep.literalNode.value.floatData ){
                 control->is_convertable = true;
             }
@@ -466,7 +478,8 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return ID;
 
         case tokentype_zeroint :
-            createLiteralNode(node, i32, token.value, NULL);
+            int zero_int = 0;
+            createLiteralNode(node, i32, &zero_int, NULL);
             control->known_during_compile = true;
             control->is_nullable = false;
             control->type = i32;
@@ -475,7 +488,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return ID;
 
         case tokentype_string:
-            createLiteralNode(node, u8, token.value, NULL);
+            createLiteralNode(node, u8, token.value, NULL); //TODO strings
             control->known_during_compile = true;
             control->is_convertable = false;
             control->is_nullable = false;
@@ -500,12 +513,32 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
     }
 
-    if(left_operand->control->type == u8 || left_operand->control->type == u8){
+    if(left_operand->control->type == u8 || right_operand->control->type == u8){
         ERROR(ERR_SEM_TYPE, ("Cannont use u8 type in arithmetical or logical operations\n"));
     }
+    if((left_operand->control->is_nullable == true || right_operand->control->is_nullable == true) && operator->expr != NOT_EQUAL && operator->expr != EQUAL){
+        ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression\n");
+    }
+
     control->known_during_compile = false;
     control->is_nullable = false;
     control->litconst = false;
+
+    if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
+        if(left_operand->control->type == null_ && right_operand->control->is_nullable == false){
+            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+        }
+        else if(right_operand->control->type == null_ && left_operand->control->is_nullable == false){
+            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+        }
+        else{
+            control->type = unknown;
+            control->is_convertable = false;
+        }
+        return;
+    }
+
+    
 
     if(left_operand->control->type == right_operand->control->type){
         control->type = left_operand->control->type;

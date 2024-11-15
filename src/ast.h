@@ -238,7 +238,7 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
 void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum);
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
-void createLiteralNode(astNode *dest, dataType dataT, char *value, astNode *parent);
+void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **exprParams, int paramNum, bool isNullable);
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
