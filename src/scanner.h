@@ -1,3 +1,16 @@
+/**
+ * @file   scanner.h
+ * 
+ * @brief  Header file for scanner for IFJ24
+ * 
+ *         This is a header file which includes declarations
+ *         of functions used in scanner.c to tokenize
+ *         input.
+ *         
+ * @author xmalegt00
+ * @date   15.11.2024
+*/
+
 #ifndef SCANNER_H
 #define SCANNER_H
 
@@ -8,10 +21,14 @@
 #include <string.h>
 #include "error.h"
 
-#define NUM_OF_KEYWORDS 13
+#define NUM_OF_KEYWORDS 13 //Defining the number of keywords.
 
-extern int Line_Number;
+extern int Line_Number;    //Global variable for tracking the line number.
+extern int Column_Number;
 
+/*
+An enum holding each of the types of token possible.
+*/
 typedef enum {
     tokentype_EOF,
 
@@ -52,6 +69,7 @@ typedef enum {
     tokentype_lsbracket,
     tokentype_rsbracket,
 
+    //KEYWORD TYPES
     tokentype_kw_const,
     tokentype_kw_else,
     tokentype_kw_fn,
@@ -68,8 +86,11 @@ typedef enum {
     
 }token_types;
 
-#define FIRST_KEYWORD tokentype_kw_const
+#define FIRST_KEYWORD tokentype_kw_const //Define the first keyword token type for use in functions.
 
+/* 
+Structure of token, containing its type, line, column and value
+*/
 typedef struct {
     token_types type;
     int line;
@@ -77,12 +98,16 @@ typedef struct {
     char* value;
 } Token;
 
+/*
+Linked list for storing values of each token,
+containing the value of token and a pointer to the value
+*/
 typedef struct TokenValues {
     char *value;
     struct TokenValues *next;
 } TokenValues;
 
-
+//FUNCTION DECLARATIONS
 extern const char *keywords[NUM_OF_KEYWORDS];
 
 extern FILE *input_file;
@@ -116,3 +141,5 @@ void free_all_values();
 void reset_scanner();
 
 #endif
+
+/* END OF FILE scanner.h */

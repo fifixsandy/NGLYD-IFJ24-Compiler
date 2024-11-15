@@ -1,27 +1,66 @@
+/**
+ * @file   scanner.c
+ * 
+ * @brief  Implementation of scanner for IFJ24
+ * 
+ *         Scanner reads from standard input and processes
+ *         input into tokens. Tokens hold information about
+ *         their value, their line and their type. It also
+ *         recognizes lexical errors and calls an error function
+ *         when needed.
+ *         
+ * @author xmalegt00
+ * @date   15.11.2024
+*/
+
 #include "scanner.h"
 
+// This array of strings holds each keyword in order to be recognized as keywords
 const char *keywords[NUM_OF_KEYWORDS] = {
     "const", "else", "fn", "if", "i32", "f64", "null", 
     "pub", "return", "u8", "var", "void", "while"
 };
 
 FILE *input_file;
-int Line_Number = 1;
-TokenValues *head = NULL;
+int Line_Number = 1;            //Initializing Line_Number to 1, because we are starting on the first line
+int Column_Number = 0;          //Initializing Column_Numer to 0, because we havent yet read any character
+TokenValues *head = NULL;       //Initializing the head of linked list holding values of tokens to NULL
 
+
+/**
+ * @brief Function which decides between token types based on the next character in input.
+ * 
+ * @param file          Input from which function reads.
+ * @param token         Token to which is the type assigned.
+ * @param expected_char Character which is expected to follow.
+ * @param type1         Return token type if condition is not met.
+ * @param type2         Return token type if condition is met.
+ * 
+ * @return Returns type of token which is then assigned to token.
+ * 
+ */
 token_types is_next_token(FILE *file, Token *token, char expected_char, token_types type1,token_types type2){
     char nextchar = getc(file);
     if(nextchar == expected_char) {
-                token->type = type2;
-                return type2;
-            }
-            else {
-                ungetc(nextchar, file);
-                token->type = type1;
-                return type1;
-            }
+        Column_Number++;
+        token->type = type2;
+        return type2;
+    }
+    else {
+        ungetc(nextchar, file);
+        token->type = type1;
+        return type1;
+    }
 }
 
+/**
+ * @brief Function which compares ID token and decides if its a keyword
+ * 
+ * @param str   String which we compare.
+ * @param token Token to which we assign its type.
+ * 
+ * @return Zero if match found in keywords.
+ */
 int is_keyword(const char *str, Token *token) {
     for(int i = 0; i < NUM_OF_KEYWORDS; i++) {
         if(strcmp(str, keywords[i]) == 0) {
@@ -33,6 +72,14 @@ int is_keyword(const char *str, Token *token) {
     return 0;
 }
 
+/**
+ * @brief Function for initializing an array holding value of token.
+ * 
+ * @param buffer        Pointer to a memory to be allocated.
+ * @param initial_size  Size of how much memory to allocate.
+ * 
+ * @return Zero if alloc was successful.
+ */
 int init_value(char **buffer, int initial_size) {
     *buffer = malloc(initial_size);
     if (*buffer == NULL) {
@@ -41,6 +88,14 @@ int init_value(char **buffer, int initial_size) {
     return 0;
 }
 
+/**
+ * @brief Function for reallocing value size if it exceeds half of the memory currently allocated.
+ * 
+ * @param buffer        Pointer to a memory to be allocated.
+ * @param buffer_size   Size of how much memory to allocate.
+ * 
+ * @return Zero if reallocation was successful.
+ */
 int realloc_value(char **buffer, int *buffer_size) {
     *buffer_size *= 2;
     *buffer = realloc(*buffer, *buffer_size);
@@ -50,18 +105,12 @@ int realloc_value(char **buffer, int *buffer_size) {
     return 0;
 }
 
-int cleanup_value(Token *token) {
-    if (token == NULL) {
-        return -1;  
-    }
-
-    if (token->value != NULL) {
-        free(token->value);  
-        token->value = NULL;
-    }
-    return 0;
-}
-
+/**
+ * @brief Function which adds the value of token into a linked list in order to be freed later.
+ * 
+ * @param value Holds the pointer to a memory containing value of token.
+ * 
+ */
 void add_value_pointer(char *value) {
     TokenValues *new_node = (TokenValues *) malloc(sizeof(TokenValues));
     if(new_node == NULL) {
@@ -73,6 +122,9 @@ void add_value_pointer(char *value) {
 
 }
 
+/**
+ * @brief Function which frees all allocated memory for holding the value of tokens.
+ */
 void free_all_values() {
     TokenValues *current = head;
     while(current != NULL) {
@@ -84,44 +136,63 @@ void free_all_values() {
     head = NULL;
 }
 
+/**
+ * @brief Function which resets the scanner to initial state, ready to read from input again.
+ */
 void reset_scanner() {
     fseek(input_file, 0, SEEK_SET);
     Line_Number = 1;
+    Column_Number = 0;
 }
 
+/**
+ * @brief   Main scanner function which tokenizes the input.
+ * 
+ * @return  getToken functions returns a single token which contains its value,
+ *          its type and its line number
+ * 
+ */
 Token getToken() {
-    char c;
-    char nextchar;
-    char expected_char;
-    Token current_token;
-    current_token.value = NULL;
-    current_token.type = tokentype_EOF;
+    
+    char c;                              //first character which will be read from input
+    char nextchar;                       //next character which will bea read from input
+    char expected_char;                  //expected char which will be used in a decision making function
+    Token current_token;                 //token of which type and value we are processing
+    current_token.value = NULL;          //initializing token value to NULL
+    current_token.type = tokentype_EOF;  //setting the initial state of token type to EOF
     
     here:
-    while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') {
-        if(c == '\n') {
-            Line_Number++;;
+    while((c = getc(input_file)) == ' ' || c == '\t' || c == '\n') { //Skipping every white character
+        Column_Number++;
+        if(c == '\n') {             
+            Line_Number++;;         //incrementing line number when next line character was found
+            Column_Number = 0;      //resetting column on new line
         }
     }
-    if(c == EOF) {
-        current_token.type = tokentype_EOF;
-        current_token.line = Line_Number;
+    Column_Number++;
+
+    if(c == EOF) {                              //We reached the end of file
+        current_token.type = tokentype_EOF;     //set the type to EOF
+        current_token.line = Line_Number;       //and assign the line number 
+        current_token.column = Column_Number;   //and column number to token
         return current_token;
     }
     
-    switch(c) {
+    switch(c) {       //switch for making decisions based on the first character read
         case '/':
-            if((c = getc(input_file)) == '/') {
-                while(c != '\n') { 
+            if((c = getc(input_file)) == '/') {  //If the first two characters are "//"
+                Column_Number++;
+                while(c != '\n') {               //skip until you reach end of line.
                     c = getc(input_file);
                     continue;
                 }
-                Line_Number++;
-                goto here;
-            }
+                Line_Number++;                  //Increment Line number after reaching end of line
+                Column_Number = 0;              //reset column when reaching new line
+                goto here;                      //Jump to the beginning of getToken to start reading again.
+            }       
             else {
-                ungetc(c, input_file);
-                current_token.type = tokentype_divide;
+                ungetc(c, input_file);                     //if its only a single "/", 
+                current_token.type = tokentype_divide;     //assign token type.
                 break;
             }
                 
@@ -158,7 +229,7 @@ Token getToken() {
             break;
         
         case '=':
-            expected_char = '=';
+            expected_char = '=';    //using is_next_token to assign type correctly
             is_next_token(input_file, &current_token, expected_char, tokentype_assign, tokentype_equal);
             break;
 
@@ -195,6 +266,7 @@ Token getToken() {
         case '!':
             nextchar = getc(input_file);
             if (nextchar == '=') {
+                Column_Number++;
                 current_token.type = tokentype_notequal;
             }
             else {
@@ -223,13 +295,13 @@ Token getToken() {
             current_token = process_Multiline_String_Token(input_file);
             break;
 
-        default:
+        default:                        //if none of conditions above were met, default will handle all the rest
             if(c >= '0' && c <= '9') {
                 current_token = process_Number_Token(c, input_file);
             }
             else if (c == '_') {
                 nextchar = getc(input_file);
-                if(!isalnum(nextchar) && nextchar != '_') {
+                if(!isalnum(nextchar) && nextchar != '_') {     //Deciding if its a pseudovariable or an ID
                     current_token.type = tokentype_pseudovar;
                     ungetc(nextchar, input_file);
 
@@ -240,96 +312,126 @@ Token getToken() {
                     current_token = process_ID_Token(c, input_file);
                 }
             }
-            else {
-                current_token = process_ID_Token(c, input_file);
+            else {      //else branch for processing the only type left, ID type.
+                current_token = process_ID_Token(c, input_file); 
             }    
     }
-    add_value_pointer(current_token.value);
-    current_token.line = Line_Number;
-    return current_token;
+    add_value_pointer(current_token.value);     //Adding value to list of values.
+    current_token.line = Line_Number;           //Assigning line number to token.
+    current_token.column = Column_Number;       //Assigning column number to token.
+
+    //printf("L: %d, C: %d\n", current_token.line, current_token.column);
+
+    return current_token;                       //Return processed token.
 }   
 
+/**
+ * @brief  Function which processes number tokens.
+ * 
+ * @param firstchar   First character of currently processed token.
+ * @param input_file  Input from which we read characters.
+ * 
+ * @return Returns processed token of number type.
+ */
 Token process_Number_Token(char firstchar, FILE *input_file) {
         
     Token current_token;
     char nextchar;
-    int buffer_size = 2;
-    int index = 0;
+    int buffer_size = 2;    //initial buffer_size is 2, used for reallocating memory
+    int index = 0;          //index of value is intitialized to zero
         
-    init_value(&current_token.value, buffer_size);
+    init_value(&current_token.value, buffer_size);  //initializing value array
 
-    current_token.value[index++] = firstchar;
+    current_token.value[index++] = firstchar;       //Adding the first character of token to value.
 
+    //processing zero and whole part of a number
     if(firstchar == '0') {
         if(isdigit(nextchar = getc(input_file))) {
             ungetc(nextchar, input_file);
             ERRORLEX(ERR_LEX, "A whole number cannot start with 0. Line: %d.\n", Line_Number);
         }
-        current_token.type = tokentype_zeroint;
+        current_token.type = tokentype_zeroint;     //assigning type zeroint if its a zero
         nextchar = getc(input_file);
+        Column_Number++;
 
     }
-    else {
+    else {                                          //else process a non zero number
         current_token.type = tokentype_int;
         
         while(isdigit((nextchar = getc(input_file)))) {
-            if (index >= buffer_size - 1) {
+            if (index >= buffer_size - 1) {               //reallocate memory if needed
                 realloc_value(&current_token.value, &buffer_size);
             }
-            current_token.value[index++] = (char) nextchar;
+            current_token.value[index++] = (char) nextchar; //add another character to value
+            Column_Number++;
         }
     }
     
-    if (nextchar == '.') {
+    //processing the decimal part of a number or an exponent
+    if (nextchar == '.') {         
         current_token.type = tokentype_float;
         current_token.value[index++] = (char) nextchar;
             
-        while(isdigit((nextchar = getc(input_file)))) {
+        while(isdigit((nextchar = getc(input_file)))) { //allocating more memory if needed
             if (index >= buffer_size - 1) {
                 realloc_value(&current_token.value, &buffer_size);
             }
-            current_token.value[index++] = (char) nextchar;
+            current_token.value[index++] = (char) nextchar; //adding character to array
+            Column_Number++;
         }
+        Column_Number++;
     }
     if(nextchar == 'e' || nextchar == 'E') {
         if(current_token.type == tokentype_zeroint) {
             ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line: %d.\n", Line_Number);
         }
         current_token.type = tokentype_exponentialnum;
-        current_token.value[index++] = (char) nextchar;
+        current_token.value[index++] = (char) nextchar; //adding character to array
 
         nextchar = getc(input_file);
-        if(nextchar == '+' || nextchar == '-') {
+        Column_Number++;
+        if(nextchar == '+' || nextchar == '-') {    //considering a sign of an exponential number
             current_token.value[index++] = (char) nextchar;
             nextchar = getc(input_file);
+            Column_Number++;
         }
 
-        while(isdigit(nextchar)) {
+        while(isdigit(nextchar)) {               //reading and assigning until we reach a non number character
             if (index >= buffer_size - 1) {
                 realloc_value(&current_token.value, &buffer_size);
             }
             current_token.value[index++] = (char) nextchar;
             nextchar = getc(input_file);
+            Column_Number++;
         }
     }
-    if(current_token.value[index-1] == 'e' || 
-        current_token.value[index-1] == 'E' || 
+    if(current_token.value[index-1] == 'e' ||   //If statement checks for incomplete 
+        current_token.value[index-1] == 'E' ||  //exponential and decimal numbers.
         current_token.value[index-1] == '.' ||
         current_token.value[index-1] == '-' ||
         current_token.value[index-1] == '+' )
         {
         ERRORLEX(ERR_LEX, "Number incomplete on line %d.\n", Line_Number);
     }       
-    if(!isdigit(nextchar)) {
+    
+    if(!isdigit(nextchar)) {           //returning a character back to the input
         ungetc(nextchar, input_file);
     }
-    current_token.value[index] = '\0';
+    current_token.value[index] = '\0';  //terminating the array of chars with null string
+    
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
-    return current_token;
+    
+    return current_token;              //returning processed number token
 }
 
-
+/**
+ * @brief            Function which processes tokens of type string.
+ * 
+ * @param input_file Input from which function reads.
+ * 
+ * @return           Functions returns processed token.
+ */
 Token process_String_Token(FILE *input_file) {
         
     Token current_token;
@@ -339,20 +441,26 @@ Token process_String_Token(FILE *input_file) {
 
     current_token.type = tokentype_string;
 
-    init_value(&current_token.value, buffer_size);
+    init_value(&current_token.value, buffer_size); //initializing value
 
+    //while reads until we find quotation marks or we reach the end of line    
+    while((nextchar = getc(input_file)) != '"' && nextchar != '\n') { 
         
-    while((nextchar = getc(input_file)) != '"' && nextchar != '\n') {
-        if (index >= buffer_size - 1) {
+        Column_Number++;
+
+        if (index >= buffer_size - 1) {         //reallocating value if needed
             realloc_value(&current_token.value, &buffer_size);
         }
-        if(nextchar == EOF) {
+        if(nextchar == EOF) {     //if the string is terminated incorrectly and we reach EOF
             ERRORLEX(ERR_LEX, "String incomplete on line %d.\n", Line_Number);
         }
 
-        if(nextchar == 92) {
+        //if statement for handling all escape sequences and hexadecimal numbers in string.
+        if(nextchar == 92) {    //checking for a backslash
             
             nextchar = getc(input_file);
+            Column_Number++;
+            //correctly assigning each escape sequence directly into string value
             if(nextchar == 'n') {
                 current_token.value[index++] = '\n';
             }
@@ -369,47 +477,61 @@ Token process_String_Token(FILE *input_file) {
                 current_token.value[index++] = '\\';   
             }
             
+            //logic for transforming hexadecimal numbers
             else if(nextchar == 'x') {
-                char hex_str[3] = {0};
+                char hex_str[3] = {0};  //initializing buffer string to all zeroes
                 
-                for(int i = 0; i < 2; i++) {
+                for(int i = 0; i < 2; i++) {    //Searching for hexadecimal number
                     if(((nextchar = getc(input_file)) >= '0' && nextchar <= '9') ||
                         (nextchar >= 'a' && nextchar <= 'f') || 
                         (nextchar >= 'A' && nextchar <= 'F'))    
                     {
-                    hex_str[i] = nextchar;
+                    hex_str[i] = nextchar; //putting the number into an array
+                    Column_Number++;
                     }
                     else {
                         ERRORLEX(ERR_LEX, "Hexadecimal number incorrect on line %d.\n", Line_Number);
                     }
                 }
-                long dec_value = strtol(hex_str, NULL, 16);
+                long dec_value = strtol(hex_str, NULL, 16); //transforming the number from hexadecimal to decimal
                 
-                int chars_needed = snprintf(NULL, 0, "%ld", dec_value) + 1;
-                while (index + chars_needed >= buffer_size) {
+                int chars_needed = snprintf(NULL, 0, "%ld", dec_value) + 1; //calculating how many characters we are writing
+                while (index + chars_needed >= buffer_size) {               //and raellocating if size exceeds allocated size
                     realloc_value(&current_token.value, &buffer_size);
                 }
-                index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value);
+                index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value); //updating index
             }
             else {
                 ERRORLEX(ERR_LEX, "Escape sequence incorrect on line %d.\n", Line_Number);
             }
         }
+        
+        //If its none of the above, just write it to token value.
         else {
             current_token.value[index++] = nextchar;
         }
     }
+    //If string was interrupted by the end of line, its incorrectly terminated
     if(nextchar == '\n') {
         ERRORLEX(ERR_LEX, "String incorrect on line %d.\n", Line_Number);
     }
+    Column_Number++;
 
-    current_token.value[index] = '\0';
+    current_token.value[index] = '\0';  //Terminating the string with a null string
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
 
-    return current_token;
+    return current_token;   //Return processed token of type string.
 }
 
+/**
+ * @brief Function which processes ID token.
+ * 
+ * @param firstchar  First character of the token.
+ * @param input_file Input from which the function reads.
+ * 
+ * @return The function returns processed ID token.
+ */
 Token process_ID_Token(char firstchar, FILE *input_file) {
     
     Token current_token;
@@ -417,9 +539,9 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
     int buffer_size = 2;
     int index = 0;
 
-    init_value(&current_token.value, buffer_size);
+    init_value(&current_token.value, buffer_size); //initializing value of token
     
-    if(isalpha(firstchar) || firstchar == '_') {
+    if(isalpha(firstchar) || firstchar == '_') {  //ID must start with a letter or an underscore
         current_token.type = tokentype_id;
     }
 
@@ -427,40 +549,48 @@ Token process_ID_Token(char firstchar, FILE *input_file) {
         ERRORLEX(ERR_LEX, "Invalid ID on line %d.\n", Line_Number);
     }
     
-    current_token.value[index++] = firstchar;
+    current_token.value[index++] = firstchar;   //putting the first character of an ID into array.
 
+    //reading until we find a character not allowed in ID
     while((isalpha(nextchar = getc(input_file))) || isdigit(nextchar) || nextchar == '_') {
         if (index >= buffer_size - 1) {
-            realloc_value(&current_token.value, &buffer_size);
+            realloc_value(&current_token.value, &buffer_size); //reallocating memory if needed
         }
+        Column_Number++;
         current_token.value[index++] = nextchar;
     }
-    current_token.value[index] = '\0';
+    current_token.value[index] = '\0'; //terminating character array with null string
 
-    ungetc(nextchar, input_file);
+    ungetc(nextchar, input_file);      //return the last read character back since we dont need it
 
-    is_keyword(current_token.value, &current_token);
-
+    is_keyword(current_token.value, &current_token);    //decide whether the ID is a keyword or not
 
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
 
-    return current_token;
+    return current_token; //return processed token of type ID
 }
 
+/**
+ * @brief Function which processes the prologue token of program.
+ * 
+ * @param input_file Input from which the function reads.
+ * 
+ * @return Processed token of type import.
+ */
 Token process_Import(FILE *input_file) {
     
     Token current_token;
     current_token.type = tokentype_import;
 
-    const char *keyword = "import";
+    const char *keyword = "import"; //char keyword for comparing
     char nextchar;
     int i = 0;
 
     while (keyword[i] != '\0') {
         nextchar = getc(input_file);
-
-        if (nextchar != keyword[i]) {
+        Column_Number++;
+        if (nextchar != keyword[i]) { //error if we find a mismatch
             ERRORLEX(ERR_LEX, "Import incorrect on line %d.\n", Line_Number);  
         }
         i++; 
@@ -470,51 +600,62 @@ Token process_Import(FILE *input_file) {
     return current_token;
 }
 
-Token process_Multiline_String_Token(FILE *input_file) {
+/**
+ * @brief Function for processing multiline string token.
+ * 
+ * @param input_file Input from which the function reads.
+ * 
+ * @return Proccessed multiline string token.
+ */
+Token process_Multiline_String_Token(FILE *input_file) { //TODO PRIDAT COLUMN TO MULTILINE
     char nextchar;
     Token current_token;
     int index = 0;
     int buffer_size = 2;
 
-    init_value(&current_token.value, buffer_size);
+    init_value(&current_token.value, buffer_size); //initalize value
     
-    if((nextchar = getc(input_file)) == '\\') {
+    if((nextchar = getc(input_file)) == '\\') {   //multiline string begins with two backslashes
         current_token.type = tokentype_string;
-        
+        //Column_Number++;
         while(1) {
                 
             if (index >= buffer_size - 1) {
-                realloc_value(&current_token.value, &buffer_size);
+                realloc_value(&current_token.value, &buffer_size);  //reallocate memory if needed
             }
             nextchar = getc(input_file);
-            
-            if(nextchar == EOF) {
+            //Column_Number++;
+            if(nextchar == EOF) {   //if you reached the end of file, break out of the loop
                 break;
             }
-            if(nextchar == '\n') {
+            if(nextchar == '\n') {  //Checking if the multiline continues on the next line
                 Line_Number++;
                 char tempchar;
-                while((tempchar = getc(input_file)) != EOF && isspace(tempchar)) {
-                    if(tempchar == '\n') {
+                while((tempchar = getc(input_file)) != EOF && isspace(tempchar)) { //skipping whitespaces
+                    //Column_Number++;
+                    if(tempchar == '\n') { //We reached the end of line, break
+                        //Column_Number = 0;
                         break;
                     }
                 }
-                if(tempchar == '\\' && (nextchar = getc(input_file)) == '\\') {
-                    current_token.value[index++] = '\n';
+                
+                if(tempchar == '\\' && (nextchar = getc(input_file)) == '\\') { //check if multiline continues on next line
+                    //Column_Number++;
+                    current_token.value[index++] = '\n';    //put EOL into the string if multiline continues
                     continue;
                 }
                 else {
-                    Line_Number--;
-                    ungetc(tempchar, input_file);
+                    Line_Number--;  //decrement line number if the string doesnt continue
+                    ungetc(tempchar, input_file);   //return back the characters we read and dont need
                     ungetc(nextchar, input_file);
                     break;
                 }
             }
-            else {
+            else {  //default case, assign char to array
                 current_token.value[index++] = nextchar;
             }
         }
-        current_token.value[index] = '\0';
+        current_token.value[index] = '\0'; //terminate string with a null string
     }
     else {
         ERRORLEX(ERR_LEX, "Invalid multiline string on line %d.\n", Line_Number);
@@ -523,7 +664,7 @@ Token process_Multiline_String_Token(FILE *input_file) {
     //printf("%s", current_token.value);
     //printf("%d\n", current_token.type);
 
-    return current_token;
+    return current_token; //Return processed token
 }
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
@@ -539,3 +680,5 @@ Token process_Multiline_String_Token(FILE *input_file) {
 //    fclose(input_file);
 //      return 0;
 //  }
+
+/* END OF FILE scanner.c */
