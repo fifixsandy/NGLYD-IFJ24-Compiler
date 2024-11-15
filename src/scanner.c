@@ -271,7 +271,7 @@ Token getToken() {
             }
             else {
                 ungetc(nextchar, stdin);
-                ERRORLEX(ERR_LEX, "Invalid character on line %d.\n", Line_Number);
+                ERRORLEX(ERR_LEX, "Invalid character on line %d, column %d.\n", Line_Number, Column_Number);
             }
             break;
         
@@ -326,7 +326,7 @@ Token getToken() {
     current_token.column = FirstCharOfToken;    //Assigning index of first char of token to token
     
     //printf("L: %d, C: %d\n", current_token.line, current_token.column);
-    //printf("%d\n", Column_Number);
+    //printf("COLNUM: %d\n", Column_Number);
     //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
 
@@ -354,7 +354,7 @@ Token process_Number_Token(char firstchar) {
     if(firstchar == '0') {
         if(isdigit(nextchar = getc(stdin))) {
             ungetc(nextchar, stdin);
-            ERRORLEX(ERR_LEX, "A whole number cannot start with 0. Line: %d.\n", Line_Number);
+            ERRORLEX(ERR_LEX, "A whole number cannot start with 0. Line %d, column %d.\n", Line_Number, Column_Number);
         }
         else {
             current_token.type = tokentype_zeroint;     //assigning type zeroint if its a zero
@@ -388,7 +388,7 @@ Token process_Number_Token(char firstchar) {
     }
     if(nextchar == 'e' || nextchar == 'E') {
         if(current_token.type == tokentype_zeroint) {
-            ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line: %d.\n", Line_Number);
+            ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line %d, column %d.\n", Line_Number, Column_Number);
         }
         current_token.type = tokentype_exponentialnum;
         current_token.value[index++] = (char) nextchar; //adding character to array
@@ -416,7 +416,7 @@ Token process_Number_Token(char firstchar) {
         current_token.value[index-1] == '-' ||
         current_token.value[index-1] == '+' )
         {
-        ERRORLEX(ERR_LEX, "Number incomplete on line %d.\n", Line_Number);
+        ERRORLEX(ERR_LEX, "Number incomplete on line %d, column %d.\n", Line_Number, Column_Number);
     }       
     
     ungetc(nextchar, stdin);   //returning a character back to the input
@@ -454,7 +454,7 @@ Token process_String_Token() {
             realloc_value(&current_token.value, &buffer_size);
         }
         if(nextchar == EOF) {     //if the string is terminated incorrectly and we reach EOF
-            ERRORLEX(ERR_LEX, "String incomplete on line %d.\n", Line_Number);
+            ERRORLEX(ERR_LEX, "String incomplete on line %d, column %d.\n", Line_Number, Column_Number);
         }
 
         //if statement for handling all escape sequences and hexadecimal numbers in string.
@@ -492,7 +492,7 @@ Token process_String_Token() {
                     Column_Number++;
                     }
                     else {
-                        ERRORLEX(ERR_LEX, "Hexadecimal number incorrect on line %d.\n", Line_Number);
+                        ERRORLEX(ERR_LEX, "Hexadecimal number incorrect on line %d, column %d.\n", Line_Number, Column_Number);
                     }
                 }
                 long dec_value = strtol(hex_str, NULL, 16); //transforming the number from hexadecimal to decimal
@@ -504,7 +504,7 @@ Token process_String_Token() {
                 index += snprintf(current_token.value + index, chars_needed, "%ld", dec_value); //updating index
             }
             else {
-                ERRORLEX(ERR_LEX, "Escape sequence incorrect on line %d.\n", Line_Number);
+                ERRORLEX(ERR_LEX, "Escape sequence incorrect on line %d, column %d.\n", Line_Number, Column_Number);
             }
         }
         
@@ -515,7 +515,7 @@ Token process_String_Token() {
     }
     //If string was interrupted by the end of line, its incorrectly terminated
     if(nextchar == '\n') {
-        ERRORLEX(ERR_LEX, "String incorrect on line %d.\n", Line_Number);
+        ERRORLEX(ERR_LEX, "String incorrect on line %d, column %d.\n", Line_Number, Column_Number);
     }
     Column_Number++;
 
@@ -547,7 +547,7 @@ Token process_ID_Token(char firstchar) {
     }
 
     else {
-        ERRORLEX(ERR_LEX, "Invalid ID on line %d.\n", Line_Number);
+        ERRORLEX(ERR_LEX, "Invalid ID on line %d, column %d.\n", Line_Number, Column_Number);
     }
     
     current_token.value[index++] = firstchar;   //putting the first character of an ID into array.
@@ -590,7 +590,7 @@ Token process_Import() {
         nextchar = getc(stdin);
         Column_Number++;
         if (nextchar != keyword[i]) { //error if we find a mismatch
-            ERRORLEX(ERR_LEX, "Import incorrect on line %d.\n", Line_Number);  
+            ERRORLEX(ERR_LEX, "Import incorrect on line %d, column %d.\n", Line_Number, Column_Number);  
         }
         i++; 
     }
@@ -614,14 +614,13 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
     
     if((nextchar = getc(stdin)) == '\\') {   //multiline string begins with two backslashes
         current_token.type = tokentype_string;
-        //Column_Number++;
+
         while(1) {
                 
             if (index >= buffer_size - 1) {
                 realloc_value(&current_token.value, &buffer_size);  //reallocate memory if needed
             }
             nextchar = getc(stdin);
-            //Column_Number++;
             if(nextchar == EOF) {   //if you reached the end of file, break out of the loop
                 break;
             }
@@ -629,15 +628,12 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
                 Line_Number++;
                 char tempchar;
                 while((tempchar = getc(stdin)) != EOF && isspace(tempchar)) { //skipping whitespaces
-                    //Column_Number++;
                     if(tempchar == '\n') { //We reached the end of line, break
-                        //Column_Number = 0;
                         break;
                     }
                 }
                 
                 if(tempchar == '\\' && (nextchar = getc(stdin)) == '\\') { //check if multiline continues on next line
-                    //Column_Number++;
                     current_token.value[index++] = '\n';    //put EOL into the string if multiline continues
                     continue;
                 }
@@ -655,10 +651,10 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
         current_token.value[index] = '\0'; //terminate string with a null string
     }
     else {
-        ERRORLEX(ERR_LEX, "Invalid character on line %d.\n", Line_Number);
+        ERRORLEX(ERR_LEX, "Invalid character on line %d, column %d.\n", Line_Number, Column_Number);
     }
 
-    //printf("%s", current_token.value);
+    //printf("%s\n", current_token.value);
     //printf("%d\n", current_token.type);
 
     return current_token; //Return processed token
