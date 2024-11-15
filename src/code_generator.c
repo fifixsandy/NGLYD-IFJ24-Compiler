@@ -322,7 +322,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
             add_code("LABEL "); add_code(cond_label); endl();
 
-            if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
+            if(!code_generator(ast->nodeRep.whileNode.condition, TF_vars)) return false;
 
             if(ast->nodeRep.whileNode.withNull){
                 def_var(TF_vars, ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null, USER);
@@ -444,7 +444,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 add_code("ADDS"); endl();
                 break;
             case SUBSTRACTION:
-                add_code("SUBs"); endl();
+                add_code("SUBS"); endl();
                 break;
             case EQUAL:
                 add_code("EQS");endl();
