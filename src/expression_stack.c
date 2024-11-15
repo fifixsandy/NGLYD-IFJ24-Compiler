@@ -71,7 +71,7 @@ astNode *exp_stack_pop_node(exp_stack *estack){
     astNode *top_node = estack->top->node;
     stack_item *top_to_delete = estack->top;
     estack->top = estack->top->next;
-    free(top_to_delete->control);
+    //free(top_to_delete->control);
     free(top_to_delete);
     estack->count--;
     return top_node;
@@ -111,6 +111,7 @@ void exp_stack_free_stack(exp_stack *estack){
 bool exp_stack_find_lbr(exp_stack *estack){
     stack_item *estack_item = estack->top;
     while(estack_item){
+        
         if(estack_item->expr == LBR){
             return true;
         }
@@ -137,19 +138,26 @@ stack_item *exp_stack_pop(exp_stack *estack){
 * @return True if build was successful; False if build wasn't successful
 */
 bool expression(astNode *expr_node){
+    fprintf(stderr, "\n");
+    DEBPRINT("entered expression func\n");
     bool *known_upon_compilation;
     //fprintf(stderr, "\nDOSTAL SOM SA DO EXPRESSION ČASTI!!\n");
     exp_stack *estack = exp_stack_create();
         if(estack == NULL){
             return false; //TODO internal error
         }
-    exp_stack_push(estack, NULL, STOP);
+    exp_stack_push(estack, NULL, STOP);    //push stop symbol on top of the stack
+    DEBPRINT("pushed stop sign to stack\n");
 
     if(process_expr(estack)){
-        DEBPRINT("AHOJ MOJ typ JE %d a token %d\n ", estack->top->node->nodeRep.funcCallNode.retType, currentToken.type);
-        astNode *final_exp = exp_stack_pop(estack);
         
-        createExpressionNode(expr_node, what_type(final_exp), final_exp, false);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
+        control_items *expr_items = estack->top->control;
+       
+        astNode *final_exp = exp_stack_pop_node(estack);
+        
+
+        createExpressionNode(expr_node, expr_items->type, final_exp, expr_items->is_nullable);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
+        
         exp_stack_free_stack(estack);
         
         return true;
@@ -161,7 +169,7 @@ bool expression(astNode *expr_node){
 }
 
 bool process_expr(exp_stack *estack){
-    
+    DEBPRINT("entered process_expr func with token %d (token_types)\n", currentToken.type);
     astNode *curr_node = createAstNode();
     if(curr_node == NULL){
         return false; //TODO internal Error
@@ -172,11 +180,25 @@ bool process_expr(exp_stack *estack){
         return false; //TODO internal Error
     }
 
-    int evaluate = shift(estack, curr_node, control);
+    // initialization of empty controls
+    control->is_convertable = false;
+    control->is_nullable = false;
+    control->litconst = false;
+    control->type = void_;
+
+
+    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node, control);
+    DEBPRINT("evaluated current token as %d (symbol_number)\n", curr_symb);       
+    if(curr_symb == ERROR){
+        
+        ERROR(ERR_SYNTAX, "Wrong Token in expression\n");
+    }
+    int evaluate = shift(estack, curr_node, control, curr_symb);
     //fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
     if(evaluate == 0){
-        DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
+        
         GT
+        
         return process_expr(estack);
     }
     else if(evaluate == 1){
@@ -201,37 +223,31 @@ bool process_expr(exp_stack *estack){
 * 
 * @return True if the expression has been fully processed or encountered an error; false if the expression has not been fully processed.
 */
-int shift(exp_stack *estack, astNode *curr_node, control_items *control){
-    
+int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_number curr_symb){
+    //DEBPRINT("som vo funkcii shift a na vrchole stacku sa nachádza %d", estack->top->expr);
+
+
     symbol_number top_term = exp_stack_top_term_symb(estack);
-    
-    symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node, control);
-    if(curr_symb == ERROR){
-        
-        return 2; // TODO error
-    }
+    DEBPRINT("in fucnion shit found that top term symbol on stack is %d (symbol_number)\n", top_term);
     precedence compare = precedence_table[top_term][curr_symb];
+    DEBPRINT("Porovnaním najvyššieho terminalu na stacku a mojho znaku som priradil precednciu %d\n", compare);
     if(compare == LS || compare == EQ){
-        fprintf(stderr, "súčasný token je %d a najvyšší znak je %d\n", currentToken.type, estack->top->expr);
+        
         exp_stack_push(estack, curr_node, curr_symb);
         estack->top->control = control;
         return 0;
     }
     else if(compare == GR){
-        
         reduce(estack);
-        return shift(estack, curr_node, control);
+        return shift(estack, curr_node, control, curr_symb);
     }
     else{
-        if(top_term == ID && curr_symb == LBR){
-        }
-
-        else if(top_term == STOP && curr_symb == STOP){
+        if(top_term == STOP && curr_symb == STOP){
             return 1; // GG vyhrali sme
         }
         else{
             //fprintf(stderr, "vyhodnocovacie pravidlo nd\n");
-            ERROR(ERR_SYNTAX, ("Invalid expression, expected: \";\"\n")); // ERORR chybný expression
+            ERROR(ERR_SYNTAX, ("Invalid expression, expected: \";\", sprava prišla z funkcie shift\n")); // ERORR chybný expression
         }
     }
 }
@@ -247,8 +263,9 @@ void reduce(exp_stack *stack){
             break;
  
         case RBR :
-            astNode *rbr = exp_stack__node(stack);
+            astNode *rbr = exp_stack_pop_node(stack);
             free(rbr);
+            control_items *term_items = stack->top->control;
             astNode *expr = exp_stack_pop_node(stack);
             if(stack->top->expr != LBR){
                 ERROR(ERR_SYNTAX, "Invalid Token");
@@ -256,6 +273,7 @@ void reduce(exp_stack *stack){
             astNode *lbr = exp_stack_pop_node(stack);
             free(lbr);
             exp_stack_push(stack, expr, NO_TERMINAL);
+            stack->top->control = term_items;
             return;
 
         case STOP :
@@ -288,9 +306,17 @@ void reduce(exp_stack *stack){
             
             dataType data_type_buffer;  // semanticke pravidlo pretypovania alebo erroru, treba urobiť porovnanie oboch výrazo a prípadne pritypovanie
             
+            control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
+            
+            semantic_check_retype(stack->top->next->next, stack->top->next, stack->top, operation_item);
+            
+            astNode *right_elem = exp_stack_pop_node(stack);
+            astNode *operator = exp_stack_pop_node(stack);
+            astNode *left_elem = exp_stack_pop_node(stack);
 
-            //createBinOpNode(operator, top_term, left_elem, right_elem, data_type_buffer, NULL);
+            createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL);
             exp_stack_push(stack, operator, NO_TERMINAL);
+            stack->top->control = operation_item;
             return;
     }
       
@@ -358,12 +384,14 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     control->litconst = node->nodeRep.varNode.symtableEntry->data.data.vData.isConst;
                     if(control->litconst == true){
                         if(symnode->data.data.vData.type == f64){
-                            control->is_convertable = false;
+                            control->is_convertable = false;    // storing value issue
 
                         }else if(symnode->data.data.vData.type == i32){
                                 control->is_convertable = true;
+                        }else if(symnode->data.data.vData.type == u8){
+                            control->is_convertable = false;
                         }else{
-                             ERROR(ERR_SYNTAX, (" incompatible type in expression\n"));
+                             ERROR(ERR_SYNTAX, (" incompatible type in expression\n")); 
                         }
                     }
                     else{   //vo výraze môže byť premenná len typu f64 alebo i32 ostatné typy (zamerané presnejšie na []u8 je nepodoporvaný)
@@ -374,11 +402,8 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 return ID;
             }
             else{
-                DEBPRINT("DOSTAL SOM SA DO ELSUUUUUUUUUUUUUUUUUUUUUUUUU\n");
                 char *id = currentToken.value;
-                DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
                 GT
-                DEBPRINT("----------------------------------------------------------------------------------- %d\n", currentToken.type);
                 if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
                     
                     funCallHandle(id, node, true);
@@ -426,6 +451,21 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_convertable = false;
             return ID;
 
+        case tokentype_zeroint :
+            createLiteralNode(node, i32, token.value, NULL);
+            control->is_nullable = false;
+            control->type = i32;
+            control->litconst = true;
+            control->is_convertable = true;
+            return ID;
+
+        case tokentype_string:
+            createLiteralNode(node, u8, token.value, NULL);
+            control->is_convertable = false;
+            control->is_nullable = false;
+            control->litconst = true;
+            control->type = u8;
+            return ID;
 
         default:
             //free(node);
@@ -438,43 +478,15 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
 
 
-dataType what_type(astNode *elemnt_node){
-    switch(elemnt_node->type){
-        
-        case AST_NODE_VAR :
-            if(check_if_known == true){
-                if(1){ //dorobiť vyhodnocovanie flagu
-                    known_value = true;
-                }
-                else{
-                    known_value = false;
-                }
-            }
-            return element_node->nodeRep.varNode.dataT;
-
-        case AST_NODE_LITERAL :
-            known_value = true;
-            return element_node->nodeRep.literalNode.dataT;
-
-        case AST_NODE_BINOP :
-            known_value = false;
-            return element_node->nodeRep.binOpNode.dataT;
-
-        case AST_NODE_FUNC_CALL:
-            return elemnt_node->nodeRep.funcCallNode.retType;
-
-        default:
-            return void_ ;
-
-    }
-}
-
 
 void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control){
     if(left_operand->expr != NO_TERMINAL || left_operand->expr != NO_TERMINAL){
         ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
     }
 
+    if(left_operand->control->type == u8 || left_operand->control->type == u8){
+        ERROR(ERR_SEM_TYPE, ("Cannont use u8 type in arithmetical or logical operations\n"));
+    }
     control->is_nullable = false;
     control->litconst = false;
 
@@ -486,7 +498,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         else{
             control->is_convertable = false;
         }
-        return;//všetko vpohode nerieš
+        return; //všetko vpohode nerieš
 
     }
     else if(left_operand->control->is_convertable == true){
@@ -513,7 +525,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
 
     }
     else{
-        ERROR(ERR_SEM_TYPE, "types of operands in expresions don't match");
+        ERROR(ERR_SEM_TYPE, "types of operands in expresions don't match\n");
     }
 
 }

@@ -66,11 +66,11 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 //funkcia na poskladanie stromu zo stacku ale to potom
 //void reduce_bin_op(exp_stack *estack, control_items *control);
 void reduce(exp_stack *estack);
-int shift(exp_stack *estack, astNode *curr_node, control_items *control);
+int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_number curr_symb);
 
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
-dataType what_type(astNode *elemnt_node, bool *known_value, bool check_if_known);
+
 
 
 #endif
