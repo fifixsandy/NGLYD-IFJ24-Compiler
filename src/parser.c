@@ -802,7 +802,7 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
 
-            if(withNull){
+            if(!withNull){
                 if(!checkIfExprLogic(condExrpNode)){
                     ERROR(ERR_SEM_TYPE, "Expression in if statement is not of logic type.\n");
                 }
