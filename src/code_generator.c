@@ -376,6 +376,9 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         case AST_NODE_EXPR:
             // Expresion evaluation
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
+            if(ast->nodeRep.exprNode.exprTree != NULL && ast->nodeRep.exprNode.exprTree->type == AST_NODE_FUNC_CALL){
+                add_code("PUSHS "); GF(); endl();
+            }
             break;
         
         case AST_NODE_BINOP:
