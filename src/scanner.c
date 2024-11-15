@@ -655,7 +655,7 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
         current_token.value[index] = '\0'; //terminate string with a null string
     }
     else {
-        ERRORLEX(ERR_LEX, "Invalid multiline string on line %d.\n", Line_Number);
+        ERRORLEX(ERR_LEX, "Invalid character on line %d.\n", Line_Number);
     }
 
     //printf("%s", current_token.value);
