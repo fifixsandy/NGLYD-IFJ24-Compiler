@@ -141,7 +141,7 @@ bool expression(astNode *expr_node){
         DEBPRINT("AHOJ MOJ typ JE %d a token %d\n ", estack->top->node->nodeRep.funcCallNode.retType, currentToken.type);
         astNode *final_exp = exp_stack_pop(estack);
         
-        createExpressionNode(expr_node, what_type(final_exp), final_exp); 
+        createExpressionNode(expr_node, what_type(final_exp), final_exp, false);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
         exp_stack_free_stack(estack);
         
         return true;
@@ -441,7 +441,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
 dataType what_type(astNode *elemnt_node){
     switch(elemnt_node->type){
-        /*
+        
         case AST_NODE_VAR :
             return elemnt_node->nodeRep.varNode.dataT;
 
@@ -453,9 +453,9 @@ dataType what_type(astNode *elemnt_node){
 
         case AST_NODE_FUNC_CALL:
             return elemnt_node->nodeRep.funcCallNode.retType;
-*/
+
         default:
-            return i32 ;
+            return void_ ;
 
     }
 }
