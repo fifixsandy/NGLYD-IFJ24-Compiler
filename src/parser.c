@@ -716,7 +716,7 @@ bool while_statement(dataType expRetType, astNode *block){
 
     // prepare empty nodes
     astNode *whileAstNode    = createAstNode(); 
-    astNode *condExprAstNode = createAstNode();
+    astNode *condExprNode = createAstNode();
     astNode *bodyAstNode     = createAstNode();
 
     // prepare info needed for correct construction of ast node while
@@ -732,12 +732,22 @@ bool while_statement(dataType expRetType, astNode *block){
         GT
         if(currentToken.type == tokentype_lbracket){
             GT
-            if(expression(condExprAstNode)){ // TODO EXPRESSION
+            if(expression(condExprNode)){ // TODO EXPRESSION
                 if(currentToken.type == tokentype_rbracket){
                     GT
                     if(id_without_null(&withNull, &id_wout_null)){
 
-                        // TODO check correct expression in condExprNode
+                        if(!withNull){
+                            if(!checkIfExprLogic(condExprNode)){
+                                ERROR(ERR_SEM_TYPE, "Expression in while statement is not of logic type.\n");
+                            }
+                        }
+                        else{
+                            findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExprNode->nodeRep.exprNode.dataT;
+                            if(!checkIfNullable(condExprNode)){
+                            ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
+                            }
+                        }
 
                         if(currentToken.type == tokentype_lcbracket){
                             GT
@@ -761,7 +771,7 @@ bool while_statement(dataType expRetType, astNode *block){
     allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block while
     // create node with correct info and connect it to block
     pop(&symtableStack); // pop, so scopes are not disturbed
-    createWhileNode(whileAstNode, withNull, id_wout_null, condExprAstNode, bodyAstNode, whileSymTable, block);
+    createWhileNode(whileAstNode, withNull, id_wout_null, condExprNode, bodyAstNode, whileSymTable, block);
     connectToBlock(whileAstNode, block);
 
 DEBPRINT(" %d\n", correct);
@@ -801,7 +811,6 @@ bool if_statement(dataType expRetType, astNode *block){
         if(currentToken.type == tokentype_rbracket){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
-
             if(!withNull){
                 if(!checkIfExprLogic(condExrpNode)){
                     ERROR(ERR_SEM_TYPE, "Expression in if statement is not of logic type.\n");
