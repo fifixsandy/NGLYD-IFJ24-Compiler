@@ -324,9 +324,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
 
             if(ast->nodeRep.whileNode.withNull){
+                def_var(TF_vars, ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null, USER);
+
                 add_code("POPS "); TF(ast->nodeRep.whileNode.id_without_null); endl();
 
-                add_code("EQ"); TF_ARGS("TF@tmp_bool"); add_null(); TF(ast->nodeRep.whileNode.id_without_null); endl();
+                add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.whileNode.id_without_null); endl();
             }
             else{
                 add_code("POPS TF@tmp_bool"); endl();
@@ -339,7 +341,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("JUMP "); add_code(cond_label); endl();
             add_code("LABEL "); add_code(end_label); endl();
 
-            //if(!code_generator(ast->next, TF_vars)) return false;
+            if(!code_generator(ast->next, TF_vars)) return false;
             break;
         case AST_NODE_IFELSE:
             count++;
@@ -350,10 +352,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             //if(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null)
             if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
 
-            if(ast->nodeRep.ifElseNode.withNull){
+            if(ast->nodeRep.ifElseNode.withNull){ 
+                def_var(TF_vars, ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null, USER);
                 add_code("POPS "); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
 
-                add_code("EQ"); TF_ARGS("TF@tmp_bool"); add_null(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
+                add_code("EQ "); TF_ARGS("tmp_bool"); space(); add_null(); space(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
             }
             else{
                 add_code("POPS TF@tmp_bool"); endl();
@@ -368,7 +371,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(!code_generator(ast->nodeRep.ifElseNode.elsePart, TF_vars)) return false;
             add_code("LABEL "); add_code(end_label); endl();
             
-            //if(!code_generator(ast->next, TF_vars)) return false;
+            if(!code_generator(ast->next, TF_vars)) return false;
 
             break;
         case AST_NODE_IF:
