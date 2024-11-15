@@ -831,7 +831,7 @@ bool if_statement(dataType expRetType, astNode *block){
 
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, ifNode)){
+        if(body(expRetType, bodyIfNode)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_kw_else){ 
@@ -841,7 +841,7 @@ bool if_statement(dataType expRetType, astNode *block){
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, elseNode)){
+        if(body(expRetType, bodyElseNode)){
         if(currentToken.type == tokentype_rcbracket){
             correct = true;
         }else{ERROR(ERR_SYNTAX, "cExpected: \"}\" .\n");}
