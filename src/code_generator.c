@@ -255,9 +255,8 @@ bool generate_build_in_functions(){
 }
 
 bool generate_header(){
-    add_code(".IFJcode24\n"); endl();
-    add_code("DEFVAR "); GF(); endl();
-    add_code("JUMP $main"); endl();
+    add_code(HEADER); endl();
+    if(!generate_build_in_functions()) return false;
     endl();
     return true;
 }
@@ -325,7 +324,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(!code_generator(ast->nodeRep.whileNode.condition, TF_vars)) return false;
 
             if(ast->nodeRep.whileNode.withNull){
-                def_var(TF_vars, ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null, USER);
+                def_var(TF_vars, ast->nodeRep.whileNode.id_without_null, USER);
 
                 add_code("POPS "); TF(ast->nodeRep.whileNode.id_without_null); endl();
 
@@ -660,11 +659,11 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     // define var if it is not defined on begining
                     if(!def_var(TF_vars,var_tmp, COMPILER)) return false;
 
-                    add_code("MOVE %1 "); GF(); endl();
+                    add_code("MOVE "); TF_ARGS(var_tmp); space(); GF(); endl();
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
 
                     add_code("POPS "); GF(); endl();
-                    if(!add_str_concat(RETVAL, var_tmp, RETVAL)) return false;
+                    add_code("CONCAT"); add_param(RETVAL); space(); TF_ARGS(var_tmp); add_param(RETVAL); endl();
                     goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr") == 0){
