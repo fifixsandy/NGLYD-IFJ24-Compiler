@@ -177,7 +177,6 @@ Token getToken() {
         current_token.column = Column_Number;   //and column number to token
         return current_token;
     }
-    
     switch(c) {       //switch for making decisions based on the first character read
         case '/':
             if((c = getc(input_file)) == '/') {  //If the first two characters are "//"
@@ -316,11 +315,16 @@ Token getToken() {
                 current_token = process_ID_Token(c, input_file); 
             }    
     }
-    add_value_pointer(current_token.value);     //Adding value to list of values.
+    if(current_token.value != NULL) {
+        add_value_pointer(current_token.value); //Adding value to list of values.
+    }
+
     current_token.line = Line_Number;           //Assigning line number to token.
     current_token.column = Column_Number;       //Assigning column number to token.
-
+    
     //printf("L: %d, C: %d\n", current_token.line, current_token.column);
+    //printf("%s\n", current_token.value);
+    //printf("%d\n", current_token.type);
 
     return current_token;                       //Return processed token.
 }   
@@ -350,10 +354,9 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
             ungetc(nextchar, input_file);
             ERRORLEX(ERR_LEX, "A whole number cannot start with 0. Line: %d.\n", Line_Number);
         }
-        current_token.type = tokentype_zeroint;     //assigning type zeroint if its a zero
-        nextchar = getc(input_file);
-        Column_Number++;
-
+        else {
+            current_token.type = tokentype_zeroint;     //assigning type zeroint if its a zero
+        }
     }
     else {                                          //else process a non zero number
         current_token.type = tokentype_int;
@@ -414,9 +417,8 @@ Token process_Number_Token(char firstchar, FILE *input_file) {
         ERRORLEX(ERR_LEX, "Number incomplete on line %d.\n", Line_Number);
     }       
     
-    if(!isdigit(nextchar)) {           //returning a character back to the input
-        ungetc(nextchar, input_file);
-    }
+    ungetc(nextchar, input_file);   //returning a character back to the input
+
     current_token.value[index] = '\0';  //terminating the array of chars with null string
     
     //printf("%s\n", current_token.value);
