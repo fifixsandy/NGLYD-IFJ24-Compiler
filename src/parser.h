@@ -26,8 +26,8 @@ bool prog(bool firstTraverse);
 bool prolog();
 bool code(bool firstTraverse);
 bool def_func(bool firstTraverse);
-bool params(int *paramNum, dataType **paramTypes, char ***paramNames);
-bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames);
+bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **paramNullable);
+bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames, bool **paramNullable);
 bool def_variable(astNode *block);
 bool varorconst(bool *isConst);
 bool unused_decl(astNode *block);
@@ -57,11 +57,13 @@ bool wasDefined(char *ID, symNode **node);
 dataType getReturnType(char *ID);
 dataType getVarType(char *ID);
 bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex);
+bool checkParameterNullability(bool *expected, astNode **given, int paramNum, int *badIndex);
 symNode *checkBuiltinId(char *id);
 bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex);
 bool checkIfNullable(astNode *expr);
 bool checkIfExprLogic(astNode *expr);
 void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData);
 bool allReturns(astNode *statement);
+
 
 #endif

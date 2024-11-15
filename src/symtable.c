@@ -610,6 +610,8 @@ void prepareBuiltinSymtable(){
     fData.paramNum         = 1;
     fData.paramTypes       = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0]    = any;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 1;
     fData.returnType       = void_;
     data.data.fData        = fData;
     insertSymNode(builtinSymtable, "write", data);
@@ -620,6 +622,8 @@ void prepareBuiltinSymtable(){
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = i32;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "i2f", data);
 
@@ -629,6 +633,8 @@ void prepareBuiltinSymtable(){
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = f64;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "f2i", data);
 
@@ -638,6 +644,8 @@ void prepareBuiltinSymtable(){
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = any;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "string", data);
 
@@ -647,6 +655,8 @@ void prepareBuiltinSymtable(){
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = u8;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "length", data);
 
@@ -657,6 +667,9 @@ void prepareBuiltinSymtable(){
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = u8;
     fData.paramTypes[1] = u8;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
+    fData.paramNullable[1] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "concat", data);
 
@@ -668,6 +681,10 @@ void prepareBuiltinSymtable(){
     fData.paramTypes[0] = u8;
     fData.paramTypes[1] = i32;
     fData.paramTypes[2] = i32;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
+    fData.paramNullable[1] = 0;
+    fData.paramNullable[2] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "substring", data);
     
@@ -678,6 +695,9 @@ void prepareBuiltinSymtable(){
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = u8;
     fData.paramTypes[1] = u8;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
+    fData.paramNullable[1] = 0;
     data.data.fData     = fData;
 
     insertSymNode(builtinSymtable, "strcmp", data);
@@ -689,6 +709,9 @@ void prepareBuiltinSymtable(){
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = u8;
     fData.paramTypes[1] = i32;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
+    fData.paramNullable[1] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "ord", data);
     
@@ -698,6 +721,8 @@ void prepareBuiltinSymtable(){
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = i32;
+    fData.paramNullable    = malloc(sizeof(bool) * fData.paramNum);
+    fData.paramNullable[0] = 0;
     data.data.fData     = fData;
     insertSymNode(builtinSymtable, "chr", data);
     

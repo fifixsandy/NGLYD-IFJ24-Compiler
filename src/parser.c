@@ -114,8 +114,9 @@ bool def_func(bool firstTraverse){
     char     *funID;
     funData   entryData;
     symData   entrySymData;
-    dataType *paramTypes = malloc(sizeof(dataType)*MAX_PARAM_NUM);
-    char    **paramNames = malloc(sizeof(char *)*MAX_PARAM_NUM);
+    dataType *paramTypes    = malloc(sizeof(dataType)*MAX_PARAM_NUM);
+    char    **paramNames    = malloc(sizeof(char *)*MAX_PARAM_NUM);
+    bool    *paramNullable = malloc(sizeof(bool)*MAX_PARAM_NUM);
     int       paramNum = 0;
     dataType  returnType;
     bool      nullable;
@@ -164,7 +165,7 @@ bool def_func(bool firstTraverse){
     
     GT
         
-    params(&paramNum, &paramTypes, &paramNames);
+    params(&paramNum, &paramTypes, &paramNames, &paramNullable);
 
     if(currentToken.type != tokentype_rbracket){
         ERROR(ERR_SYNTAX, "Expected: \")\".\n");
@@ -211,6 +212,7 @@ bool def_func(bool firstTraverse){
         entryData.defined       = true;
         entryData.paramNames    = paramNames;
         entryData.paramTypes    = paramTypes;
+        entryData.paramNullable = paramNullable;
         entryData.nullableRType = nullable;
         entryData.returnType    = returnType;
         entryData.paramNum      = paramNum;
@@ -241,7 +243,7 @@ bool def_func(bool firstTraverse){
     return correct;
 }
 
-bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
+bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **paramNullable){
     bool correct = false;
 
     // preparing information about parameter
@@ -258,7 +260,7 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
         // check if redefining existing (two params with same name)
         paramID = currentToken.value;
         symNode *entry = findInStack(&symtableStack, paramID);
-        if(entry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",paramID);} // TODO SEMANTIC ERROR 5
+        if(entry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",paramID);}
         
         GT
 
@@ -270,15 +272,17 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
 
         type(&nullable, &paramType) ;       
         // all information are known, set them accordingly
-        (*paramNames)[*paramNum]  = paramID;
-        (*paramTypes)[*paramNum]  = paramType;
+        (*paramNames)[*paramNum]    = paramID;
+        (*paramTypes)[*paramNum]    = paramType;
+        (*paramNullable)[*paramNum] = nullable;
+
         entryVarData.type       = paramType;
         entryVarData.isNullable = nullable;
         (*paramNum)++;
         entryData.data.vData    = entryVarData,
         insertSymNode(symtableStack.top->tbPtr, paramID, entryData);
 
-        correct = params_n(paramNum, paramTypes, paramNames);
+        correct = params_n(paramNum, paramTypes, paramNames, paramNullable);
         
     }
 
@@ -292,12 +296,12 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames){
 }
 
 // TODO CHECK THIS WHOLE FUNCTION
-bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames){
+bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames, bool **paramNullable){
     bool correct = false;
     // RULE 8 <params_n> -> , <params>
     if(currentToken.type == tokentype_comma){
         GT
-        correct = params(paramNum, paramTypes, paramNames);
+        correct = params(paramNum, paramTypes, paramNames, paramNullable);
     }
     // RULE 9 <params_n> -> ε
     else if(currentToken.type == tokentype_rbracket){
@@ -339,7 +343,7 @@ bool def_variable(astNode *block){
 
         varName = currentToken.value;
         symNode *varEntry = findInStack(&symtableStack, varName);
-        if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);} // TODO SEMANTIC error 5 redefinition
+        if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);}
 
         variData.isConst = isConst;
         entryData.used = false;
@@ -398,7 +402,7 @@ bool def_variable(astNode *block){
 
         }
 
-        if(isConst && exprNode->nodeRep.exprNode.knownDuringCompile){ // TODO PRETIFY
+        if(isConst && exprNode->nodeRep.exprNode.knownDuringCompile){
             extractValueToConst(exprNode->nodeRep.exprNode.dataT, exprNode->nodeRep.exprNode.exprTree, &variData);
         }
         else{
@@ -451,7 +455,7 @@ bool unused_decl(astNode *block){
         GT
         if(currentToken.type == tokentype_assign){
             GT
-            if(expression(expr)){ // TODO EXPRESSION
+            if(expression(expr)){
                 if(currentToken.type == tokentype_semicolon){
                     correct = true;
                 }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
@@ -676,7 +680,7 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
     }
     // RULE 43 <exp_func_ret> -> expression
     else{
-        correct = expression(*exprNode); // TODO EXPRESSION
+        correct = expression(*exprNode); 
         dataType exprType = (*exprNode)->nodeRep.exprNode.dataT;
         if(exprType != expRetType){
             ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
@@ -696,7 +700,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             *id_wout_null = currentToken.value;
             DEBPRINT("inhere %s ------------------------------,\n", currentToken.value);
             symNode *symEntry = findInStack(&symtableStack, currentToken.value);
-            if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}// TODO ERROR 5 redefinition
+            if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}
 
             // add the ID_WITHOUT_NULL to symtable for if/while
             varData variData = {.inheritedType = true, .isConst = true, .isNullable = false}; // TODO CHECK THIS
@@ -741,7 +745,7 @@ bool while_statement(dataType expRetType, astNode *block){
         GT
         if(currentToken.type == tokentype_lbracket){
             GT
-            if(expression(condExprNode)){ // TODO EXPRESSION
+            if(expression(condExprNode)){
                 if(currentToken.type == tokentype_rbracket){
                     GT
                     if(id_without_null(&withNull, &id_wout_null)){
@@ -883,7 +887,7 @@ bool expr_params(astNode **params, int *paramCnt){
         correct = true;
     }
     // RULE 24 <expr_params> -> expression <expr_params_n>
-    else if(expression(expr)){ // TODO EXPRESSION
+    else if(expression(expr)){ 
 
         params[*paramCnt] = expr;
         (*paramCnt)++;
@@ -1004,8 +1008,6 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
             if(currentToken.type == tokentype_lbracket){
                 GT
                 if(expr_params(exprParamsArr, &paramCnt)){
-                    if(currentToken.type == tokentype_rbracket){
-                    }
                 }
             }
         
@@ -1021,11 +1023,14 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
 
         if(entry->data.data.fData.paramNum != paramCnt){
             ERROR(ERR_SEM_FUN, "Calling \"%s\" with wrong number of parameters.\nExpected: %d\nGot: %d\n", 
-                                id, entry->data.data.fData.paramNum, paramCnt);
+                                betterID, entry->data.data.fData.paramNum, paramCnt);
         }
         int badIndex = 0;
         if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
+        }
+        if(!checkParameterNullability(entry->data.data.fData.paramNullable, exprParamsArr, paramCnt, &badIndex)){
+            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call cannot be nullable.\n", badIndex, id);
         }
         DEBPRINT("BETTER %s\n", betterID);
         createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt, entry->data.data.fData.nullableRType);
@@ -1058,7 +1063,7 @@ bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterI
             ERROR(ERR_SYNTAX, "Incorrect namespace for builtin functions. Expected: \"ifj\" Got: \"%s\" .\n", id);
         }
         GT
-        if(currentToken.type == tokentype_id){ // TODO SEMANTIC check if correct builtin name
+        if(currentToken.type == tokentype_id){ 
             char *builtinName = currentToken.value;
             *betterID = builtinName;
             *symtableNode = checkBuiltinId(builtinName); // if there is no builtin with id, it exits with error
@@ -1218,9 +1223,7 @@ dataType getVarType(char *ID){
  * @param given    An array of pointers to astNode that represent the expression.
  * @param paramNum Number of parameters.
  * @param badIndex Pointer to a int flag signalising position of first incorrect parameter type.
- * 
- * @warning         Similar function is compareDataTypesArray. Make sure to use
- *                  the one with intended behaviour. 
+ *  
  * 
  * @note            Used in funcCalls to validate input parameters given to the function.
  * 
@@ -1239,30 +1242,20 @@ bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int 
     return true;
 }
 
-/**
- * @brief          Compares two arrays of dataTypes.
- * 
- * @param expected An array of expected data types.
- * @param given    An array of given data types to compare with expected.
- * @param paramNum Number of parameters.
- * @param badIndex Pointer to a int flag signalising position of first incorrect parameter type.
- * 
- * @warning         Similar function is checkParameterTypes.. Make sure to use
- *                  the one with intended behaviour.           
- * 
- * @return         False if there is a mismatch, true if all valid.
- */
-bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex){
+bool checkParameterNullability(bool *expected, astNode **given, int paramNum, int *badIndex){
+    
+    bool givenNullable;
 
     for(int i = 0; i < paramNum; i++){
-
-        if(expected[i] != given[i]){
+        givenNullable = given[i]->nodeRep.exprNode.isNullable;
+        if(!expected[i] && givenNullable){ // expected is not nullable, but given expression is nullable, which is an error
             *badIndex = i;
             return false;
         }
     }
     return true;
 }
+
 
 symNode *checkBuiltinId(char *id){
     DEBPRINT("hjehehehe %d \n", id==NULL);
