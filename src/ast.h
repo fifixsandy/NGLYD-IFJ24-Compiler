@@ -122,7 +122,8 @@ typedef struct astDefFunc {
     symtable *symtableFun;
     astNode  *body;
     char    **paramNames;  // added for easier access for codegen
-    int       paramNum; 
+    int       paramNum;
+    dataType  returnType; 
 
 }astDefFunc;
 
@@ -235,7 +236,7 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
 void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent);
 void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT);
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum);
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum, dataType returnType);
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent);
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
