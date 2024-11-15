@@ -322,7 +322,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("LABEL "); add_code(cond_label); endl();
 
             if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
-            add_code("POPS TF@tmp_bool"); endl();
+
+            if(ast->nodeRep.whileNode.withNull){
+                add_code("POPS "); TF(ast->nodeRep.whileNode.id_without_null); endl();
+
+                add_code("EQ"); TF_ARGS("TF@tmp_bool"); add_null(); TF(ast->nodeRep.whileNode.id_without_null); endl();
+            }
+            else{
+                add_code("POPS TF@tmp_bool"); endl();
+            }
 
             add_code("JUMPIFNEQ "); add_code(end_label); add_code(" TF@tmp_bool bool@true"); endl();
 
@@ -335,15 +343,24 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             break;
         case AST_NODE_IFELSE:
             count++;
-            // TODO id_with_null
             // save genrated label names
             generate_label(else_label, IF_ELSE, count);
             generate_label(end_label, IF_END, count);
 
+            //if(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null)
             if(!code_generator(ast->nodeRep.ifElseNode.condition, TF_vars)) return false;
-            add_code("POPS TF@tmp_bool"); endl();
+
+            if(ast->nodeRep.ifElseNode.withNull){
+                add_code("POPS "); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
+
+                add_code("EQ"); TF_ARGS("TF@tmp_bool"); add_null(); TF(ast->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null); endl();
+            }
+            else{
+                add_code("POPS TF@tmp_bool"); endl();
+            }
 
             add_code("JUMPIFNEQ "); add_code(else_label); add_code(" TF@tmp_bool bool@true"); endl();
+
             if(!code_generator(ast->nodeRep.ifElseNode.ifPart, TF_vars)) return false;
             add_code("JUMP "); add_code(end_label); endl();
 
