@@ -15,6 +15,7 @@ TESTFILES := $(wildcard $(TESTFOLDER)/*/*.c)
 TESTBINS := $(TESTFILES:$(TESTFOLDER)/%.c=$(TESTFOLDER)/%)
 
 IFJCODE := out.ifjcode
+INZIG := in.ifj
 
 # Compiler and flags
 CC = gcc
@@ -80,8 +81,11 @@ run_tests: $(TESTBINS)
 $(IFJCODE):
 	touch $(IFJCODE)
 
+$(INZIG):
+	touch $(INZIG)
+
 run: $(NAME)
-	./$(NAME) > $(IFJCODE)
+	./$(NAME) <$(INZIG) > $(IFJCODE)
 	./ic24int $(IFJCODE)
 
 # Phony targets
