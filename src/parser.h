@@ -25,7 +25,6 @@ astNode *parser();
 bool prog(bool firstTraverse);
 bool prolog();
 bool code(bool firstTraverse);
-bool next_code(bool firstTraverse);
 bool def_func(bool firstTraverse);
 bool params(int *paramNum, dataType **paramTypes, char ***paramNames);
 bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames);
@@ -60,6 +59,7 @@ dataType getVarType(char *ID);
 bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex);
 symNode *checkBuiltinId(char *id);
 bool compareDataTypesArray(dataType *expected, dataType *given, int paramNum, int *badIndex);
-void insertUndefinedFunction(char *funID, dataType *paramTypes, dataType returnType, bool nullableRType, int paramNum);
+bool checkIfNullable(astNode *expr);
+bool checkIfExprLogic(astNode *expr);
 
 #endif
