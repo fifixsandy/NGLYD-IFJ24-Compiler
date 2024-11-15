@@ -1273,7 +1273,7 @@ bool checkIfNullable(astNode *expr){
             return true;
         }
     }
-    return false;
+    return true; // TODO FIX
 }
 
 astNode *parser(){
