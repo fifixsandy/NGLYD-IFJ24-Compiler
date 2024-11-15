@@ -158,6 +158,7 @@ Token getToken() {
     Token current_token;                 //token of which type and value we are processing
     current_token.value = NULL;          //initializing token value to NULL
     current_token.type = tokentype_EOF;  //setting the initial state of token type to EOF
+    int FirstCharOfToken;                //declaring an integer for storing the index of first char of token
     
     here:
     while((c = getc(stdin)) == ' ' || c == '\t' || c == '\n') { //Skipping every white character
@@ -169,8 +170,7 @@ Token getToken() {
     }
 
     Column_Number++;
-    current_token.column = Column_Number;       //Assigning column number to token.
-    //printf("first token: Column_Number = %d\n", current_token.column);
+    FirstCharOfToken = Column_Number;       //Saving the index of first char of token
 
     if(c == EOF) {                              //We reached the end of file
         current_token.type = tokentype_EOF;     //set the type to EOF
@@ -298,7 +298,9 @@ Token getToken() {
         default:                        //if none of conditions above were met, default will handle all the rest
             if(c >= '0' && c <= '9') {
                 current_token = process_Number_Token(c);
+                
             }
+
             else if (c == '_') {
                 nextchar = getc(stdin);
                 if(!isalnum(nextchar) && nextchar != '_') {     //Deciding if its a pseudovariable or an ID
@@ -321,6 +323,7 @@ Token getToken() {
     }
 
     current_token.line = Line_Number;           //Assigning line number to token.
+    current_token.column = FirstCharOfToken;    //Assigning index of first char of token to token
     
     //printf("L: %d, C: %d\n", current_token.line, current_token.column);
     //printf("%d\n", Column_Number);
@@ -338,12 +341,11 @@ Token getToken() {
  * @return Returns processed token of number type.
  */
 Token process_Number_Token(char firstchar) {
-        
     Token current_token;
     char nextchar;
     int buffer_size = 2;    //initial buffer_size is 2, used for reallocating memory
     int index = 0;          //index of value is intitialized to zero
-        
+
     init_value(&current_token.value, buffer_size);  //initializing value array
 
     current_token.value[index++] = firstchar;       //Adding the first character of token to value.
@@ -666,18 +668,18 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
 
 //  int main() {
 
- //     for(int i = 0; i < 10; i++) {
- //         getToken();
- //     }
- //   free_all_values();
- //   reset_scanner();
+//      for(int i = 0; i < 10; i++) {
+//          getToken();
+//      }
+//    free_all_values();
+//    reset_scanner();
  //   printf("\nEND\n");
  //   for(int i = 0; i < 10; i++) {
  //       getToken();
  //   }
  //   free_all_values();
 
- //   return 0;
- // }
+//    return 0;
+//  }
 
 /* END OF FILE scanner.c */
