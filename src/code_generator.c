@@ -602,8 +602,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(ast->nodeRep.returnNode.returnType != void_){
                 add_code("POPS "); GF(); endl();
             }
-            add_code("POPFRAME"); endl();
-            add_code("RETURN"); endl();
+            if(ast->nodeRep.returnNode.inMain){
+                add_code("JUMP $$end"); endl();
+            }
+            else{
+                add_code("POPFRAME"); endl();
+                add_code("RETURN"); endl();
+            }
             break;
         
         case AST_NODE_ROOT:
