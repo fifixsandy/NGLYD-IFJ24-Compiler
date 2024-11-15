@@ -77,7 +77,7 @@ run_tests: $(TESTBINS)
 
 # Run the main executable
 
- $(IFJCODE):
+$(IFJCODE):
 	touch $(IFJCODE)
 
 run: $(NAME)
