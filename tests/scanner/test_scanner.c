@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <input_filename> <output_filename>\n", argv[0]);
         return 1; 
     }
-
     // Open the input file for reading
     input_file = fopen(argv[1], "r");
     if (input_file == NULL) {
