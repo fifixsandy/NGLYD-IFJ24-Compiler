@@ -465,7 +465,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_convertable = false;
             control->is_nullable = false;
             
-            control->type = u8;
+            control->type = string;
             return ID;
 
         default:
