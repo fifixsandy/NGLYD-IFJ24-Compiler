@@ -29,7 +29,9 @@ bool prog(bool firstTraverse){
     bool correct = false;
     DEBPRINT("%d\n", currentToken.type);
 
-    ASTree.root = createRootNode(); // initialize ASTree
+    if(!firstTraverse){
+        ASTree.root = createRootNode(); // initialize ASTree
+    }
 
     // RULE 1 <prog> -> <prolog> <code> EOF
     if(currentToken.type == tokentype_kw_const){
@@ -150,7 +152,6 @@ bool def_func_first(symNode *functionEntry, char *funID){
     if(currentToken.type != tokentype_lcbracket){
         ERROR(ERR_SYNTAX, "Expected: \"{\".\n");
     }
-
     entryData.tbPtr         = pop(&symtableStack);
     entryData.defined       = true;
     entryData.paramNames    = paramNames;
@@ -296,17 +297,11 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **par
         insertSymNode(symtableStack.top->tbPtr, paramID, entryData);
 
         correct = params_n(paramNum, paramTypes, paramNames, paramNullable);
-        
+
     }
 
     // RULE 7 <params> -> ε
     else if(currentToken.type == tokentype_rbracket){
-        free(*paramNames);
-        free(*paramTypes);
-        free(*paramNullable);
-        *paramNames = NULL;
-        *paramTypes = NULL;
-        *paramNullable = NULL;
         return true;
     }
     else{ERROR(ERR_SYNTAX, "Expected: id or \")\".\n");}
@@ -1021,7 +1016,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         int paramCnt            = 0;
         char *betterID = NULL;
         builtin(id, &entry, &builtinCall, &betterID);
-                
+        
         if(entry == NULL){
             ERROR(ERR_SEM_UNDEF, "Function \"%s\" called but never defined.\n", id);
         }
@@ -1047,6 +1042,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
                                 betterID, entry->data.data.fData.paramNum, paramCnt);
         }
         int badIndex = 0;
+        DEBPRINT("PARAM TYPES IS NULL %d AND NUM IS %d\n", entry->data.data.fData.paramTypes == NULL, paramCnt);
         if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
         }
