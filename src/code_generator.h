@@ -213,7 +213,7 @@ bool add_null();
  * @param val The float value to be added.
  * @return true if the operation was successful, false otherwise.
  */
-bool add_float(int val);
+bool add_float(float val);
 
 /**
  * @brief Add formatted string value to the code buffer.

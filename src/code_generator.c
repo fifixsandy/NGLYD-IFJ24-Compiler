@@ -153,7 +153,7 @@ bool add_int(int val){
 }
 
 // Help function for adding const float value
-bool add_float(int val){
+bool add_float(float val){
     add_code("float@");
     if(!buf_add_float(buf, val)) return false;
     return true;
@@ -518,6 +518,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             default:
                 break;
             }
+    
             endl();
             break;
         
