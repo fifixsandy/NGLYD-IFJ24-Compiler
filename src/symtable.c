@@ -641,7 +641,7 @@ void prepareBuiltinSymtable(){
 
     // ifj.string(term) []u8
     fData.paramNum      = 1;
-    fData.returnType    = u8;
+    fData.returnType    = stringOru8;
     fData.nullableRType = false;
     fData.paramTypes    = malloc(sizeof(dataType) * fData.paramNum);
     fData.paramTypes[0] = any;
