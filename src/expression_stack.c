@@ -24,13 +24,14 @@ precedence precedence_table[14][14] = {
                     |     stack
 */
 
-/*
-* Vytvor a inicializuj stack, proste allokuj a daj top na NULL
+
+/**
+* @brief Creates and intializes stack for expressions
 */
 exp_stack *exp_stack_create(){
     exp_stack *Stack = (exp_stack *)malloc(sizeof(exp_stack));
     if(Stack == NULL){
-        return NULL; //internal error
+        ERROR(ERR_INTERNAL, "Failed to allocated memory for stack.");
     }
     Stack->top = NULL;
     Stack->count = 0;
@@ -39,20 +40,18 @@ exp_stack *exp_stack_create(){
 
 
 /** 
-* @brief push on stack new item 
+* @brief Pushes new item on expression stack 
 * 
 * @param estack pointer to stack
 * @param node 
-* @param op operator needed for precedence parsing
-* @param type what type is new item
-* @param isnullable true if parameter can be NULL false if not
-* @param convert true if we can convert parameter to different type
+* @param op opearnd or type of expression operator 
 */
-void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op){
+void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_items *control){
     stack_item *new_item = (stack_item *)malloc(sizeof(stack_item));
     if(new_item == NULL){
-        return; //internal error
+        ERROR(ERR_INTERNAL, "Failed to allocated memory for stack element"); //internal error
     }
+    new_item->control = control;
     new_item->node = node;
     new_item->expr = op;
     new_item->next = estack->top;
@@ -63,21 +62,29 @@ void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op){
 
 
 
-
-astNode *exp_stack_pop_node(exp_stack *estack){
+/**
+ * @brief Pop top AST node from expression stack
+ * 
+ * @param estack Pointer to stack  
+ */
+astNode *exp_stack_pop(exp_stack *estack, bool control_needed){
     if (estack->top == NULL){
         return NULL;
     }
     astNode *top_node = estack->top->node;
     stack_item *top_to_delete = estack->top;
     estack->top = estack->top->next;
-    //free(top_to_delete->control);
+    if(!control_needed){
+        free(top_to_delete->control);
+    }
     free(top_to_delete);
     estack->count--;
     return top_node;
 }
 
-
+/**
+ * @brief funcion to find terminal that is on the top of stack
+ */
 symbol_number exp_stack_top_term_symb(exp_stack *estack){
     if(estack->top->expr == NO_TERMINAL){
         if(estack->top->next->expr == NO_TERMINAL){
@@ -91,23 +98,27 @@ symbol_number exp_stack_top_term_symb(exp_stack *estack){
 }
 
 
-
-bool exp_stack_is_empty(exp_stack *estack){
-    return estack->top == NULL;
-}
-
-
-
+/**
+ * @brief destroy everything allocated in stack
+ */
 void exp_stack_free_stack(exp_stack *estack){
     stack_item *curr = estack->top;
     while(curr){
         stack_item *next_item = curr->next;
+        freeASTNode(curr->node);
+        free(curr->control);
         free(curr);
         curr = next_item;
     }
     free(estack);
 }
 
+
+/**
+ * @brief 
+ * 
+ * @return true if in the stack is left bracket; false if left bracket isn't in the stack
+ */
 bool exp_stack_find_lbr(exp_stack *estack){
     stack_item *estack_item = estack->top;
     while(estack_item){
@@ -120,19 +131,14 @@ bool exp_stack_find_lbr(exp_stack *estack){
     return false;
 }
 
-stack_item *exp_stack_pop(exp_stack *estack){
-    stack_item *popped_item = estack->top;
-    estack->top = estack->top->next;
-    estack->count--;
-    return popped_item;
-}
 
-/****************************************************************************************** */
-/*                              veci stade napchaj potom inde                               */
 
-// ako opravil som niektoré veci pri základom parsovaní ale pokazil som vyhodnotenie error funkcie
+/****************************************************************************************************************************** */
+/*                              veci stade napchaj potom inde                                                                   */
 
-/*
+
+
+/**
 * @brief A funcion that calls helper funcions to build an expression tree
 *
 * @return True if build was successful; False if build wasn't successful
@@ -143,21 +149,20 @@ bool expression(astNode *expr_node){
     bool *known_upon_compilation;
     //fprintf(stderr, "\nDOSTAL SOM SA DO EXPRESSION ČASTI!!\n");
     exp_stack *estack = exp_stack_create();
-        if(estack == NULL){
-            return false; //TODO internal error
-        }
-    exp_stack_push(estack, NULL, STOP);    //push stop symbol on top of the stack
+
+    exp_stack_push(estack, NULL, STOP, NULL);    //push stop symbol on top of the stack
     DEBPRINT("pushed stop sign to stack\n");
 
     if(process_expr(estack)){
         
         control_items *expr_items = estack->top->control;
        
-        astNode *final_exp = exp_stack_pop_node(estack);
+        astNode *final_exp = exp_stack_pop(estack, true);
         
-        DEBPRINT("IS EXPRESSION KNOWN DURING COMPILATION: %d\n", expr_items->known_during_compile);
+        DEBPRINT("IS EXPRESSION KNOWN DURING COMPILATION: %d, data typ je %d\n", expr_items->known_during_compile, expr_items->type);
         createExpressionNode(expr_node, expr_items->type, final_exp, expr_items->is_nullable, expr_items->known_during_compile);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
         
+        free(expr_items);
         exp_stack_free_stack(estack);
         
         return true;
@@ -171,28 +176,22 @@ bool expression(astNode *expr_node){
 bool process_expr(exp_stack *estack){
     DEBPRINT("entered process_expr func with token %d (token_types)\n", currentToken.type);
     astNode *curr_node = createAstNode();
-    if(curr_node == NULL){
-        return false; //TODO internal Error
-    }
+    
 
     control_items *control =(control_items *)malloc(sizeof(struct control_items));
     if(control == NULL){
-        return false; //TODO internal Error
+        ERROR(ERR_INTERNAL, "Failed to allocate memory for control struct"); //TODO internal Error
     }
 
     // initialization of empty controls
     control->is_convertable = false;
     control->is_nullable = false;
-    control->litconst = false;
+    
     control->type = void_;
     control->known_during_compile = false;
 
     symbol_number curr_symb = evaluate_given_token(estack, currentToken, curr_node, control);
     DEBPRINT("evaluated current token as %d (symbol_number)\n", curr_symb);       
-    if(curr_symb == ERROR){
-        
-        ERROR(ERR_SYNTAX, "Wrong Token in expression\n");
-    }
     int evaluate = shift(estack, curr_node, control, curr_symb);
     //fprintf(stderr, "prijatý token %d a hodnota shiftu je %d\n", currentToken.type, evaluate);
     if(evaluate == 0){
@@ -215,7 +214,7 @@ bool process_expr(exp_stack *estack){
     
 }
 
-/*
+/**
 * @brief A function that evaluates the precedence of a token with the precedence of the highest terminal symbol and applies a rule according to precedence parsing.
 *
 * @param estack A pointer to an expression stack
@@ -233,8 +232,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
     DEBPRINT("Porovnaním najvyššieho terminalu na stacku a mojho znaku som priradil precednciu %d\n", compare);
     if(compare == LS || compare == EQ){
         
-        exp_stack_push(estack, curr_node, curr_symb);
-        estack->top->control = control;
+        exp_stack_push(estack, curr_node, curr_symb, control);
         return 0;
     }
     else if(compare == GR){
@@ -253,7 +251,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
 }
 
 
-// NULL rieš ako literál
+
 
 void reduce(exp_stack *stack){
     symbol_number top_term = exp_stack_top_term_symb(stack);
@@ -263,61 +261,37 @@ void reduce(exp_stack *stack){
             break;
  
         case RBR :
-            astNode *rbr = exp_stack_pop_node(stack);
-            free(rbr);
-            control_items *term_items = stack->top->control;
-            astNode *expr = exp_stack_pop_node(stack);
+            astNode *rbr = exp_stack_pop(stack, false);    // delete right bracket item from stack
+            freeASTNode(rbr); 
+            control_items *operand_items = stack->top->control;
+            astNode *expr = exp_stack_pop(stack, true);
             if(stack->top->expr != LBR){
-                ERROR(ERR_SYNTAX, "Invalid Token");
+                ERROR(ERR_SYNTAX, "Unexpected token in stack");
             }
-            astNode *lbr = exp_stack_pop_node(stack);
-            free(lbr);
-            exp_stack_push(stack, expr, NO_TERMINAL);
-            stack->top->control = term_items;
+            astNode *lbr = exp_stack_pop(stack, false);
+            freeASTNode(lbr);
+            exp_stack_push(stack, expr, NO_TERMINAL, operand_items);
             return;
 
         case STOP :
-            break;
+            return;
 
 
-        case MULTIPLICATION:
-        case DIVISION:
-        case ADDITION:
-        case SUBSTRACTION:
-        case LOWER:
-        case GREATER:
-        case LOWER_OR_EQUAL:
-        case GREATER_OR_EQUAL:
-            if(stack->count < 4 ){  //môže sa toto vykonať validne ked je na stacku menej ako 3 položky, jeden stop operand operator operand
-                ERROR(ERR_SYNTAX, "Invalid token\n");
-            }
-            /*
-            if(stack->top->control->is_nullable == true){
-                ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
-            }
-            else if(stack->top->next->next->control->is_nullable == true){
-                ERROR(ERR_SYNTAX, ("Operand with null cannot be used in expression\n"));
-            }
-            //ked jedna je nulovacia error
-            */
         default :
             if(stack->count < 4 ){
                 ERROR(ERR_SYNTAX, "Invalid token in expression\n");
             }
             
-            dataType data_type_buffer;  // semanticke pravidlo pretypovania alebo erroru, treba urobiť porovnanie oboch výrazo a prípadne pritypovanie
-            
             control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
             
             semantic_check_retype(stack->top->next->next, stack->top->next, stack->top, operation_item);
             
-            astNode *right_elem = exp_stack_pop_node(stack);
-            astNode *operator = exp_stack_pop_node(stack);
-            astNode *left_elem = exp_stack_pop_node(stack);
+            astNode *right_elem = exp_stack_pop(stack, false);
+            astNode *operator = exp_stack_pop(stack, false);
+            astNode *left_elem = exp_stack_pop(stack, false);
 
             createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL);
-            exp_stack_push(stack, operator, NO_TERMINAL);
-            stack->top->control = operation_item;
+            exp_stack_push(stack, operator, NO_TERMINAL, operation_item);
             return;
     }
       
@@ -330,7 +304,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         case tokentype_multiply :
             
             return MULTIPLICATION;
-            
+
         case tokentype_divide :
             
             return DIVISION;
@@ -376,21 +350,20 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 
                 return RBR;
             }
+            freeASTNode(node);
+            free(control);
             return STOP;
 
         case tokentype_id :
-        //doriešiť funkcie
             if(wasDefined(token.value, &symnode)){
 
                 if(symnode->data.data.vData.knownDuringCompile == true){    //if variable has value known during compile check if it can be converted to different type and set flag in control struct
                     control->known_during_compile = true;
-                    control->litconst = true;   // prolly gonna delete soon
 
-                    if(symnode->data.data.vData.isNullable == false){   // Nullable variable has to be checked for possible null value by user (in other case this check needs to be redone) 
-
+                    if(symnode->data.data.vData.isNullable == false){   // Nullable variable has to be checked for possible null value by user (if not this check needs to be redone) 
                         dataType type = symnode->data.data.vData.type;
 
-                        if(type == f64){   // when value of node is float
+                        if(type == f64){   // when value of node is float (or double float)
                             float fdata = symnode->data.data.vData.value.floatData;
                             if((int) fdata == fdata){ //can be converted into int
                                     createLiteralNode(node, f64, &fdata, NULL);
@@ -401,10 +374,10 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                             }
                         }
 
-                        if(type == i32){
-                            int idata = symnode->data.data.vData.value.intData;
+                        else if(type == i32){
+                            int idata = symnode->data.data.vData.value.intData; //TODO shouldn't this be long int?
                             createLiteralNode(node, i32, &idata, NULL);
-                            control->is_convertable = true;
+                            control->is_convertable = true; //every i32 can be converted to f64
                             control->is_nullable = false;
                             control->type = i32;
                             return ID;
@@ -413,8 +386,8 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 }
                 
                 createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
+                control->known_during_compile = false;
                 control->is_convertable = false;
-                control->litconst = false;
                 control->type = symnode->data.data.vData.type;
                 control->is_nullable = symnode->data.data.vData.isNullable;
                 return ID;
@@ -433,7 +406,6 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     control->is_nullable = node->nodeRep.funcCallNode.nullableRetType;
                     control->type = node->nodeRep.funcCallNode.retType;
                     control->is_convertable = false;
-                    control->litconst = false;
                     return ID;
                 }
                 else{
@@ -446,7 +418,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             createLiteralNode(node, i32, &ivalue,  NULL);
             control->is_nullable = false;
             control->type = i32;
-            control->litconst = true;
+           
             control->is_convertable = true;
             control->known_during_compile = true;
             return ID;
@@ -457,7 +429,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
             control->is_nullable = false;
             control->type = f64;
-            control->litconst = true;
+            
             control->known_during_compile = true;
 
             if((int) node->nodeRep.literalNode.value.floatData == node->nodeRep.literalNode.value.floatData ){
@@ -473,7 +445,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->known_during_compile = true;
             control->is_nullable = true;
             control->type = null_;
-            control->litconst = true;
+            
             control->is_convertable = false;
             return ID;
 
@@ -483,7 +455,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->known_during_compile = true;
             control->is_nullable = false;
             control->type = i32;
-            control->litconst = true;
+            
             control->is_convertable = true;
             return ID;
 
@@ -492,20 +464,18 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->known_during_compile = true;
             control->is_convertable = false;
             control->is_nullable = false;
-            control->litconst = true;
+            
             control->type = u8;
             return ID;
 
         default:
-            //free(node);
+            freeASTNode(node);
+            free(control);
             return STOP;
         
 
     }
 }
-
-
-
 
 
 void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control){
@@ -522,7 +492,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
 
     control->known_during_compile = false;
     control->is_nullable = false;
-    control->litconst = false;
+
 
     if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
         if(left_operand->control->type == null_ && right_operand->control->is_nullable == false){
@@ -531,11 +501,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         else if(right_operand->control->type == null_ && left_operand->control->is_nullable == false){
             ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
         }
-        else{
-            control->type = unknown;
-            control->is_convertable = false;
-        }
-        return;
+        
     }
 
     
@@ -551,10 +517,11 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         return; //všetko vpohode nerieš
 
     }
-    else if(left_operand->control->is_convertable == true){
-        control->type = right_operand->control->type;
 
-        if(right_operand->control->is_convertable == true){
+    else if(right_operand->control->is_convertable == true){
+        retype(right_operand->node);
+        control->type = left_operand->control->type;
+        if(left_operand->control->is_convertable == true){
             control->is_convertable = true;
         }
         else{
@@ -563,9 +530,13 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         return;
 
     }
-    else if(right_operand->control->is_convertable == true){
-        control->type = left_operand->control->type;
-        if(left_operand->control->is_convertable == true){
+
+    else if(left_operand->control->is_convertable == true){
+        retype(left_operand->node);
+
+        control->type = right_operand->control->type;
+
+        if(right_operand->control->is_convertable == true){
             control->is_convertable = true;
         }
         else{
@@ -578,4 +549,35 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SEM_TYPE, "types of operands in expresions don't match\n");
     }
 
+}
+
+
+void retype(astNode *operand){
+    
+    if(operand->type == AST_NODE_BINOP){
+        //DEBPRINT("Môj typ je %d - nachadzam sa v node bin operacie\n", operand->nodeRep.binOpNode.dataT);
+        retype(operand->nodeRep.binOpNode.left);
+        retype(operand->nodeRep.binOpNode.right);
+        return;
+    }
+    else if(operand->type = AST_NODE_LITERAL){
+        
+        dataType type = operand->nodeRep.literalNode.dataT;
+        //DEBPRINT("Môj typ je %d - nachadzam sa v node literal\n", type);
+        if(type == i32){
+            int value = operand->nodeRep.literalNode.value.intData;
+            operand->nodeRep.literalNode.dataT = f64;
+            operand->nodeRep.literalNode.value.floatData = (float) value; 
+            return;
+        }
+        else if(type == f64){
+            float value = operand->nodeRep.literalNode.value.floatData;
+            operand->nodeRep.literalNode.dataT = i32;
+            operand->nodeRep.literalNode.value.intData = (int) value;
+            return; 
+        }
+        else{
+            ERROR(ERR_INTERNAL, "TODO in fucion retype, recieved wrong type.\n");
+        }
+    }
 }

@@ -21,20 +21,12 @@ typedef enum{
 
 
 
-//potom funckiu na shift a reduce len teraz podme späť ku stacku WAAAAAAAAAAAAAAAAAAAA
-//ohľadom funkcií pre reduce stačí jedna lebo jedno a to isté pravidlo sa opakuje nonstop dookola alebo
-//v ast sa bude ukladať o aký typ operácie ide vtedy by sa zrobilo viac funkcií ktorá by vytvarala podstromy príslušným spôsobom
-// ale vlastne aj jedna funkcia by stačila pretože existuje tu enum ale tak potrebujem vedieť že či si AST bude mať nejaký flag že 
-// o aký štýl podstromu sa jedná
-
-// pamätá si náš compiler () keď áno akým štýlom sú vytvárané stromy lebo ja neviem potom ako by mal vyzerať strom prepríklad 5 * ( 4 + 2 ) like dude
 
 extern precedence precedence_table[14][14];
 
 typedef struct control_items{
     bool known_during_compile;
     bool is_nullable;
-    bool litconst;      //false keď je var true keď je litconst (keď je true tak je možné konvertovať)
     bool is_convertable;
     dataType type;
 } control_items;
@@ -54,8 +46,8 @@ typedef struct exp_stack{
 
 exp_stack *exp_stack_create();
 void exp_stack_init(exp_stack *estack);
-void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op);
-astNode *exp_stack_pop_node(exp_stack *estack);
+void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_items *control);
+astNode *exp_stack_pop(exp_stack *estack, bool control_needed);
 symbol_number exp_stack_top_term_symb(exp_stack *estack); //toto musí niečo vraciať s čím sa bude dať porovnavať, UPDATE: poriešil som to v hlave
 bool exp_stack_is_empty(exp_stack *estack);
 void exp_stack_free_stack(exp_stack *estack);
