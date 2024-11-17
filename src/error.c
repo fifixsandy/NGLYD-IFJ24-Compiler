@@ -3,13 +3,15 @@
 #include "error.h"
 #include "symtable.h"
 #include "scanner.h"
+#include "parser.h"
 
 
 void delete_all_allocated(){
-    freeStack(&symtableStack);
-    /*
-    cleanup_value(); //zo scanner.c
-    freeStack();
-    */
+
+    freeASTNode(ASTree.root);
+    deleteSymtable(builtinSymtable);
+    deleteSymtable(funSymtable);
+    free_all_values();
+    
 }
  

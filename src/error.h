@@ -23,14 +23,16 @@
 
 // ADD CLEANUP
 #define ERROR(errNum, ...) do { \
-    fprintf(stderr, "\nERROR NUMBER %d at line %d: ", errNum, currentToken.line); \
+    fprintf(stderr, "\nERROR NUMBER %d at line %d column %d: ", errNum, currentToken.line, currentToken.column); \
     fprintf(stderr, __VA_ARGS__); \
+    delete_all_allocated(); \
     exit(errNum); \
 } while (0)
 
 #define ERRORLEX(errNum, ...) do{\
     fprintf(stderr, "\nERROR NUMBER %d: ", errNum); \
     fprintf(stderr, __VA_ARGS__); \
+    free_all_values(); \
     exit(errNum); \
 } while (0)
 

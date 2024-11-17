@@ -8,9 +8,7 @@ Token currentToken;
 
 
 int main(){
-
-    
-    //input_file = fopen("file.txt", "r");
     astNode * rootTree = parser();
     generate_code(rootTree);
+    delete_all_allocated();
 }
