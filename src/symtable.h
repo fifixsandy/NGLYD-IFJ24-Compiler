@@ -32,6 +32,7 @@ typedef enum dataType{
    u8,
    i32,
    f64,
+   string,
    void_,
    null_,
    unknown,
