@@ -587,6 +587,7 @@ Token process_Import() {
     
     Token current_token;
     current_token.type = tokentype_import;
+    current_token.value = NULL;
 
     const char *keyword = "import"; //char keyword for comparing
     char nextchar;
@@ -668,13 +669,13 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
 
 //TODO FUNCKCIA NA BUILTIN FUNKCIE
 
-//  int main() {
+ // int main() {
 
-    //  for(int i = 0; i < 10; i++) {
+     // for(int i = 0; i < 10; i++) {
      //     getToken();
-     // }
-//    free_all_values();
-//    reset_scanner();
+    //  }
+   // free_all_values();
+    //reset_scanner();
  //   printf("\nEND\n");
  //   for(int i = 0; i < 10; i++) {
  //       getToken();
