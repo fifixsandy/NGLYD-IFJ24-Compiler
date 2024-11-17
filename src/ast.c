@@ -283,7 +283,6 @@ void freeASTNode(astNode *node){
             freeASTNode(node->nodeRep.assignNode.expression);
             break;
         case AST_NODE_DEFFUNC:
-            free(node->nodeRep.defFuncNode.paramNames);
             freeASTNode(node->nodeRep.defFuncNode.body);
             deleteSymtable(node->nodeRep.defFuncNode.symtableFun);
             break;

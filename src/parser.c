@@ -103,22 +103,18 @@ bool code(bool firstTraverse){
     // RULE 4 <code> -> ε
     else if(currentToken.type == tokentype_EOF){
         correct = true;
-    }else{ERROR(ERR_SYNTAX, "Expected: \"pub\"\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \"pub\" %d\n", firstTraverse);}
     DEBPRINT("%d %d\n", correct, currentToken.type);
     return correct;
 }
 
-bool def_func(bool firstTraverse){
-    bool correct = false;
-    DEBPRINT("%d \n",currentToken.type);
-
-    // preparing information about defined function
-    char     *funID;
+bool def_func_first(symNode *functionEntry, char *funID){
+    
     funData   entryData;
     symData   entrySymData;
-    dataType *paramTypes    = malloc(sizeof(dataType)*MAX_PARAM_NUM);
-    char    **paramNames    = malloc(sizeof(char *)*MAX_PARAM_NUM);
-    bool    *paramNullable  = malloc(sizeof(bool)*MAX_PARAM_NUM);
+    dataType *paramTypes     = malloc(sizeof(dataType)*MAX_PARAM_NUM);
+    char    **paramNames     = malloc(sizeof(char *)*MAX_PARAM_NUM);
+    bool     *paramNullable  = malloc(sizeof(bool)*MAX_PARAM_NUM);
     if(paramTypes == NULL || paramNames == NULL || paramNullable == NULL){
         ERROR(ERR_INTERNAL,"Malloc fail in def_func.\n");
     }
@@ -126,45 +122,16 @@ bool def_func(bool firstTraverse){
     dataType  returnType;
     bool      nullable;
 
-    astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
-    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
-
-    symNode *functionEntry = NULL;
-
-    // RULE 5 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
-    if(currentToken.type != tokentype_kw_pub){
-        ERROR(ERR_SYNTAX, "Expected: \"pub\".\n");
-    }
-
-    GT
-    DEBPRINT("%d %s \n",currentToken.type, currentToken.value);
-
-    if(currentToken.type != tokentype_kw_fn){
-        ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");
-    }
-    
-    GT
-    DEBPRINT("%d %s\n",currentToken.type, currentToken.value);
-
-    if(currentToken.type != tokentype_id){
-        ERROR(ERR_SYNTAX, "Expected: id.\n");
-    }
-        
-    funID = currentToken.value;
-    // check for redefining already defined function when first traverse
-    functionEntry = findSymNode(funSymtable->rootPtr, funID);
-    if(functionEntry != NULL && firstTraverse){
+    if(functionEntry != NULL){
         ERROR(ERR_SEM_REDEF, "Redefining function (%s) is not allowed.\n",funID);
     }
-        
-
-    // create new scope and push it
+    
     symtable *symtableNewF = createSymtable();
     push(&symtableStack, symtableNewF);
 
     GT
-    
-    if(currentToken.type != tokentype_lbracket){
+
+        if(currentToken.type != tokentype_lbracket){
         ERROR(ERR_SYNTAX, "Expected: \"(\".\n");
     }
     
@@ -184,73 +151,109 @@ bool def_func(bool firstTraverse){
         ERROR(ERR_SYNTAX, "Expected: \"{\".\n");
     }
 
-    GT
-    
-    if(firstTraverse){
-        free(funcAstNode);
-        free(bodyAstRoot);
-        while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){
-            DEBPRINT("gotout\n");
-            GT
-        }
+    entryData.tbPtr         = pop(&symtableStack);
+    entryData.defined       = true;
+    entryData.paramNames    = paramNames;
+    entryData.paramTypes    = paramTypes;
+    entryData.paramNullable = paramNullable;
+    entryData.nullableRType = nullable;
+    entryData.returnType    = returnType;
+    entryData.paramNum      = paramNum;
+
+    entrySymData.data.fData = entryData;
+    entrySymData.varOrFun   = 1;
+
+    if(strcmp(funID, "main") == 0){
+        entrySymData.used = true;
     }
     else{
-        
-        bool inMain = (strcmp(funID, "main") == 0); 
-        body(returnType, bodyAstRoot, inMain);
-        if(currentToken.type != tokentype_rcbracket){
-            ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
-        }
-
-        GT
+        entrySymData.used = false;
     }
     
-    // information is now known, set it
-    symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
-    if(!firstTraverse){
-        allUsed(symtableFun->rootPtr); // perform semantic check of used variables
-        if(returnType != void_){
-            if(!allReturns(bodyAstRoot)){
+    insertSymNode(funSymtable, funID, entrySymData);
+
+    GT
+
+    while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){
+        GT
+    }
+
+    return true;
+
+}
+
+bool def_func_sec(symNode *functionEntry, char *funID){
+    astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
+    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
+
+    symtable *symtableFun = functionEntry->data.data.fData.tbPtr;
+    dataType returnType = getReturnType(funID);
+    char    **paramNames = functionEntry->data.data.fData.paramNames;
+    int paramNum = functionEntry->data.data.fData.paramNum;
+
+    while(currentToken.type != tokentype_lcbracket){
+        GT
+    }
+    GT
+
+    push(&symtableStack, symtableFun);
+
+    bool inMain = (strcmp(funID, "main") == 0); 
+    body(returnType, bodyAstRoot, inMain);
+    if(currentToken.type != tokentype_rcbracket){
+        ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
+    }
+
+    symtableFun = pop(&symtableStack);
+
+    allUsed(symtableFun->rootPtr); // perform semantic check of used variables
+    if(returnType != void_){
+        if(!allReturns(bodyAstRoot)){
                 ERROR(ERR_SEM_RETURN, "Function \"%s\" include path with no \"return\" statement.", funID);
-            }
         }
     }
 
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType); 
+    connectToBlock(funcAstNode, ASTree.root);
+    GT
+    return true;
+}
+
+bool def_func(bool firstTraverse){
+
+    // RULE 5 <def_func> -> pub fn id ( <params> ) <type_func_ret> { <body> }
+    if(currentToken.type != tokentype_kw_pub){
+        ERROR(ERR_SYNTAX, "Expected: \"pub\" %d.\n", firstTraverse);
+    }
+
+    GT
+    DEBPRINT("%d %s \n",currentToken.type, currentToken.value);
+
+    if(currentToken.type != tokentype_kw_fn){
+        ERROR(ERR_SYNTAX, "Expected: \"fn\".\n");
+    }
+    
+    GT
+    DEBPRINT("%d %s\n",currentToken.type, currentToken.value);
+
+    if(currentToken.type != tokentype_id){
+        ERROR(ERR_SYNTAX, "Expected: id.\n");
+    }
+
+
+    char *funID = currentToken.value;
+    // check for redefining already defined function when first traverse
+    symNode *functionEntry = findSymNode(funSymtable->rootPtr, funID);
+    
     if(firstTraverse){
-
-        entryData.tbPtr         = symtableFun;
-        entryData.defined       = true;
-        entryData.paramNames    = paramNames;
-        entryData.paramTypes    = paramTypes;
-        entryData.paramNullable = paramNullable;
-        entryData.nullableRType = nullable;
-        entryData.returnType    = returnType;
-        entryData.paramNum      = paramNum;
-
-        entrySymData.data.fData = entryData;
-        entrySymData.varOrFun   = 1;
-
-        if(strcmp(funID, "main") == 0){
-            entrySymData.used = true;
-        }
-        else{
-            entrySymData.used = false;
-        }
-        
-        insertSymNode(funSymtable, funID, entrySymData);
+        def_func_first(functionEntry, funID);
+    }
+    else{
+        def_func_sec(functionEntry, funID);
     }
 
-
-
-    // add correct data to astnode previously created
-    if(!firstTraverse){
-        createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType); 
-        connectToBlock(funcAstNode, ASTree.root);
-    }
-
-    //symNode *test = findSymNode(funSymtable->rootPtr, funID);
-    //DEBPRINT(" %s WAS USED %d\n",funID, test->data.used);
-    return correct;
+    
+    return true;
 }
 
 bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **paramNullable){
