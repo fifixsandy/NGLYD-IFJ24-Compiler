@@ -61,9 +61,9 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
     dest->nodeRep.ifNode = newIf;
 }
 
-void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent) {
+void createElseNode(astNode *dest, symtable *symtableElse, astNode *body, astNode *parent) {
     astElse newElse = {
-        .symtableIf = symtableIf,
+        .symtableElse = symtableElse,
         .body = body
     };
 
@@ -263,6 +263,8 @@ void freeASTNode(astNode *node){
 
             freeASTNode(node->nodeRep.whileNode.condition);
             freeASTNode(node->nodeRep.whileNode.body);
+            deleteSymtable(node->nodeRep.whileNode.symtableWhile);
+            
             break;
         case AST_NODE_IFELSE:
             freeASTNode(node->nodeRep.ifElseNode.condition);
@@ -270,16 +272,20 @@ void freeASTNode(astNode *node){
             freeASTNode(node->nodeRep.ifElseNode.elsePart);
             break;
         case AST_NODE_IF:
+            deleteSymtable(node->nodeRep.ifNode.symtableIf);
             freeASTNode(node->nodeRep.ifNode.body);
             break;
         case AST_NODE_ELSE:
+            deleteSymtable(node->nodeRep.elseNode.symtableElse);
             freeASTNode(node->nodeRep.elseNode.body);
             break;
         case AST_NODE_ASSIGN:
             freeASTNode(node->nodeRep.assignNode.expression);
             break;
         case AST_NODE_DEFFUNC:
+            free(node->nodeRep.defFuncNode.paramNames);
             freeASTNode(node->nodeRep.defFuncNode.body);
+            deleteSymtable(node->nodeRep.defFuncNode.symtableFun);
             break;
         case AST_NODE_RETURN:
             freeASTNode(node->nodeRep.returnNode.returnExp);
@@ -294,10 +300,22 @@ void freeASTNode(astNode *node){
         case AST_NODE_DEFVAR:
             freeASTNode(node->nodeRep.defVarNode.initExpr);
             break;
+        case AST_NODE_FUNC_CALL:
+            for(int i = 0; i < node->nodeRep.funcCallNode.paramNum; i++){
+                freeASTNode(node->nodeRep.funcCallNode.paramExpr[i]);
+            }
+            free(node->nodeRep.funcCallNode.paramExpr);
+            break;
+        case AST_NODE_ROOT:
+            freeASTNode(node->next);
+            node->next = NULL;
+            break;
+
         default:
             break;
     }
 
     freeASTNode(node->next);
+    node->next = NULL;
     free(node);
 }

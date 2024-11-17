@@ -179,7 +179,7 @@ bool def_func(bool firstTraverse){
     GT
         
     type_func_ret(&nullable, &returnType);
-
+    
     if(currentToken.type != tokentype_lcbracket){
         ERROR(ERR_SYNTAX, "Expected: \"{\".\n");
     }
@@ -187,11 +187,15 @@ bool def_func(bool firstTraverse){
     GT
     
     if(firstTraverse){
+        free(funcAstNode);
+        free(bodyAstRoot);
         while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){
+            DEBPRINT("gotout\n");
             GT
         }
     }
     else{
+        
         bool inMain = (strcmp(funID, "main") == 0); 
         body(returnType, bodyAstRoot, inMain);
         if(currentToken.type != tokentype_rcbracket){
@@ -200,7 +204,7 @@ bool def_func(bool firstTraverse){
 
         GT
     }
-
+    
     // information is now known, set it
     symtable *symtableFun   = pop(&symtableStack); // pop from stack so it can be added to symNode
     if(!firstTraverse){
@@ -294,6 +298,12 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **par
 
     // RULE 7 <params> -> ε
     else if(currentToken.type == tokentype_rbracket){
+        free(*paramNames);
+        free(*paramTypes);
+        free(*paramNullable);
+        *paramNames = NULL;
+        *paramTypes = NULL;
+        *paramNullable = NULL;
         return true;
     }
     else{ERROR(ERR_SYNTAX, "Expected: id or \")\".\n");}
@@ -410,6 +420,7 @@ bool def_variable(astNode *block){
 
         if(isConst && exprNode->nodeRep.exprNode.knownDuringCompile){
             extractValueToConst(exprNode->nodeRep.exprNode.dataT, exprNode->nodeRep.exprNode.exprTree, &variData);
+            variData.knownDuringCompile = true;
         }
         else{
             variData.knownDuringCompile = false;
@@ -557,7 +568,7 @@ bool type_func_ret(bool *nullable, dataType *datatype){
         *datatype = void_;
         GT
     }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" or \"void\".\n");}
-DEBPRINT(" %d\n", correct);
+    DEBPRINT(" %d\n", correct);
     return correct;
 }
 
@@ -678,6 +689,7 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
     if(currentToken.type == tokentype_semicolon){
         if(expRetType == void_){
             correct = true;
+            free(*exprNode);
             *exprNode = NULL;
         }
         else{
@@ -889,6 +901,7 @@ bool expr_params(astNode **params, int *paramCnt){
     astNode *expr = createAstNode();
     // RULE 25 <expr_params> -> ε
     if(currentToken.type == tokentype_rbracket){
+        free(expr);
         correct = true;
     }
     // RULE 24 <expr_params> -> expression <expr_params_n>
@@ -1362,7 +1375,6 @@ void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData
 
 
 
-// TODO POSSIBLE OPTIMISATION 
 
 /**
  * @brief  Validating that body has always-reachable return statement.
@@ -1411,9 +1423,9 @@ astNode *parser(){
     prepareBuiltinSymtable();
     funSymtable = createSymtable();
 
-    prog(true);
+    prog(true); // first pass, just collect information about defined functions
     reset_scanner();
-    prog(false);
+    prog(false); // second pass, do everything else
 
     return ASTree.root;
 }

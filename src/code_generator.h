@@ -31,13 +31,13 @@ typedef struct{
 
 #define DEBUG
 #ifdef DEBUG
-    #ifndef DEBPRINT(...) 
+    #ifndef DEBPRINT
     #define DEBPRINT(...) \
         fprintf(stderr, "D: %s, %d: ", __func__ , __LINE__); \
         fprintf(stderr, __VA_ARGS__);
     #endif
 #else
-    #ifndef DEBPRINT(...) 
+    #ifndef DEBPRINT 
     #define DEBPRINT(...) 
     #endif
 #endif

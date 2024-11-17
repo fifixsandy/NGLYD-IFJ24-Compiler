@@ -251,6 +251,7 @@ void freeSymNodes(symNode *node){
     if(node->data.varOrFun){
         free(node->data.data.fData.paramTypes);
         free(node->data.data.fData.paramNames);
+        free(node->data.data.fData.paramNullable);
     }
     freeSymNodes(node->r);
     freeSymNodes(node->l);
@@ -577,7 +578,7 @@ int max(int a, int b){
 void prepareBuiltinSymtable(){
     builtinSymtable = createSymtable();
 
-    symData data = {.varOrFun = 0};
+    symData data = {.varOrFun = 1};
     funData fData = {.defined = true, 
                      .paramTypes = NULL, 
                      .paramNames = NULL};

@@ -103,7 +103,7 @@ typedef struct astIf {
 
 typedef struct astElse {
     
-    symtable *symtableIf;
+    symtable *symtableElse;
     astNode  *body;
 
 }astElse;
