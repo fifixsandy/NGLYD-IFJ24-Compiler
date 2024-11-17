@@ -1252,7 +1252,7 @@ bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int 
     for(int i = 0; i < paramNum; i++){
         givenDataType = given[i]->nodeRep.exprNode.dataT;
         if(expected[i] != givenDataType && expected[i] != any){
-            if(expected[i] = stringOru8 && 
+            if(expected[i] == stringOru8 && 
             (givenDataType == string || givenDataType == u8)){
                 return true;
             }
