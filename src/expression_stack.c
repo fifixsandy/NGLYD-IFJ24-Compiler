@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "expression_stack.h"
 
+
 precedence precedence_table[14][14] = {
 //    *   /   +   -   ==  !=  <   >   <=  >=  (   )   i   $
     { GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, LS, GR, LS, GR},  // *    
@@ -159,7 +160,7 @@ bool expression(astNode *expr_node){
        
         astNode *final_exp = exp_stack_pop(estack, true);
         
-        DEBPRINT("IS EXPRESSION KNOWN DURING COMPILATION: %d, data typ je %d\n", expr_items->known_during_compile, expr_items->type);
+        //DEBPRINT("IS EXPRESSION KNOWN DURING COMPILATION: %d, data typ je %d\n", expr_items->known_during_compile, expr_items->type);
         createExpressionNode(expr_node, expr_items->type, final_exp, expr_items->is_nullable, expr_items->known_during_compile);  // TODO MATUS TOTO FALSE TAM ASI NEMA BYT UPRAV PLS DIK TO JA PRIDAL NECH NA MNA NEKRICI VSCODE
         
         free(expr_items);
@@ -224,7 +225,11 @@ bool process_expr(exp_stack *estack){
 */
 int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_number curr_symb){
     //DEBPRINT("som vo funkcii shift a na vrchole stacku sa nachádza %d", estack->top->expr);
-
+    if(curr_symb == RBR && exp_stack_find_lbr(estack) == false){
+        curr_symb = STOP;
+        free(curr_node);
+        free(control);
+    }
 
     symbol_number top_term = exp_stack_top_term_symb(estack);
     DEBPRINT("in fucnion shit found that top term symbol on stack is %d (symbol_number)\n", top_term);
@@ -465,7 +470,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_convertable = false;
             control->is_nullable = false;
             
-            control->type = u8;
+            control->type = string;
             return ID;
 
         default:
@@ -489,6 +494,8 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
     if((left_operand->control->is_nullable == true || right_operand->control->is_nullable == true) && operator->expr != NOT_EQUAL && operator->expr != EQUAL){
         ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression\n");
     }
+
+
 
     control->known_during_compile = false;
     control->is_nullable = false;
