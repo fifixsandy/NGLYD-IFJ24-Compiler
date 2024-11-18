@@ -17,7 +17,9 @@ OBJFILES := $(patsubst $(SRCFOLDER)/%.c, $(OBJFOLDER)/%.o, $(SRCFILES))
 INTERPRETER := ic24int
 IFJCODE := out.ifjcode
 INZIG := in.ifj
-INTERETER := ic24int
+
+TESTFOLDER = ./tests
+TESTSCRIPT = ./tests/test.sh
 
 # Compiler and flags
 CC = gcc
@@ -44,8 +46,8 @@ clean:
 	rm -f $(TESTFOLDER)/*.out
 
 # Run tests
-test: 
-	./tests/test.sh ./tests $(NAME) $(INTERPRETER)
+test: $(NAME) $(INTERPRETER)
+	$(TESTSCRIPT) $(TESTFOLDER) $(NAME) $(INTERPRETER)
 
 # Run the main executable
 
@@ -57,7 +59,7 @@ $(INZIG):
 
 run: $(NAME)
 	./$(NAME) <$(INZIG) > $(IFJCODE)
-	./$(INTERETER) $(IFJCODE)
+	./$(INTERPRETER) $(IFJCODE)
 
 # Phony targets
 .PHONY: all clean test run_tests run
