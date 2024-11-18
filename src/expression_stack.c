@@ -460,7 +460,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return ID;
 
         case tokentype_string:
-            createLiteralNode(node, u8, token.value, NULL); //TODO strings
+            createLiteralNode(node, string, token.value, NULL); //TODO strings
             control->known_during_compile = true;
             control->is_convertable = false;
             control->is_nullable = false;
@@ -483,8 +483,8 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
     }
 
-    if(left_operand->control->type == u8 || right_operand->control->type == u8){
-        ERROR(ERR_SEM_TYPE, ("Cannont use u8 type in arithmetical or logical operations\n"));
+    if(left_operand->control->type == u8 || right_operand->control->type == u8 || left_operand->control->type == string || right_operand->control->type == string ){
+        ERROR(ERR_SEM_TYPE, ("Cannont use u8 type or string in arithmetical or logical operations\n"));
     }
     if((left_operand->control->is_nullable == true || right_operand->control->is_nullable == true) && operator->expr != NOT_EQUAL && operator->expr != EQUAL){
         ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression\n");

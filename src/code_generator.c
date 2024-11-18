@@ -504,6 +504,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             add_code("PUSHS ");
             switch(ast->nodeRep.literalNode.dataT){
             case u8:
+            case string:
                 if(!add_string(ast->nodeRep.literalNode.value.charData)) return false;
                 break;
             case i32:

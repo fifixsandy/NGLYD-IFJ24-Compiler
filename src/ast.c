@@ -160,6 +160,9 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
     else if (dataT == u8) {
         newLiteral.value.charData = value;
     }
+    else if(dataT == string){
+        newLiteral.value.charData = value;
+    }
 
     dest->next = NULL;
     dest->type = AST_NODE_LITERAL;
