@@ -1030,11 +1030,11 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
 
         // already defined user function or builtin function was called, semantic check of the parameters and return type
         if(entry->data.data.fData.returnType != void_ && !inExpr){
-            ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", id);
+            ERROR(ERR_SEM_FUN, "Non-void function \"%s\" called without storing the return value.\n", betterID);
         }
         
         if(entry->data.data.fData.returnType == void_ && inExpr){
-            ERROR(ERR_SEM_FUN, "Void function \"%s\" called in expression.\n", id);
+            ERROR(ERR_SEM_FUN, "Void function \"%s\" called in expression.\n", betterID);
         }
 
         if(entry->data.data.fData.paramNum != paramCnt){
@@ -1044,10 +1044,10 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         int badIndex = 0;
         DEBPRINT("PARAM TYPES IS NULL %d AND NUM IS %d\n", entry->data.data.fData.paramTypes == NULL, paramCnt);
         if(!checkParameterTypes(entry->data.data.fData.paramTypes, exprParamsArr, paramCnt, &badIndex)){
-            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, id);
+            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call has wrong type.\n", badIndex, betterID);
         }
         if(!checkParameterNullability(entry->data.data.fData.paramNullable, exprParamsArr, paramCnt, &badIndex)){
-            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call cannot be nullable.\n", badIndex, id);
+            ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call cannot be nullable.\n", badIndex, betterID);
         }
         DEBPRINT("BETTER %s\n", betterID);
         createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt, entry->data.data.fData.nullableRType);
