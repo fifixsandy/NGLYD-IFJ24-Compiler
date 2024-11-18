@@ -16,6 +16,7 @@ YELLOW='\033[33m'
 RESET='\033[0m'
 CYAN="\033[36m"
 BLUE="\033[34m"
+BROWN="\033[0;33m"
 
 # Check for required arguments
 if [ $# -lt 2 ]; then
@@ -40,7 +41,7 @@ for code in "$path_in"/*.ifj; do
 
     # Generate .ifjcode file using the compiler
     ifjcode="${path_out}/${base_name}.ifjcode"
-    echo -e "${YELLOW}Compiling: $code -> $ifjcode${RESET}"
+    echo -e "Compiling: $code -> $ifjcode${RESET}"
     "$COMPILER" < "$code" > "$ifjcode"
     compiler_exit_code=$?
 
@@ -57,7 +58,7 @@ for code in "$path_in"/*.ifj; do
         # Skip if no matching input files
         if [ "$input_file" = "$path_in/${base_name}.in*" ]; then
             input_file="${path_in}/empty.in"
-            echo "No input file found, using default empty file: $input_file"
+            #echo "No input file found, using default empty file: $input_file"
         fi
 
         tests_total=$((tests_total + 1))
@@ -68,7 +69,7 @@ for code in "$path_in"/*.ifj; do
         ref_file="${path_ref}/${base_name}.ref${after_name}"
 
         # Run the interpreter
-        echo -e "${YELLOW}Interpreting: $ifjcode with input $input_file -> $output_file${RESET}"
+        echo -e "Interpreting: $ifjcode with input $input_file -> $output_file${RESET}"
         "$INTERPRETER" "$ifjcode" < "$input_file" > "$output_file"
         interpreter_exit_code=$?
 
@@ -85,7 +86,7 @@ for code in "$path_in"/*.ifj; do
         # Compare output to reference, if reference exists
         if [ -f "$ref_file" ]; then
             if diff -q "$output_file" "$ref_file" > /dev/null; then
-                echo -e "${GREEN}Test passed: $input_file${RESET}"
+                echo -e "${GREEN}Test passed: $code $input_file${RESET}"
                 tests_passed=$((tests_passed + 1))
                 results_table+="${GREEN}$base_name | $input_file | PASSED\n${RESET}"
             else
