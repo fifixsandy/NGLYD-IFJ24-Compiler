@@ -45,12 +45,11 @@ typedef struct exp_stack{
 } exp_stack;
 
 exp_stack *exp_stack_create();
-void exp_stack_init(exp_stack *estack);
 void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_items *control);
 astNode *exp_stack_pop(exp_stack *estack, bool control_needed);
 symbol_number exp_stack_top_term_symb(exp_stack *estack); //toto musí niečo vraciať s čím sa bude dať porovnavať, UPDATE: poriešil som to v hlave
-bool exp_stack_is_empty(exp_stack *estack);
 void exp_stack_free_stack(exp_stack *estack);
+bool exp_stack_find_lbr(exp_stack *estack);
 
 
 /****************************************************************************************** */
