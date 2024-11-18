@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "expression_stack.h"
 
-#define EPSILON 1e-6    // 0.000001
 
 precedence precedence_table[14][14] = {
 //    *   /   +   -   ==  !=  <   >   <=  >=  (   )   i   $
@@ -496,21 +495,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression\n");
     }
 
-    if(right_operand->control->known_during_compile == true && operator->expr == DIVISION){
-        dataType typeZ = right_operand->node->nodeRep.literalNode.dataT;
-        if( typeZ == f64){
-            float fvalue = right_operand->node->nodeRep.literalNode.value.floatData;
-            if( fabs(fvalue) < EPSILON){        // if expresion is devided by zero or very small number
-                ERROR(ERR_SEM_ELSE, "Expression can't be devided by zero\n");
-            }
-        }
-        if(typeZ == i32){
-            int ivalue = right_operand->node->nodeRep.literalNode.value.intData;
-            if(ivalue == 0){        // if expresion is devided by zero
-                ERROR(ERR_SEM_ELSE, "Expression can't be devided by zero\n");
-            }
-        }
-    }
+
 
     control->known_during_compile = false;
     control->is_nullable = false;
