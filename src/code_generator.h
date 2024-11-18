@@ -29,7 +29,7 @@ typedef struct{
 
 
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #ifndef DEBPRINT
     #define DEBPRINT(...) \

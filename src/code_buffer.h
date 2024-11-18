@@ -14,7 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
     #ifndef DEBPRINT 
     #define DEBPRINT(...) \
