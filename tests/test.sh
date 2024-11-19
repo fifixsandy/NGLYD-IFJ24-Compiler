@@ -50,6 +50,7 @@ for code in "$path_in"/*.ifj; do
     compiler_exit_code=$?
 
     if [ $compiler_exit_code -ne 0 ]; then
+        tests_total=$((tests_total + 1))
         if [ -f "$expected_exit_file" ]; then
             expected_exit_code=$(cat "$expected_exit_file")
             
@@ -94,7 +95,7 @@ for code in "$path_in"/*.ifj; do
         interpreter_exit_code=$?
 
 
-        if [ $interpreter_exit_code -ne 0 ]; then
+        if [ $interpreter_exit_code -ne 0 ] || [ -f $expected_exit_file ]; then
             if [ -f $expected_exit_file ]; then
                 expected_exit_code=$(cat "$expected_exit_file")
                 if [ "$expected_exit_code" -eq "$interpreter_exit_code" ]; then
