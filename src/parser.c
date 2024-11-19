@@ -382,6 +382,10 @@ bool def_variable(astNode *block){
 
         expression(exprNode);
 
+        if(checkIfExprLogic(exprNode)){
+                ERROR(ERR_SEM_TYPE, "Expression in definition for variable \"%s\" cannot be logical.\n", varName);
+        }
+
         if(currentToken.type != tokentype_semicolon){
             ERROR(ERR_SYNTAX, "Expected \";\".\n");
         }
@@ -835,7 +839,7 @@ bool if_statement(dataType expRetType, astNode *block, bool inMain){
             GT
         if(expression(condExrpNode)){ 
 
-
+        
         if(currentToken.type == tokentype_rbracket){
             GT
         if(id_without_null(&withNull, &id_wout_null)){
@@ -846,6 +850,7 @@ bool if_statement(dataType expRetType, astNode *block, bool inMain){
             }
             else{
                 findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExrpNode->nodeRep.exprNode.dataT;
+                // TODO ADD THE CHECK
                 if(!checkIfNullable(condExrpNode)){
                     ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
                 }
@@ -948,6 +953,9 @@ bool after_id(char *id, astNode *block){
 
         GT
         if(expression(newAssExpNode)){
+            if(checkIfExprLogic(newAssExpNode)){
+                ERROR(ERR_SEM_TYPE, "Expression in assignment for variable \"%s\" cannot be logical.\n", id);
+            }
             if(currentToken.type != tokentype_semicolon){
                 ERROR(ERR_SYNTAX, "Expected \";\"");
             };
