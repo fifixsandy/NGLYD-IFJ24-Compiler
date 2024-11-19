@@ -7,7 +7,7 @@ COMPILER=./$2      # Path to the compiler binary
 INTERPRETER=./$3   # Path to the interpreter binary
 path_in="$TESTDIR"/in       # Input directory containing .ifj and .in* files
 path_out="$TESTDIR"/out      # Output directory for generated files
-path_ref="$TESTDIR"/ref 
+path_ref="$TESTDIR"/ref     # Reference direcotry for .ref* and .exit* files
 
 # Define color codes
 RED='\033[31m'
@@ -49,6 +49,7 @@ for code in "$path_in"/*.ifj; do
 
     compiler_exit_code=$?
 
+    # Test exit code of Compiler
     if [ $compiler_exit_code -ne 0 ]; then
         tests_total=$((tests_total + 1))
         if [ -f "$expected_exit_file" ]; then
@@ -94,7 +95,7 @@ for code in "$path_in"/*.ifj; do
         "$INTERPRETER" "$ifjcode" < "$input_file" > "$output_file"
         interpreter_exit_code=$?
 
-
+        # Test exit code of Interpreter
         if [ $interpreter_exit_code -ne 0 ] || [ -f $expected_exit_file ]; then
             if [ -f $expected_exit_file ]; then
                 tests_total=$((tests_total + 1))
