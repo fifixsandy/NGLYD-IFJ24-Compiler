@@ -81,7 +81,7 @@ for code in "$path_in"/*.ifj; do
             #echo "No input file found, using default empty file: $input_file"
         fi
 
-        tests_total=$((tests_total + 1))
+        
 		after_name="${input_file##*.in}"
 
         # Define output and reference file paths
@@ -117,7 +117,7 @@ for code in "$path_in"/*.ifj; do
             fi
         fi
 
-		"$path_out"/rm "$ifjcode"
+		tests_total=$((tests_total + 1))
 
         # Compare output to reference, if reference exists
         if [ -f "$ref_file" ]; then

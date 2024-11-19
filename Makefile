@@ -42,8 +42,7 @@ $(OBJFOLDER)/%.o: $(SRCFOLDER)/%.c
 clean:
 	rm -rf $(OBJFOLDER)/
 	rm -f $(NAME)
-	rm -f $(TESTBINS)
-	rm -f $(TESTFOLDER)/*.out
+	rm -f $(TESTFOLDER)/out/* -R
 
 # Run tests
 test: $(NAME) $(INTERPRETER)
