@@ -203,7 +203,7 @@ bool process_expr(exp_stack *estack){
     }
     else if(evaluate == 1){
         if(estack->top->expr != NO_TERMINAL){
-            ERROR(ERR_SYNTAX, "Empty expression\n");
+            ERROR(ERR_SYNTAX, "Invalid expression\n");
         }
         
         return true;
@@ -250,7 +250,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
         }
         else{
             //fprintf(stderr, "vyhodnocovacie pravidlo nd\n");
-            ERROR(ERR_SYNTAX, ("Invalid expression, expected: \";\", sprava prišla z funkcie shift\n")); // ERORR chybný expression
+            ERROR(ERR_SYNTAX, ("Invalid expression\n")); // ERORR chybný expression
         }
     }
 }
@@ -271,7 +271,7 @@ void reduce(exp_stack *stack){
             control_items *operand_items = stack->top->control;
             astNode *expr = exp_stack_pop(stack, true);
             if(stack->top->expr != LBR){
-                ERROR(ERR_SYNTAX, "Unexpected token in stack");
+                ERROR(ERR_SYNTAX, "Unexpected \")\" in expression ");
             }
             astNode *lbr = exp_stack_pop(stack, false);
             freeASTNode(lbr);
@@ -284,7 +284,7 @@ void reduce(exp_stack *stack){
 
         default :
             if(stack->count < 4 ){
-                ERROR(ERR_SYNTAX, "Invalid token in expression\n");
+                ERROR(ERR_SYNTAX, "Invalid character in expression\n");
             }
             
             control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
@@ -403,10 +403,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
                     
                     funCallHandle(id, node, true);
-                    if(node->nodeRep.funcCallNode.retType == void_){
-                        ERROR(ERR_SYNTAX, "Void funcion cannot be used in expression.\n");
-                    }
-
+                    
                     control->known_during_compile = false;
                     control->is_nullable = node->nodeRep.funcCallNode.nullableRetType;
                     control->type = node->nodeRep.funcCallNode.retType;
@@ -414,7 +411,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     return ID;
                 }
                 else{
-                    ERROR(ERR_SEM_UNDEF, ("Variable or function undefined.\n")); //TODO ERRROR
+                    ERROR(ERR_SEM_UNDEF, ("Variable undefined.\n")); //TODO ERRROR
                 }
             }
 
@@ -485,7 +482,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
 void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control){
     if(left_operand->expr != NO_TERMINAL || left_operand->expr != NO_TERMINAL){
-        ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
+        ERROR(ERR_SYNTAX, "Unexpected character in expression\n"); 
     }
 
     if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
@@ -511,7 +508,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SEM_TYPE, ("Cannont use u8 type or string in arithmetical or logical operations\n"));
     }
     if((left_operand->control->is_nullable == true || right_operand->control->is_nullable == true) && operator->expr != NOT_EQUAL && operator->expr != EQUAL){
-        ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression\n");
+        ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression other than == and != \n");
     }
 
 
@@ -595,7 +592,7 @@ void retype(astNode *operand){
             return; 
         }
         else{
-            ERROR(ERR_INTERNAL, "TODO in fucion retype, recieved wrong type.\n");
+            ERROR(ERR_INTERNAL, "Fault in compile. I wasn't counting on this D: .\n");
         }
     }
 }
