@@ -264,7 +264,7 @@ void reduce(exp_stack *stack){
             stack->top->expr = NO_TERMINAL;
             break;
  
-        case RBR :
+        case RBR :{
             astNode *rbr = exp_stack_pop(stack, false);    // delete right bracket item from stack
             freeASTNode(rbr); 
             control_items *operand_items = stack->top->control;
@@ -276,6 +276,7 @@ void reduce(exp_stack *stack){
             freeASTNode(lbr);
             exp_stack_push(stack, expr, NO_TERMINAL, operand_items);
             return;
+        }
 
         case STOP :
             return;
@@ -414,7 +415,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 }
             }
 
-        case tokentype_int :
+        case tokentype_int :{
             int ivalue = atoi(token.value);
             createLiteralNode(node, i32, &ivalue,  NULL);
             control->is_nullable = false;
@@ -423,8 +424,9 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_convertable = true;
             control->known_during_compile = true;
             return ID;
+        }
 
-        case tokentype_float :
+        case tokentype_float :{
             float fvalue = atof(token.value);
             createLiteralNode(node, f64, &fvalue, NULL);
 
@@ -440,7 +442,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                 control->is_convertable = false;
             }
             return ID;
-
+        }
         case tokentype_kw_null :
             createLiteralNode(node, null_, NULL, NULL );
             control->known_during_compile = true;
@@ -450,7 +452,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->is_convertable = false;
             return ID;
 
-        case tokentype_zeroint :
+        case tokentype_zeroint :{
             int zero_int = 0;
             createLiteralNode(node, i32, &zero_int, NULL);
             control->known_during_compile = true;
@@ -459,7 +461,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             
             control->is_convertable = true;
             return ID;
-
+        }
         case tokentype_string:
             createLiteralNode(node, string, token.value, NULL); //TODO strings
             control->known_during_compile = true;
@@ -574,7 +576,7 @@ void retype(astNode *operand){
         retype(operand->nodeRep.binOpNode.right);
         return;
     }
-    else if(operand->type = AST_NODE_LITERAL){
+    else if(operand->type == AST_NODE_LITERAL){
         
         dataType type = operand->nodeRep.literalNode.dataT;
         //DEBPRINT("Môj typ je %d - nachadzam sa v node literal\n", type);

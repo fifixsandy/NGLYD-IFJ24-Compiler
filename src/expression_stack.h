@@ -59,7 +59,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 //void reduce_bin_op(exp_stack *estack, control_items *control);
 void reduce(exp_stack *estack);
 int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_number curr_symb);
-
+void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control);
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
 void retype(astNode *operand);

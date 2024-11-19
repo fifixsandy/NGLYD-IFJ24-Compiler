@@ -329,7 +329,6 @@ bool params_n(int *paramNum, dataType **paramTypes, char ***paramNames, bool **p
 }
 
 bool def_variable(astNode *block){
-    bool correct = false;
 
     // prepare information about defined variable
     char    *varName;
