@@ -16,10 +16,35 @@ Skript spustíte príkazom:
 ```
 
 Parametre:
-- <adresár_testov>: Adresár obsahujúci testy.
+- <adresár_testov>: Adresár obsahujúci testy. 
 - <cesta_ku_kompilátoru>: Cesta k spustiteľnému súboru kompilátora.
 - <cesta_k_interpretru>: Cesta k spustiteľnému súboru interpretra.
 
+### Príklad spustenia
+
+Pre štruktúru:
+
+```
+projekt/
+├── ic24int                 # Interpret
+├── compiler                # Komplilátor
+└── tests/                  # Adresár pre testy
+    ├── in                  # Vstupné testy
+    │   ├── big_test.ifj
+    │   ├── test_1.ifj
+    │   └── ...             # Ďalšie vstupné testy
+    ├── out                 # Vystupy z interpretora
+    ├── ref                 # Referenčné výstupy
+    │   ├── big_test.ref1
+    │   ├── test_1.ref1
+    │   └── ...             # Ďalšie referenčné súbory
+    └── test.sh             # Testovací skript
+```
+
+```bash
+cd projekt/
+./tests/test.sh ./tests compiler ic24int
+```
 ## Pridanie vlastného testu
 
 ### 1. Testovaný program
