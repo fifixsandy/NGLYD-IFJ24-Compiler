@@ -97,6 +97,7 @@ for code in "$path_in"/*.ifj; do
 
         if [ $interpreter_exit_code -ne 0 ] || [ -f $expected_exit_file ]; then
             if [ -f $expected_exit_file ]; then
+                tests_total=$((tests_total + 1))
                 expected_exit_code=$(cat "$expected_exit_file")
                 if [ "$expected_exit_code" -eq "$interpreter_exit_code" ]; then
                     echo -e "${GREEN}Test passed: $code exit code: $interpreter_exit_code${RESET}"
