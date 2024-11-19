@@ -17,6 +17,7 @@ RESET='\033[0m'
 CYAN="\033[36m"
 BLUE="\033[34m"
 BROWN="\033[0;33m"
+PINK='\033[35m' 
 
 # Check for required arguments
 if [ $# -lt 2 ]; then
@@ -37,15 +38,33 @@ results_table=""
 for code in "$path_in"/*.ifj; do
     # Extract base name without extension
     base_name=$(basename "$code" .ifj)
-
+    ref_file="${path_ref}/${base_name}.ref"
+    expected_exit_file="${path_ref}/${base_name}.exit"
 
     # Generate .ifjcode file using the compiler
     ifjcode="${path_out}/${base_name}.ifjcode"
     echo -e "Compiling: $code -> $ifjcode${RESET}"
+
     "$COMPILER" < "$code" > "$ifjcode"
+
     compiler_exit_code=$?
 
     if [ $compiler_exit_code -ne 0 ]; then
+        if [ -f "$expected_exit_file" ]; then
+            expected_exit_code=$(cat "$expected_exit_file")
+            
+            if [ "$expected_exit_code" -eq "$compiler_exit_code" ]; then
+                echo -e "${GREEN}Test passed: $code exit code: $compiler_exit_code${RESET}"
+                tests_passed=$((tests_passed + 1))
+                results_table+="${GREEN}$base_name | $expected_exit_file | PASSED\n${RESET}"        
+                continue 
+            else
+                echo -e "${RED}Compiler failed with exit code $compiler_exit_code for $code, expected exit code: $expected_exit_code${RESET}"
+                results_table+="${RED}$base_name | ${RED}$expected_exit_file${RESET} | ${RED}FAILED${RESET} | $compiler_exit_code | ${RESET}\n"
+                tests_failed=$((tests_failed + 1))
+                continue;
+            fi
+        fi
         echo -e "${RED}Compiler failed with exit code $compiler_exit_code for $code${RESET}"
         results_table+="$base_name | ${CYAN}N/A${RESET} | ${RED}COMPILER FAILED${RESET} | $compiler_exit_code | ${RESET}\n"
         tests_failed=$((tests_failed + 1))
@@ -67,6 +86,7 @@ for code in "$path_in"/*.ifj; do
         # Define output and reference file paths
         output_file="${path_out}/${base_name}.out${after_name}"
         ref_file="${path_ref}/${base_name}.ref${after_name}"
+        expected_exit_file="${path_ref}/${base_name}.exit${after_name}"
 
         # Run the interpreter
         echo -e "Interpreting: $ifjcode with input $input_file -> $output_file${RESET}"
@@ -75,10 +95,24 @@ for code in "$path_in"/*.ifj; do
 
 
         if [ $interpreter_exit_code -ne 0 ]; then
-            echo -e "${RED}Error: Interpretation failed for $ifjcode (exit code: $interpreter_exit_code)${RESET}"
-            results_table+="$base_name | $input_file | ${RED}INTERPRETER FAILED${RESET} | $interpreter_exit_code\n"
-            tests_failed=$((tests_failed + 1))
-            continue
+            if [ -f $expected_exit_file ]; then
+                expected_exit_code=$(cat "$expected_exit_file")
+                if [ "$expected_exit_code" -eq "$interpreter_exit_code" ]; then
+                    echo -e "${GREEN}Test passed: $code exit code: $interpreter_exit_code${RESET}"
+                    tests_passed=$((tests_passed + 1))
+                    results_table+="${GREEN}$base_name | $expected_exit_file | PASSED\n${RESET}"        
+                else
+                     echo -e "${RED}Interpretation failed with exit code $interpreter_exit_code for $code, expected exit code: $expected_exit_code${RESET}"
+                    results_table+="${RED}$base_name | ${RED}$expected_exit_file${RESET} | ${RED}FAILED${RESET} | $interpreter_exit_code | ${RESET}\n"
+                    tests_failed=$((tests_failed + 1))
+                    continue;
+                fi
+            else
+                echo -e "${RED}Error: Interpretation failed for $ifjcode (exit code: $interpreter_exit_code)${RESET}"
+                results_table+="$base_name | $input_file | ${RED}INTERPRETER FAILED${RESET} | $interpreter_exit_code\n"
+                tests_failed=$((tests_failed + 1))
+                continue
+            fi
         fi
 
 		"$path_out"/rm "$ifjcode"
@@ -113,7 +147,7 @@ echo -e "Tests without reference: $tests_no_ref"
 
 # Print detailed results table
 echo -e "\n${CYAN}Detailed Results:${RESET}"
-echo -e "File Base | Input File | Result"
+echo -e "File Base | Input File | Result ${RESET}"
 echo -e "-----------------------------------"
 echo -e "$results_table" | column -t -s "|"
 
