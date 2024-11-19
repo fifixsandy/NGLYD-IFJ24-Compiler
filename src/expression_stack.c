@@ -488,6 +488,25 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SYNTAX, "ERROR, ktorý bude došetriť vzinok na základe toho že funkcia nedostala niečo čo by vyhodnotila ako operandy\n"); //dorieš výpis
     }
 
+    if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
+        if(left_operand->control->type == null_ && right_operand->control->is_nullable == false){
+            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+        }
+        else if(right_operand->control->type == null_ && left_operand->control->is_nullable == false){
+            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+        }
+        else{
+            if(left_operand->control->type == null_ || right_operand->control->type == null_){
+            control->known_during_compile = false;
+            control->is_convertable = false;
+            control->is_nullable = true;
+            control->type = null_;
+            return;
+            }
+        }
+    }
+
+
     if(left_operand->control->type == u8 || right_operand->control->type == u8 || left_operand->control->type == string || right_operand->control->type == string ){
         ERROR(ERR_SEM_TYPE, ("Cannont use u8 type or string in arithmetical or logical operations\n"));
     }
@@ -501,15 +520,7 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
     control->is_nullable = false;
 
 
-    if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
-        if(left_operand->control->type == null_ && right_operand->control->is_nullable == false){
-            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
-        }
-        else if(right_operand->control->type == null_ && left_operand->control->is_nullable == false){
-            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
-        }
-        
-    }
+
 
     
 
