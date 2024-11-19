@@ -62,7 +62,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
 
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
-
+void retype(astNode *operand);
 
 
 #endif

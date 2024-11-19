@@ -147,7 +147,6 @@ bool exp_stack_find_lbr(exp_stack *estack){
 bool expression(astNode *expr_node){
     //fprintf(stderr, "\n");
     DEBPRINT("entered expression func\n");
-    bool *known_upon_compilation;
     //fprintf(stderr, "\nDOSTAL SOM SA DO EXPRESSION ČASTI!!\n");
     exp_stack *estack = exp_stack_create();
 
