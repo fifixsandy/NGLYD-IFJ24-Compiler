@@ -28,10 +28,14 @@ CFLAGS = -std=c99 -pedantic -Wall -Wextra -g
 # Default target
 all: $(NAME)
 
-# Rule to build the executable
-$(NAME): $(OBJFILES)
+# Rule for building in submitted directory
+$(NAME): $(wildcard *.c) $(wildcard *.h)
+	$(CC) $(CFLAGS) $(wildcard *.c) -o $(NAME)
+
+# Rule to build the executable in developer space
+dev: $(OBJFILES)
 	mkdir -p $(OBJFOLDER)
-	$(CC) $(CFLAGS) $(OBJFILES) -o $@
+	$(CC) $(CFLAGS) $(OBJFILES) -o $(NAME)
 
 # Rule to compile .c files into .o files
 $(OBJFOLDER)/%.o: $(SRCFOLDER)/%.c
@@ -49,6 +53,9 @@ test: $(NAME) $(INTERPRETER)
 	$(TESTSCRIPT) $(TESTFOLDER) $(NAME) $(INTERPRETER)
 
 # Run the main executable
+
+pack:
+	zip -j xnovakf00.zip ./src/*.c ./src/*.h ./rozdeleni ./rozsireni ./dokumentace.pdf ./Makefile
 
 $(IFJCODE):
 	touch $(IFJCODE)
