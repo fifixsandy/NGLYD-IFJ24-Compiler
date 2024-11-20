@@ -153,5 +153,6 @@ echo -e "\n${CYAN}Detailed Results:${RESET}"
 echo -e "File Base | Input File | Result ${RESET}"
 echo -e "-----------------------------------"
 echo -e "$results_table" | column -t -s "|"
+echo -e "${RESET}"
 
 exit 0
