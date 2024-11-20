@@ -79,7 +79,8 @@ Ako by mal vyzerať taký súbor:
 ```
 ref/custom_test.exit*
 ```
-Kde * je číslo vstupu s ktorým chceš porovnávať výstup (len v prípade, že zadáš viac vstupov).Ak vytvoríš svoje vlastné testy, neváhaj a pošli ich cez pull request. :)
+Kde * je číslo vstupu s ktorým chceš porovnávať výstup (len v prípade, že zadáš viac vstupov).
+### Ak vytvoríš svoje vlastné testy, neváhaj a pošli ich cez pull request (len .ifj, .exit, .ref a prípadne .in súbory) :)
 ## Štruktúra Projektu
 
 
