@@ -1,7 +1,7 @@
 
 # IFJ Testovací Skript
 
-Tento skript automatizuje proces testovania IFJ kompilátora a interpretra. Kompiluje zdrojové súbory .ifj, spúšťa vygenerovaný kód cez interpret s rôznymi vstupnými súbormi a porovnáva výsledky s referenčnými výstupmi.
+Tento skript automatizuje proces testovania IFJ kompilátora a interpretu. Kompiluje zdrojové súbory .ifj, spúšťa vygenerovaný kód cez interpret s rôznymi vstupnými súbormi a porovnáva výsledky s referenčnými výstupmi.
 
 
 
@@ -9,16 +9,18 @@ Tento skript automatizuje proces testovania IFJ kompilátora a interpretra. Komp
 
 ## Spustenie
 
+
+
 Skript spustíte príkazom:
 
 ```bash
-./test.sh <adresár_testov> <cesta_ku_kompilátoru> <cesta_k_interpretru>
+./test.sh <adresár_testov> <cesta_ku_kompilátoru> <cesta_k_interpretu>
 ```
 
 Parametre:
 - <adresár_testov>: Adresár obsahujúci testy. 
 - <cesta_ku_kompilátoru>: Cesta k spustiteľnému súboru kompilátora.
-- <cesta_k_interpretru>: Cesta k spustiteľnému súboru interpretra.
+- <cesta_k_interpretu>: Cesta k spustiteľnému súboru interpretu.
 
 ### Príklad spustenia
 
@@ -33,7 +35,7 @@ projekt/
     │   ├── big_test.ifj
     │   ├── test_1.ifj
     │   └── ...             # Ďalšie vstupné testy
-    ├── out                 # Vystupy z interpretora
+    ├── out                 # Výstupy z interpretu
     ├── ref                 # Referenčné výstupy
     │   ├── big_test.ref1
     │   ├── test_1.ref1
@@ -43,6 +45,7 @@ projekt/
 
 ```bash
 cd projekt/
+chmod +x ./tests/test.sh
 ./tests/test.sh ./tests compiler ic24int
 ```
 ## Pridanie vlastného testu
