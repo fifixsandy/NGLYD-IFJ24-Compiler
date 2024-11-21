@@ -6,6 +6,8 @@
  * @brief  Header file for abstract syntactic tree representation.
  * 
  * @author xnovakf00 Filip Novák
+ *         xfignam00 Matúš Fignár
+ * 
  * @date   21.11.2024
 */
 
