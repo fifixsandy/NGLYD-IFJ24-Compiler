@@ -17,7 +17,7 @@
 #include "symtable.h"
 #include "ast.h"
 #include "error.h"
-#include "expression_stack.h"
+#include "expression_parser.h"
 
 //#define DEBUG
 #ifdef DEBUG
