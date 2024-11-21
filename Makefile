@@ -68,4 +68,4 @@ run: $(NAME)
 	./$(INTERPRETER) $(IFJCODE)
 
 # Phony targets
-.PHONY: all clean test run_tests run
+.PHONY: all clean test run_tests run dev
