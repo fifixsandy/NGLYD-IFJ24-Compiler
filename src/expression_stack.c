@@ -262,7 +262,7 @@ void reduce(exp_stack *stack){
     switch(top_term){
         case ID :
             stack->top->expr = NO_TERMINAL;
-            break;
+            return;
  
         case RBR :{
             astNode *rbr = exp_stack_pop(stack, false);    // delete right bracket item from stack
@@ -281,24 +281,43 @@ void reduce(exp_stack *stack){
         case STOP :
             return;
 
+        case LOWER:
+        case LOWER_OR_EQUAL:
+        case GREATER:
+        case GREATER_OR_EQUAL:
+        case EQUAL:
+        case NOT_EQUAL:
+            if(stack->count < 4 ){
+                    ERROR(ERR_SYNTAX, "Invalid character in expression\n");
+                }
+            if(stack->top->next->next->node->type == AST_NODE_BINOP){
+                symbol_number operator = stack->top->next->next->node->nodeRep.binOpNode.op;
+                if(operator == LOWER || operator == LOWER_OR_EQUAL || operator == GREATER || operator == GREATER_OR_EQUAL || operator == EQUAL || operator == NOT_EQUAL){
+                    ERROR(ERR_SYNTAX, "Invalid expression.\n");
+                }
+            }
+            break;
 
         default :
-            if(stack->count < 4 ){
-                ERROR(ERR_SYNTAX, "Invalid character in expression\n");
-            }
-            
-            control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
-            
-            semantic_check_retype(stack->top->next->next, stack->top->next, stack->top, operation_item);
-            
-            astNode *right_elem = exp_stack_pop(stack, false);
-            astNode *operator = exp_stack_pop(stack, false);
-            astNode *left_elem = exp_stack_pop(stack, false);
-
-            createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL);
-            exp_stack_push(stack, operator, NO_TERMINAL, operation_item);
-            return;
+            break;
     }
+
+    if(stack->count < 4 ){
+        ERROR(ERR_SYNTAX, "Invalid character in expression\n");
+    }
+    
+    control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
+    
+    semantic_check_retype(stack->top->next->next, stack->top->next, stack->top, operation_item);
+    
+    astNode *right_elem = exp_stack_pop(stack, false);
+    astNode *operator = exp_stack_pop(stack, false);
+    astNode *left_elem = exp_stack_pop(stack, false);
+
+    createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL); 
+    exp_stack_push(stack, operator, NO_TERMINAL, operation_item);
+    return;
+
       
 }
 
@@ -512,15 +531,8 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression other than == and != \n");
     }
 
-
-
     control->known_during_compile = false;
     control->is_nullable = false;
-
-
-
-
-    
 
     if(left_operand->control->type == right_operand->control->type){
         control->type = left_operand->control->type;
@@ -533,6 +545,31 @@ void semantic_check_retype(stack_item *left_operand, stack_item *operator, stack
         return; //všetko vpohode nerieš
 
     }
+
+    else if(right_operand->control->is_convertable == true && right_operand->control->type == i32){
+        retype(right_operand->node);
+        control->type = left_operand->control->type;
+        if(left_operand->control->is_convertable == true){
+            control->is_convertable = true;
+        }
+        else{
+            control->is_convertable = false;
+        }
+        return;
+    }
+
+    else if(left_operand->control->is_convertable == true && left_operand->control->type == i32){
+        retype(left_operand->node);
+        control->type = right_operand->control->type;
+        if(right_operand->control->is_convertable == true){
+            control->is_convertable = true;
+        }
+        else{
+            control->is_convertable = false;
+        }
+        return;
+    }
+
 
     else if(right_operand->control->is_convertable == true){
         retype(right_operand->node);
