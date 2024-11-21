@@ -675,6 +675,9 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
     else{
         correct = expression(*exprNode); 
         dataType exprType = (*exprNode)->nodeRep.exprNode.dataT;
+        if(expRetType == void_){
+            ERROR(ERR_SEM_RETURN, "Extra return value in void function.\n");
+        }
         if(exprType != expRetType){
             ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
         }
