@@ -1,4 +1,6 @@
 /**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
  * @file   symtable.h
  * 
  * @brief  Header file for a table of symbols for a compiler.
@@ -11,9 +13,8 @@
  *         function documentation in symtable.c).
  *         Includes also functions for printing out .dot representation of symtable.
  * 
- * @todo   complete symData struct to handle multiple types
- * @author xnovakf00
- * @date   12.10.2024
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
 */
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
@@ -43,12 +44,11 @@ typedef enum dataType{
 typedef struct funData{
    bool      defined;
    dataType  returnType;                  
-   bool      nullableRType;               // 1 if nullable, 0 if not
+   bool      nullableRType;  // 1 if nullable, 0 if not
    dataType *paramTypes;
-   bool    *paramNullable;
+   bool     *paramNullable;
    char    **paramNames;
    int       paramNum;
-   char     *intermediateCode;            // @todo change according to code generating
    symtable *tbPtr;
 }funData;
 

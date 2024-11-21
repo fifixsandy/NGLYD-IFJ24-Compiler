@@ -1,3 +1,16 @@
+/**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
+ * @file   parser.h
+ * 
+ * @brief  Function declarations, macros and extern declarations for a recursive
+ *         parser based on LL1 grammar defined in parser.c
+ * 
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
+*/
+
+
 #ifndef PARSER_H
 #define PARSER_H
 #include "scanner.h"

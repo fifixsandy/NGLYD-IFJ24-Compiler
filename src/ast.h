@@ -1,11 +1,12 @@
 /**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
  * @file   ast.h
  * 
  * @brief  Header file for abstract syntactic tree representation.
  * 
- * 
- * @author xnovakf00
- * @date   08.11.2024
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
 */
 
 #ifndef AST_H
@@ -34,7 +35,7 @@ typedef enum{
 
     ID,                     // 12
     STOP,                   // 13
-    NO_TERMINAL,            // 14 - neterminálny symbol, pri vyhodnocovaní skip
+    NO_TERMINAL,            // 14 
     ERROR                   // 15
 } symbol_number;
 

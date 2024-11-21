@@ -1,4 +1,6 @@
 /**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
  * @file   symtable.c
  * 
  * @brief  AVL-balanced binary search (vv-BVS) tree implementation of a table of symbols for a compiler.
@@ -8,11 +10,10 @@
  *         The tree balances when inserting or deleting a node, when necessary using rotations.
  *         Symtables can be stored in a stack, so that representation of scopes in code is possible.
  *         
- *         Implementation is mainly based on practices taught in IAL course on FIT VUT.
+ *         Implementation is mainly based on practices taught in IAL course at FIT VUT. 
  * 
- * @todo   Error handling
- * @author xnovakf00
- * @date   08.10.2024
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
 */
 
 #include "symtable.h"
@@ -26,7 +27,6 @@ symtable *builtinSymtable;
  * @brief  Creates an empty symtable.
  * 
  * @return Initialised table if allocation is successful, NULL otherwise.
- * @todo   Error handling
  */
 symtable* createSymtable(){
     symtable *table = (symtable *)malloc(sizeof(symtable));
@@ -42,7 +42,6 @@ symtable* createSymtable(){
  * @brief          Initialises symtable for further work.
  * 
  * @param symtable Symtable to be initialised.
- * @todo           Error handling
  */
 
 void initSymtable(symtable *tb){
@@ -56,7 +55,6 @@ void initSymtable(symtable *tb){
  * @param key  Key on which the node will be located in the tree.
  * @param data Extra useful data describing the symbol element.
  * 
- * @todo       Error handling.
  * 
  * @return     Pointer to the created symNode.
  */
@@ -288,7 +286,6 @@ void initStack(stack *st){
  * 
  * @return   Pointer to the created stack element or NULL if allocation fails.
  * 
- * @todo     Handle errors
  */
 stackElem *createStElem(symtable *tb){
     stackElem* newElem = (stackElem*)malloc(sizeof(stackElem));

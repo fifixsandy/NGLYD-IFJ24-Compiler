@@ -1,4 +1,6 @@
 /**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
  * @file   parser.c
  * 
  * @brief  Implementation of recursive parser for IFJ24
@@ -15,10 +17,9 @@
  *         When an error occurs, ERROR(...) defined in error.h is called and the program exits
  *         with given error code.
  *         
- * @see    scanner.h ast.h
  * 
- * @author xnovakf00
- * @date   15.11.2024
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
 */
 
 #include "parser.h"

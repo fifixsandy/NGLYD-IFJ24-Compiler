@@ -1,3 +1,12 @@
+/**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
+ * @file   error.c
+ * 
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
+*/
+
 #include <stdio.h>
 
 #include "error.h"

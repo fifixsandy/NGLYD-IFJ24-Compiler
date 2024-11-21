@@ -1,3 +1,16 @@
+/**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
+ * @file   ast.c
+ * 
+ * @brief  This file includes function definitions for creating various AST nodes defined
+ *         in ast.h as well as some functions for their management. 
+ *         
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
+*/
+
+
 #include "ast.h"
 #include "error.h"
 #include "parser.h"

@@ -1,3 +1,16 @@
+/**
+ *         Implementace překladače imperativního jazyka IFJ24.
+ * 
+ * @file   error.h
+ * 
+ * @brief  File includes definitions of error codes and macros to trigger errors,
+ *         while deallocating allocated memory.
+ * 
+ * @author xnovakf00 Filip Novák
+ * @date   21.11.2024
+*/
+
+
 #ifndef ERROR_H
 #define ERROR_H
 
