@@ -18,8 +18,8 @@ INTERPRETER := ic24int
 IFJCODE := out.ifjcode
 INZIG := in.ifj
 
-TESTFOLDER = ./tests
-TESTSCRIPT = ./tests/test.sh
+TESTFOLDER = ./IFJ24-tests
+TESTSCRIPT = ./IFJ24-tests/test.sh
 
 # Compiler and flags
 CC = gcc
