@@ -189,7 +189,7 @@ bool def_func_sec(symNode *functionEntry, char *funID){
     dataType returnType = getReturnType(funID);
     char    **paramNames = functionEntry->data.data.fData.paramNames;
     int paramNum = functionEntry->data.data.fData.paramNum;
-
+    bool nullableRType = functionEntry->data.data.fData.nullableRType;
     while(currentToken.type != tokentype_lcbracket){
         GT
     }
@@ -198,7 +198,7 @@ bool def_func_sec(symNode *functionEntry, char *funID){
     push(&symtableStack, symtableFun);
 
     bool inMain = (strcmp(funID, "main") == 0); 
-    body(returnType, bodyAstRoot, inMain);
+    body(returnType,nullableRType, bodyAstRoot, inMain);
     if(currentToken.type != tokentype_rcbracket){
         ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
     }
@@ -211,7 +211,7 @@ bool def_func_sec(symNode *functionEntry, char *funID){
                 ERROR(ERR_SEM_RETURN, "Function \"%s\" include path with no \"return\" statement.", funID);
         }
     }
-    bool nullableRType = functionEntry->data.data.fData.nullableRType;
+    
     createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType, nullableRType); 
     connectToBlock(funcAstNode, ASTree.root);
     GT
@@ -578,7 +578,7 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
     return correct;
 }
 
-bool st(dataType expReturnType, astNode *block, bool inMain){
+bool st(dataType expReturnType, bool nullableRType, astNode *block, bool inMain){
     bool correct = false;
     // RULE 33 <st> -> <def_variable>
     if(currentToken.type == tokentype_kw_const ||
@@ -596,15 +596,15 @@ bool st(dataType expReturnType, astNode *block, bool inMain){
     }
     // <st> RULE 36 -> <while_statement>
     else if(currentToken.type == tokentype_kw_while){ 
-        correct = while_statement(expReturnType, block, inMain);
+        correct = while_statement(expReturnType,nullableRType, block, inMain);
     }
     // <st> RULE 37 -> <if_statement>
     else if(currentToken.type == tokentype_kw_if){ 
-        correct = if_statement(expReturnType, block, inMain);
+        correct = if_statement(expReturnType, nullableRType, block, inMain);
     }
     // <st> RULE 38 -> <return>
     else if(currentToken.type == tokentype_kw_return){ 
-        correct = return_(expReturnType, block, inMain);
+        correct = return_(expReturnType,nullableRType, block, inMain);
     }
     else{ERROR(ERR_SYNTAX, "Unexpected start of a statement.\n");}
 
@@ -612,7 +612,7 @@ bool st(dataType expReturnType, astNode *block, bool inMain){
     return correct;
 }
 
-bool body(dataType returnType, astNode *block, bool inMain){
+bool body(dataType returnType, bool nullableRType, astNode *block, bool inMain){
     bool correct = false;
     // RULE 39 <body> -> ε
     if(currentToken.type == tokentype_rcbracket){
@@ -626,8 +626,8 @@ bool body(dataType returnType, astNode *block, bool inMain){
             currentToken.type == tokentype_kw_return ||
             currentToken.type == tokentype_id        ||
             currentToken.type == tokentype_pseudovar){
-        st(returnType, block, inMain);
-        correct = body(returnType, block, inMain);
+        st(returnType, nullableRType, block, inMain);
+        correct = body(returnType, nullableRType, block, inMain);
         
     }else if(currentToken.type == tokentype_EOF){ERROR(ERR_SYNTAX, "Unexpected EOF, source code unfinished.\n");}
     else{ERROR(ERR_SYNTAX, "Unexpected token.\n");}
@@ -635,7 +635,7 @@ bool body(dataType returnType, astNode *block, bool inMain){
     return correct;
 }
 
-bool return_(dataType expReturnType, astNode *block, bool inMain){
+bool return_(dataType expReturnType, bool nullableRetType, astNode *block, bool inMain){
     bool correct = false;
 
     astNode *exprNode   = createAstNode(); // allocate empty node
@@ -644,7 +644,7 @@ bool return_(dataType expReturnType, astNode *block, bool inMain){
     // RULE 41 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
         GT
-        if(exp_func_ret(expReturnType, &exprNode)){
+        if(exp_func_ret(expReturnType, nullableRetType, &exprNode)){
             if(currentToken.type == tokentype_semicolon){
                 correct = true;
             }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
@@ -658,7 +658,7 @@ bool return_(dataType expReturnType, astNode *block, bool inMain){
     return correct;
 }
 
-bool exp_func_ret(dataType expRetType, astNode **exprNode){
+bool exp_func_ret(dataType expRetType, bool nullableRetType, astNode **exprNode){
     bool correct = false;
     // RULE 42 <exp_func_ret> -> ε
     if(currentToken.type == tokentype_semicolon){
@@ -680,7 +680,9 @@ bool exp_func_ret(dataType expRetType, astNode **exprNode){
             ERROR(ERR_SEM_RETURN, "Extra return value in void function.\n");
         }
         if(exprType != expRetType){
-            ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
+            if( !(nullableRetType && exprType == null_) ){
+                ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
+            }
         }
     }
     return correct;
@@ -718,7 +720,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
     return correct;
 }
 
-bool while_statement(dataType expRetType, astNode *block, bool inMain){
+bool while_statement(dataType expRetType, bool nullableRType, astNode *block, bool inMain){
     bool correct = false;    // prepare empty nodes
     astNode *whileAstNode = createAstNode(); 
     astNode *condExprNode = createAstNode();
@@ -756,7 +758,7 @@ bool while_statement(dataType expRetType, astNode *block, bool inMain){
 
                         if(currentToken.type == tokentype_lcbracket){
                             GT
-                            if(body(expRetType, bodyAstNode, inMain)){
+                            if(body(expRetType, nullableRType, bodyAstNode, inMain)){
                                 if(currentToken.type == tokentype_rcbracket){
                                     correct = true;
                                 }else{ERROR(ERR_SYNTAX, "Expected: \"}\" at the end of \"while\" .\n");}
@@ -782,7 +784,7 @@ bool while_statement(dataType expRetType, astNode *block, bool inMain){
     return correct;
 }
 
-bool if_statement(dataType expRetType, astNode *block, bool inMain){
+bool if_statement(dataType expRetType, bool nullableRType, astNode *block, bool inMain){
     bool correct = false;
     
     // prepare empty nodes
@@ -830,7 +832,7 @@ bool if_statement(dataType expRetType, astNode *block, bool inMain){
 
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, bodyIfNode, inMain)){
+        if(body(expRetType, nullableRType, bodyIfNode, inMain)){
         if(currentToken.type == tokentype_rcbracket){
             GT
         if(currentToken.type == tokentype_kw_else){ 
@@ -840,7 +842,7 @@ bool if_statement(dataType expRetType, astNode *block, bool inMain){
             GT
         if(currentToken.type == tokentype_lcbracket){
             GT
-        if(body(expRetType, bodyElseNode, inMain)){
+        if(body(expRetType, nullableRType, bodyElseNode, inMain)){
         if(currentToken.type == tokentype_rcbracket){
             correct = true;
         }else{ERROR(ERR_SYNTAX, "Expected: \"}\" .\n");}
