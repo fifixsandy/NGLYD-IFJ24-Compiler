@@ -127,6 +127,7 @@ typedef struct astDefFunc {
     char    **paramNames;  // added for easier access for codegen
     int       paramNum;
     dataType  returnType; 
+    bool      nullable;
 
 }astDefFunc;
 
@@ -240,7 +241,7 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
 void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent);
 void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT);
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum, dataType returnType);
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum, dataType returnType, bool nullable);
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain);
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
@@ -255,6 +256,20 @@ void addNext(astNode *prev, astNode *next);
 void freeASTNode(astNode *node);
 
 astNode *createAstNode();
+
+// Main printing functions
+void printASTree(FILE *file, astNode *tree);
+void printASTNode(FILE *file, astNode *node);
+void printASTNodeLabel(FILE *file, astNode *node);
+void printASTEdges(FILE *file, astNode *node);
+void printASTNext(FILE *file, astNode *node);
+
+// Helper functions for specific node data
+void printIdWithoutNull(FILE *file, bool null, char *id);
+void printLiteralInfo(FILE *file, astLiteral node);
+void printDefFuncInfo(FILE *file, astDefFunc node);
+void printBinopType(FILE *file, symbol_number type);
+void printDefVarInfo(FILE *file, astDefVar node);
 
 
 #endif

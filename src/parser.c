@@ -211,8 +211,8 @@ bool def_func_sec(symNode *functionEntry, char *funID){
                 ERROR(ERR_SEM_RETURN, "Function \"%s\" include path with no \"return\" statement.", funID);
         }
     }
-
-    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType); 
+    bool nullableRType = functionEntry->data.data.fData.nullableRType;
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType, nullableRType); 
     connectToBlock(funcAstNode, ASTree.root);
     GT
     return true;

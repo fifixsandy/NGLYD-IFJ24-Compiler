@@ -114,14 +114,15 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
     dest->nodeRep.defVarNode = newDefVar;
 }
 
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum, dataType returnType) {
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum, dataType returnType, bool nullable) {
     astDefFunc newDefFunc = {
         .id          = id,
         .symtableFun = symtableFun,
         .body        = body,
         .paramNames  = paramNames,
         .paramNum    = paramNum,
-        .returnType  = returnType
+        .returnType  = returnType,
+        .nullable    = nullable
     };
 
     dest->next = NULL;
@@ -335,4 +336,329 @@ void freeASTNode(astNode *node){
     freeASTNode(node->next);
     node->next = NULL;
     free(node);
+}
+
+void printASTree(FILE *file, astNode *tree){
+        if(tree == NULL){
+        return;
+    }
+    fprintf(file, "digraph G{\n");
+    printASTNode(file, tree);
+    fprintf(file, "}\n");
+}
+
+void printASTNode(FILE *file, astNode *node){
+    printASTNodeLabel(file, node);
+    printASTEdges(file, node);
+    switch(node->type){
+        case AST_NODE_DEFFUNC:
+            printASTNode(file, node->nodeRep.defFuncNode.body);
+            break;
+        case AST_NODE_IFELSE:
+            printASTNode(file, node->nodeRep.ifElseNode.ifPart);
+            printASTNode(file, node->nodeRep.ifElseNode.elsePart);
+            printASTNode(file, node->nodeRep.ifElseNode.condition);
+            break;
+        case AST_NODE_IF:            
+            printASTNode(file, node->nodeRep.ifNode.body);
+            break;
+        case AST_NODE_ELSE:
+            printASTNode(file, node->nodeRep.elseNode.body);
+            break;
+        case AST_NODE_WHILE:
+            printASTNode(file, node->nodeRep.whileNode.body);
+            printASTNode(file, node->nodeRep.whileNode.condition);
+            break;
+        case AST_NODE_EXPR:
+            printASTNode(file, node->nodeRep.exprNode.exprTree);
+            break;
+        case AST_NODE_BINOP:
+            printASTNode(file, node->nodeRep.binOpNode.left);
+            printASTNode(file, node->nodeRep.binOpNode.right);
+            break;
+        case AST_NODE_ASSIGN:
+            printASTNode(file, node->nodeRep.assignNode.expression);
+            break;
+        case AST_NODE_RETURN:
+            printASTNode(file, node->nodeRep.returnNode.returnExp);
+            break;
+        case AST_NODE_FUNC_CALL:
+            for(int param = 0; param < node->nodeRep.funcCallNode.paramNum; param++){
+                printASTNode(file, node->nodeRep.funcCallNode.paramExpr[param]);
+            }
+            break;
+        case AST_NODE_DEFVAR:
+            printASTNode(file, node->nodeRep.defVarNode.initExpr);
+            break;
+        case AST_UNUSED:
+            printASTNode(file, node->nodeRep.unusedNode.expr);
+            break;
+        default:
+            break;
+    }
+    return;
+}
+
+void printASTNodeLabel(FILE *file, astNode *node){
+
+    fprintf(file, "  node_%p [label=\"", (void *)node);
+
+    switch (node->type) {
+        case AST_NODE_WHILE:
+            fprintf(file, "WHILE");
+            printIdWithoutNull(file, node->nodeRep.whileNode.withNull, node->nodeRep.whileNode.id_without_null);
+            break;
+        case AST_NODE_IFELSE:
+            fprintf(file, "IF_ELSE");
+            printIdWithoutNull(file, node->nodeRep.ifElseNode.withNull, node->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null);
+            break;
+        case AST_NODE_IF:
+            fprintf(file, "IF");
+            break;
+        case AST_NODE_ELSE:
+            fprintf(file, "ELSE");
+            break;
+        case AST_NODE_ASSIGN:
+            fprintf(file, "ASSIGN\\nID=%s", node->nodeRep.assignNode.id);
+            break;
+        case AST_NODE_EXPR:
+            fprintf(file, "EXPR");
+            break;
+        case AST_NODE_BINOP:
+            fprintf(file, "BINOP\\nOp=");
+            printBinopType(file, node->nodeRep.binOpNode.op);
+            break;
+        case AST_NODE_LITERAL:
+            fprintf(file, "LITERAL");
+            printLiteralInfo(file, node->nodeRep.literalNode);
+            break;
+        case AST_NODE_VAR:
+            fprintf(file, "VAR\\nID=%s", node->nodeRep.varNode.id);
+            break;
+        case AST_NODE_FUNC_CALL:
+            fprintf(file, "FUNC_CALL\\nID=%s", node->nodeRep.funcCallNode.id);
+            break;
+        case AST_NODE_DEFVAR:
+            fprintf(file, "DEFVAR\\nID=%s", node->nodeRep.defVarNode.id);
+            printDefVarInfo(file, node->nodeRep.defVarNode);
+            break;
+        case AST_NODE_DEFFUNC:
+            fprintf(file, "DEFFUNC\\nID=%s", node->nodeRep.defFuncNode.id);
+            printDefFuncInfo(file, node->nodeRep.defFuncNode);
+            break;
+        case AST_NODE_RETURN:
+            fprintf(file, "RETURN");
+            break;
+        case AST_NODE_ROOT:
+            fprintf(file, "ROOT");
+            break;
+        case AST_UNUSED:
+            fprintf(file, "_");
+            break;
+        default:
+            fprintf(file, "UNKNOWN");
+    }
+    fprintf(file, "\"];\n");
+
+}
+
+
+void printASTEdges(FILE *file, astNode *node){
+        switch (node->type) {
+        case AST_NODE_WHILE:
+            fprintf(file, "  node_%p -> node_%p [label=\"condition\"];\n", (void *)node, (void *)node->nodeRep.whileNode.condition);
+            fprintf(file, "  node_%p -> node_%p [label=\"body\"];\n", (void *)node, (void *)node->nodeRep.whileNode.body);
+            printASTNext(file, node);
+            break;
+        case AST_NODE_IFELSE:
+            fprintf(file, "  node_%p -> node_%p [label=\"condition\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.condition);
+            fprintf(file, "  node_%p -> node_%p [label=\"ifPart\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.ifPart);
+            fprintf(file, "  node_%p -> node_%p [label=\"elsePart\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.elsePart);
+            printASTNext(file, node);
+            break;
+        case AST_NODE_IF:
+            fprintf(file, "  node_%p -> node_%p [label=\"body\"];\n", (void *)node, (void *)node->nodeRep.ifNode.body);
+            break;
+        case AST_NODE_ELSE:
+            fprintf(file, "  node_%p -> node_%p [label=\"body\"];\n", (void *)node, (void *)node->nodeRep.elseNode.body);
+            break;
+        case AST_NODE_ASSIGN:
+            fprintf(file, "  node_%p -> node_%p [label=\"expr\"];\n", (void *)node, (void *)node->nodeRep.assignNode.expression);
+            printASTNext(file, node);
+            break;
+        case AST_NODE_EXPR:
+            fprintf(file, "  node_%p -> node_%p [label=\"exprTree\"];\n", (void *)node, (void *)node->nodeRep.exprNode.exprTree);
+            break;
+        case AST_NODE_BINOP:
+            fprintf(file, "  node_%p -> node_%p [label=\"left\"];\n", (void *)node, (void *)node->nodeRep.binOpNode.left);
+            fprintf(file, "  node_%p -> node_%p [label=\"right\"];\n", (void *)node, (void *)node->nodeRep.binOpNode.right);
+            break;
+        case AST_NODE_LITERAL:
+            break;
+        case AST_NODE_VAR:
+            break;
+        case AST_NODE_FUNC_CALL:
+            for(int param = 0; param < node->nodeRep.funcCallNode.paramNum; param++){
+                fprintf(file, "  node_%p -> node_%p [label=\"param%d\"];\n", (void *)node, (void *)node->nodeRep.funcCallNode.paramExpr[param], param);
+            }
+            printASTNext(file, node);
+            break;
+        case AST_NODE_DEFVAR:
+            fprintf(file, "  node_%p -> node_%p [label=\"initExpr\"];\n", (void *)node, (void *)node->nodeRep.defVarNode.initExpr);
+            printASTNext(file, node);
+            break;
+        case AST_NODE_DEFFUNC:
+            fprintf(file, "  node_%p -> node_%p [label=\"body\"];\n", (void *)node, (void *)node->nodeRep.defFuncNode.body);
+            printASTNext(file, node);
+            break;
+        case AST_NODE_RETURN:
+            if(node->nodeRep.returnNode.returnType != void_){
+                fprintf(file, "  node_%p -> node_%p [label=\"returnExp\"];\n", (void *)node, (void *)node->nodeRep.returnNode.returnExp);
+            }
+            printASTNext(file, node);
+            break;
+        case AST_NODE_ROOT:
+            printASTNext(file, node);
+            break;
+        case AST_UNUSED:
+            fprintf(file, "  node_%p -> node_%p [label=\"expr\"];\n", (void *)node, (void *)node->nodeRep.unusedNode.expr);
+            printASTNext(file, node);
+            break;
+        default:
+            break;
+    }
+}
+
+
+
+void printIdWithoutNull(FILE *file, bool null, char *id){
+    if(null){
+        fprintf(file ,"\n ID=%s ", id);
+    }
+    else{
+        return;
+    }
+}
+
+void printLiteralInfo(FILE *file, astLiteral node){
+    switch(node.dataT){
+        case i32:
+            fprintf(file, "\n type: i32\n Value: %d", node.value.intData);
+            break;
+        case f64:
+            fprintf(file, "\n type: f64\n Value: %.2f", node.value.floatData);
+            break;
+        case string:
+            fprintf(file, "\n type: string\n Value: %s", node.value.charData);
+            break;
+        default:
+            break;
+    }
+    return;
+}
+
+void printDefVarInfo(FILE *file, astDefVar node){
+    if(node.symtableEntry->data.data.vData.isConst){
+        fprintf(file, "\nconst\n");
+    }
+    else{
+        fprintf(file, "var\n");
+    }
+    if(node.symtableEntry->data.data.vData.isNullable){
+        fprintf(file, "?");
+    }
+
+    switch(node.symtableEntry->data.data.vData.type){
+        case i32:
+            fprintf(file, "i32\n");
+            break;
+        case f64:
+            fprintf(file, "f64\n");
+            break;
+        case u8:
+            fprintf(file, "u8\n");
+            break;
+        default:
+            break;
+    }
+    
+}
+
+void printDefFuncInfo(FILE *file, astDefFunc node){
+
+    fprintf(file, "\n RET: ");
+    if(node.nullable){
+        fprintf(file, "?");
+    }
+    switch(node.returnType){
+        case i32:
+            fprintf(file, "i32");
+            break;
+        case f64:
+            fprintf(file, "f64");
+            break;
+        case u8:
+            fprintf(file, "u8");
+            break;
+        case void_:
+            fprintf(file, "void");
+            break;
+        default:
+            break;
+    }
+}
+
+
+void printBinopType(FILE *file, symbol_number type) {
+    switch (type) {
+        case MULTIPLICATION:
+            fprintf(file, "*");
+            break;
+        case DIVISION:
+            fprintf(file, "/");
+            break;
+        case ADDITION:
+            fprintf(file, "+");
+            break;
+        case SUBSTRACTION:
+            fprintf(file, "-");
+            break;
+        case EQUAL:
+            fprintf(file, "==");
+            break;
+        case NOT_EQUAL:
+            fprintf(file, "!=");
+            break;
+        case LOWER:
+            fprintf(file, "<");
+            break;
+        case GREATER:
+            fprintf(file, ">");
+            break;
+        case LOWER_OR_EQUAL:
+            fprintf(file, "<=");
+            break;
+        case GREATER_OR_EQUAL:
+            fprintf(file, ">=");
+            break;
+        case LBR:
+            fprintf(file, "(");
+            break;
+        case RBR:
+            fprintf(file, ")");
+            break;
+        default:
+            fprintf(file, "UNKNOWN");
+            break;
+    }
+    fprintf(file, "\n"); 
+}
+
+
+void printASTNext(FILE *file, astNode *node){
+    if(node->next != NULL){
+        fprintf(file, "  node_%p -> node_%p [label=\"next\"];\n", (void *)node, (void *)node->next);
+        printASTNode(file, node->next);
+        return;
+    }
 }
