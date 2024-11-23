@@ -674,8 +674,9 @@ bool exp_func_ret(dataType expRetType, bool nullableRetType, astNode **exprNode)
     }
     // RULE 43 <exp_func_ret> -> expression
     else{
-        correct = expression(*exprNode); 
-        dataType exprType = (*exprNode)->nodeRep.exprNode.dataT;
+        correct               = expression(*exprNode); 
+        dataType exprType     = (*exprNode)->nodeRep.exprNode.dataT;
+        bool     exprNullable = (*exprNode)->nodeRep.exprNode.isNullable;
         if(expRetType == void_){
             ERROR(ERR_SEM_RETURN, "Extra return value in void function.\n");
         }
@@ -683,6 +684,9 @@ bool exp_func_ret(dataType expRetType, bool nullableRetType, astNode **exprNode)
             if( !(nullableRetType && exprType == null_) ){
                 ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
             }
+        }
+        if(!nullableRetType && exprNullable){
+            ERROR(ERR_SEM_FUN, "Returning expression can be null, but function cannot return null.\n");
         }
     }
     return correct;
