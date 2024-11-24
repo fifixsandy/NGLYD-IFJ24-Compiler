@@ -508,9 +508,9 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->known_during_compile = true;
             return ID;
         }
-
+        case tokentype_exponentialnum:
         case tokentype_float :{
-            float fvalue = atof(token.value);
+            float fvalue = strtof(token.value, NULL);
             createLiteralNode(node, f64, &fvalue, NULL);
 
             control->is_nullable = false;

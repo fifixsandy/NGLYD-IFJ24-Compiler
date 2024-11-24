@@ -551,6 +551,7 @@ bool type_func_ret(bool *nullable, dataType *datatype){
     else if(currentToken.type == tokentype_kw_void){ 
         correct = true;
         *datatype = void_;
+        *nullable = false;
         GT
     }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" or \"void\".\n");}
     return correct;
