@@ -3,13 +3,18 @@
  * 
  * @file   ast.c
  * 
- * @brief  This file includes function definitions for creating various AST nodes defined
- *         in ast.h as well as some functions for their management. 
+ * @brief  This file includes function definitions for creating various asbstract syntactic tree
+ *         (AST) nodes defined in ast.h as well as some functions for their management.
+ * 
+ *         File also includes functions for printing .dot visualisation of the AST in section
+ *         Debug print.
  *         
  * @author xnovakf00 Filip Novák
  *         xfignam00 Matúš Fignár     
  * 
- * @date   21.11.2024
+ * @todo delete parents
+ * 
+ * @date   24.11.2024
 */
 
 
@@ -17,7 +22,17 @@
 #include "error.h"
 #include "parser.h"
 
-
+/**
+ * @brief   Allocates space for new astNode with invalid information.
+ *        
+ *          These incomplete nodes are used for example in building AST
+ *          for expressions. Before expression parser is called, this node
+ *          is allocated so expression parser can connect built nodes to it.
+ * 
+ * @warning Always call specific create*Node() on returned invalid node.
+ * 
+ * @return  Created astNode.
+ */
 astNode *createAstNode(){
     astNode *new = malloc(sizeof(astNode));
     if(new == NULL){ 
@@ -31,6 +46,20 @@ astNode *createAstNode(){
     return new;
 }
 
+
+/**
+ * @brief Creates a new AST node of type WHILE.
+ * 
+ *        This function initializes a new "while" node with the specified condition, body,
+ *        and additional info.
+ * 
+ * @param dest      Pointer to the astNode to initialize as a WHILE node.
+ * @param withNull  Flag indicating if the condition is withNull.
+ * @param id_without_null ID of the constant without null.
+ * @param cond      astNode of condition expression (usually astExpr).
+ * @param body      astNode of body of while (root)
+ * @param symtableW Pointer to the symtable of while.
+ */
 void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent){
 
     astWhile newWhile = {
@@ -49,6 +78,18 @@ void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNod
     return;
 }
 
+/**
+ * @brief Creates a new AST node of type IFELSE.
+ * 
+ *        This function initializes a new "if-else" node with the condition,
+ *        ifPart (body of the "if" block), elsePart (body of the "else" block), and additional info.
+ * 
+ * @param dest     Pointer to the astNode to initialize as an IFELSE node.
+ * @param cond     astNode representing the condition expression (usually astExpr).
+ * @param ifPart   astNode representing the body of the "if" block.
+ * @param elsePart astNode representing the body of the "else" block.
+ * @param withNull Flag indicating if the condition is withNull.
+ */
 void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent){
     astIfElse newIfElse = {
         .condition = cond,
@@ -63,6 +104,17 @@ void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *el
     dest->next = NULL;
 }
 
+/**
+ * @brief Creates a new AST node for an IF statement.
+ * 
+ *        This function initializes a new "if" node with the specified body and other information.
+ * 
+ * @param dest            Pointer to the astNode to initialize as an IF node.
+ * @param id_without_null ID of the constant without null.
+ * @param symtable        Pointer to the symtable of the if statement.
+ * @param body            astNode of the body of the if statement (root).
+ */
+
 void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body, astNode *parent){
     astIf newIf = {
         .body = body,
@@ -76,6 +128,17 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
     dest->nodeRep.ifNode = newIf;
 }
 
+
+/**
+ * @brief Creates a new AST node for an ELSE statement.
+ * 
+ *        This function initializes a new "else" node with the specified body and other details.
+ * 
+ * @param dest          Pointer to the astNode to initialize as an ELSE node.
+ * @param symtableElse  Pointer to the symtable for the else block.
+ * @param body          astNode of the body of the else statement (root).
+ */
+
 void createElseNode(astNode *dest, symtable *symtableElse, astNode *body, astNode *parent) {
     astElse newElse = {
         .symtableElse = symtableElse,
@@ -88,6 +151,16 @@ void createElseNode(astNode *dest, symtable *symtableElse, astNode *body, astNod
     dest->nodeRep.elseNode = newElse;
 }
 
+/**
+ * @brief Creates a new AST node for an assignment.
+ * 
+ *        This function initializes a new "assignment" node with the given expression and identifier.
+ * 
+ * @param dest        Pointer to the astNode to initialize as an ASSIGN node.
+ * @param id          Identifier of the variable being assigned.
+ * @param expression  astNode representing the expression to be assigned.
+ * @param dataT       The data type of the assignment.
+ */
 void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT) {
     astAssign newAssign = {
         .id = id,
@@ -101,6 +174,17 @@ void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *par
     dest->nodeRep.assignNode = newAssign;
 }
 
+
+/**
+ * @brief Creates a new AST node for variable definition.
+ * 
+ *        This function initializes a new "define variable" node with the initialization expression.
+ * 
+ * @param dest          Pointer to the astNode to initialize as a DEFVAR node.
+ * @param id            Identifier of the variable being defined.
+ * @param initExpr      Expression used to initialize the variable.
+ * @param symtableEntry Symbol table entry for the variable.
+ */
 void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent) {
     astDefVar newDefVar = {
         .id = id,
@@ -114,6 +198,21 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
     dest->nodeRep.defVarNode = newDefVar;
 }
 
+
+/**
+ * @brief Creates a new AST node for function definition.
+ * 
+ *        This function initializes a new "function definition" node with the function's details.
+ * 
+ * @param dest          Pointer to the astNode to initialize as a DEFFUNC node.
+ * @param id            Identifier of the function.
+ * @param symtableFun   Pointer to the symtable for the function.
+ * @param body          astNode of the body of the function (root).
+ * @param paramNames    Array of parameter names for the function.
+ * @param paramNum      Number of parameters for the function.
+ * @param returnType    The return type of the function.
+ * @param nullable      Whether the function return type can be nullable.
+ */
 void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum, dataType returnType, bool nullable) {
     astDefFunc newDefFunc = {
         .id          = id,
@@ -131,6 +230,17 @@ void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *
     dest->nodeRep.defFuncNode = newDefFunc;
 }
 
+
+/**
+ * @brief Creates a new AST node for a return statement.
+ * 
+ *        This function initializes a new "return" node with the return expression and return type.
+ * 
+ * @param dest          Pointer to the astNode to initialize as a RETURN node.
+ * @param returnExp     Expression to be returned.
+ * @param returnType    The return type of the expression.
+ * @param inMain        Flag if the return is inside the main function.
+ */
 void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain) {
     astReturn newReturn = {
         .returnExp = returnExp,
@@ -144,6 +254,19 @@ void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, as
     dest->nodeRep.returnNode = newReturn;
 }
 
+
+/**
+ * @brief Creates a new AST node for a binary operation.
+ * 
+ *        This function initializes a new "binary operation" 
+ *        node with the left and right operands and the operation type.
+ * 
+ * @param dest   Pointer to the astNode to initialize as a BINOP node.
+ * @param op     Symbol for the binary operator.
+ * @param left   Left operand of the operation.
+ * @param right  Right operand of the operation.
+ * @param dataT  The data type of the result of the operation.
+ */
 void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
     astBinOp newBinOp = {
         .op = op,
@@ -160,12 +283,20 @@ void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *ri
     dest->nodeRep.binOpNode = newBinOp;
 }
 
+
+/**
+ * @brief Creates a new AST node for a literal value.
+ * 
+ *        This function initializes a new "literal" node with the specified value and data type.
+ * 
+ * @param dest  Pointer to the astNode to initialize as a LITERAL node.
+ * @param dataT The data type of the literal value.
+ * @param value The value of the literal.
+ */
 void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent) {
     astLiteral newLiteral = {
         .dataT = dataT
     };
-
-
 
     if (dataT == i32) {
         newLiteral.value.intData = *(int *)(value); // TODO change data type
@@ -186,6 +317,16 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
     dest->nodeRep.literalNode = newLiteral;
 }
 
+/**
+ * @brief Creates a new AST node for a variable.
+ * 
+ *        This function initializes a new "variable" node with the variable identifier and data type.
+ * 
+ * @param dest          Pointer to the astNode to initialize as a VAR node.
+ * @param id            Identifier of the variable.
+ * @param dataT         The data type of the variable.
+ * @param symtableEntry Symbol table entry for the variable.
+ */
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent) {
     astVar newVar = {
         .dataT = dataT,
@@ -201,6 +342,20 @@ void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEnt
     symtableEntry->data.used = true; // set for semantic check
 }
 
+/**
+ * @brief Creates a new AST node for a function call.
+ * 
+ *        This function initializes a new "function call" node with the function's details and parameters.
+ * 
+ * @param dest          Pointer to the astNode to initialize as a FUNC_CALL node.
+ * @param id            Identifier of the function.
+ * @param retType       The return type of the function.
+ * @param builtin       Flag indicating if the function is a built-in function.
+ * @param symtableEntry Symbol table entry for the function.
+ * @param paramExpr     Array of expressions for the function parameters.
+ * @param paramNum      Number of parameters.
+ * @param isNullable    Whether the return type is nullable.
+ */
 void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **paramExpr, int paramNum, bool isNullable) {
     astFuncCall newFuncCall = {
         .retType         = retType,
@@ -218,6 +373,14 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin,
     symtableEntry->data.used = true; // set for semantic check
 }
 
+/**
+ * @brief Creates a new AST node for an unused expression.
+ * 
+ *        This function initializes a new "unused expression" node.
+ * 
+ * @param dest Pointer to the astNode to initialize as an UNUSED node.
+ * @param expr Expression that is unused.
+ */
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
 
     astUnused newUnused = {
@@ -231,12 +394,24 @@ void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
 
 }
 
-void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool DuringCompile){
+/**
+ * @brief Creates a new AST node for an expression.
+ * 
+ *        This function initializes a new "expression" node with the type, 
+ *        expression tree, and whether it is nullable.
+ * 
+ * @param dest          Pointer to the astNode to initialize as an EXPR node.
+ * @param type          The data type of the expression.
+ * @param exprRoot      Root of the expression tree.
+ * @param isNullable    Flag indicating if the expression is nullable.
+ * @param duringCompile Flag indicating if the expression is known during compile time.
+ */
+void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool duringCompile){
     astExpr newExpr = {
         .dataT = type,
         .exprTree = exprRoot,
         .isNullable = isNullable,
-        .knownDuringCompile = DuringCompile
+        .knownDuringCompile = duringCompile
     };
 
     dest->next               = NULL;
@@ -245,15 +420,22 @@ void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool 
     dest->nodeRep.exprNode   = newExpr;
 }
 
+
+/**
+ * @brief  Creates a root AST node.
+ * 
+ *         This function initializes a new root node.
+ *         Root node has only "next" valid. It is used
+ *         as root of the whole AST, root of a body of function
+ *         or body of while/ifElse statements.
+ * 
+ * @return Pointer to the created root AST node.
+ */
 astNode *createRootNode(){
     astNode *new = createAstNode();
     new->type = AST_NODE_ROOT;
     new->next = NULL;
     return new;
-}
-
-void addNext(astNode *prev, astNode *next){
-    prev->next = next;
 }
 
 /**
@@ -275,15 +457,18 @@ void connectToBlock(astNode *toAdd, astNode *blockRoot){
 
 }
 
+/**
+ * @brief      Recursively frees nodes in AST.
+ * 
+ * @param node Node to free and recursively free its children.
+ */
 void freeASTNode(astNode *node){
     if(node == NULL){return;}
     switch(node->type){
         case AST_NODE_WHILE:
-
             freeASTNode(node->nodeRep.whileNode.condition);
             freeASTNode(node->nodeRep.whileNode.body);
             deleteSymtable(node->nodeRep.whileNode.symtableWhile);
-            
             break;
         case AST_NODE_IFELSE:
             freeASTNode(node->nodeRep.ifElseNode.condition);
@@ -323,6 +508,9 @@ void freeASTNode(astNode *node){
                 freeASTNode(node->nodeRep.funcCallNode.paramExpr[i]);
             }
             free(node->nodeRep.funcCallNode.paramExpr);
+            break;
+        case AST_UNUSED:
+            freeASTNode(node->nodeRep.unusedNode.expr);
             break;
         case AST_NODE_ROOT:
             freeASTNode(node->next);

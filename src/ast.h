@@ -3,12 +3,17 @@
  * 
  * @file   ast.h
  * 
- * @brief  Header file for abstract syntactic tree representation.
+ * @brief  Header file for abstract syntactic tree (AST) representation.
+ *   
+ *         File contains struct declarations of AST nodes, function declarations
+ *         for creating mentioned nodes and function declarations for editing and manipulating
+ *         the nodes.
+ *         Declarations for functions performing .dot format printing of AST are included as well.
  * 
  * @author xnovakf00 Filip Novák
  *         xfignam00 Matúš Fignár
  * 
- * @date   21.11.2024
+ * @date   24.11.2024
 */
 
 #ifndef AST_H
@@ -64,18 +69,13 @@ typedef enum {
 
     AST_INVALID
 
-}astNodeType;
+}astNodeType; 
 
-typedef enum {
-    BO_MUL,
-    BO_DIV,
-    BO_PLUS,
-    BO_MINUS,
-    BO_EQL,
-    BO_NOT_EQL,
-    BO_LWR,
-    BO_GRT
-}binOpType;
+
+/** 
+ * Next structures represent node representations based on the type of a node
+ * with information specific to each type. Unclear data are commented.
+*/
 
 typedef struct astWhile {
     
@@ -88,8 +88,8 @@ typedef struct astWhile {
 }astWhile;
 
 typedef struct astIfElse {
-    bool withNull;
 
+    bool     withNull;
     astNode *condition;
     astNode *ifPart;
     astNode *elsePart;
@@ -127,7 +127,7 @@ typedef struct astDefFunc {
     char    **paramNames;  // added for easier access for codegen
     int       paramNum;
     dataType  returnType; 
-    bool      nullable;
+    bool      nullable;   // whether the returned expression can be null
 
 }astDefFunc;
 
@@ -135,7 +135,7 @@ typedef struct astReturn {
 
     astNode *returnExp;
     dataType returnType;
-    bool inMain;
+    bool     inMain;
 
 }astReturn;
 
@@ -144,37 +144,42 @@ typedef struct astExpr {
 
     dataType dataT;
     astNode *exprTree;
-    bool isNullable;
-    bool knownDuringCompile;
+    bool     isNullable;
+    bool     knownDuringCompile;
 
 }astExpr;
 
 typedef struct astBinOp {
     
     symbol_number op;
-    astNode  *left;
-    astNode  *right;
-    dataType  dataT;
+    astNode      *left;
+    astNode      *right;
+    dataType      dataT;
 
 }astBinOp;
 
 typedef struct astLiteral {
+
     dataType dataT;
     union{
         float floatData;
         int   intData;
         char *charData;
     }value;
+
 }astLiteral;
 
 typedef struct astVar {
+
     dataType dataT;
     char    *id;
     symNode *symtableEntry;
     bool isNullable;
+
 }astVar;
 
 typedef struct astFuncCall {
+
     dataType  retType;
     char     *id;
     symNode  *symtableEntry;
@@ -182,12 +187,15 @@ typedef struct astFuncCall {
     astNode **paramExpr;
     int       paramNum;
     bool      nullableRetType;
+
 }astFuncCall;
 
 typedef struct astDefVar {
+
     char    *id;             
     astNode *initExpr;       
-    symNode *symtableEntry;  
+    symNode *symtableEntry;
+
 } astDefVar;
 
 typedef struct astUnused {
@@ -203,7 +211,9 @@ typedef struct AST {
 
 }AST;
 
-
+/**
+ * @brief General representation of astNode.
+ */
 struct astNode {
 
     astNodeType     type;
@@ -233,7 +243,7 @@ struct astNode {
 
 };
 
-
+/** Functions for creating and manipulating AST nodes and AST */
 
 void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
 void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
@@ -248,23 +258,23 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
 void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
 void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **exprParams, int paramNum, bool isNullable);
 void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
-void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool DuringCompile);
+void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool duringCompile);
 astNode *createRootNode();
 
 void connectToBlock(astNode *toAdd, astNode *blockRoot);
-void addNext(astNode *prev, astNode *next);
 void freeASTNode(astNode *node);
 
 astNode *createAstNode();
 
-// Main printing functions
+/** Functions for printing .dot representation of AST */
+
 void printASTree(FILE *file, astNode *tree);
 void printASTNode(FILE *file, astNode *node);
 void printASTNodeLabel(FILE *file, astNode *node);
 void printASTEdges(FILE *file, astNode *node);
 void printASTNext(FILE *file, astNode *node);
 
-// Helper functions for specific node data
+
 void printIdWithoutNull(FILE *file, bool null, char *id);
 void printLiteralInfo(FILE *file, astLiteral node);
 void printDefFuncInfo(FILE *file, astDefFunc node);
