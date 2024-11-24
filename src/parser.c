@@ -1383,7 +1383,13 @@ bool allReturns(astNode *statement){
             }
 
         case AST_NODE_WHILE: // one possible execution path
-            return allReturns(statement->nodeRep.whileNode.body); // traverse while body
+            bool whileB = allReturns(statement->nodeRep.whileNode.body); // traverse while body
+            if(whileB){
+                return true;
+            }
+            else{
+                return allReturns(statement->next);
+            }
         
         default: // any other statement cannot have return, moving to the next statement
             return allReturns(statement->next);
