@@ -338,6 +338,22 @@ void freeASTNode(astNode *node){
     free(node);
 }
 
+
+
+/************************************************************************************************************** 
+                                         SECTION Debug print
+                       These functions print out .dot representation of AST.
+          They should SOLELY be used when debugging and should not be used in final product!
+    Implementations of these functions were inspired by printing .dot format of BDDs from BuDDy library.
+                       https://github.com/SSoelvsten/buddy/blob/main/src/bddio.c
+*************************************************************************************************************/
+
+/**
+ * @brief Prints AST representation in .dot format.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param tree Pointer to the root of tree to print.
+ */
 void printASTree(FILE *file, astNode *tree){
         if(tree == NULL){
         return;
@@ -347,6 +363,16 @@ void printASTree(FILE *file, astNode *tree){
     fprintf(file, "}\n");
 }
 
+/**
+ * @brief      Prints representation of a AST node.
+ * 
+ *             Firstly it prints the label of the node, than the edges.
+ *             Subsequently based on the type of the node prints children 
+ *             resursively as well.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node Pointer to an astNode to print.
+ */
 void printASTNode(FILE *file, astNode *node){
     printASTNodeLabel(file, node);
     printASTEdges(file, node);
@@ -399,6 +425,15 @@ void printASTNode(FILE *file, astNode *node){
     return;
 }
 
+/**
+ * @brief      Prints the label of the node based on its type.
+ * 
+ *             Based on the type of the node also prints extra information
+ *             that might be useful to visualise (eg. id_without_null for ifElse and while).
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node Pointer to an astNode to print label of. 
+ */
 void printASTNodeLabel(FILE *file, astNode *node){
 
     fprintf(file, "  node_%p [label=\"", (void *)node);
@@ -413,11 +448,11 @@ void printASTNodeLabel(FILE *file, astNode *node){
             printIdWithoutNull(file, node->nodeRep.ifElseNode.withNull, node->nodeRep.ifElseNode.ifPart->nodeRep.ifNode.id_without_null);
             break;
         case AST_NODE_IF:
-            fprintf(file, "IF");
-            break;
+            fprintf(file, "IF\", color=\"green\"];");
+            return;
         case AST_NODE_ELSE:
-            fprintf(file, "ELSE");
-            break;
+            fprintf(file, "ELSE\", color=\"red\"];");
+            return;
         case AST_NODE_ASSIGN:
             fprintf(file, "ASSIGN\\nID=%s", node->nodeRep.assignNode.id);
             break;
@@ -445,7 +480,8 @@ void printASTNodeLabel(FILE *file, astNode *node){
         case AST_NODE_DEFFUNC:
             fprintf(file, "DEFFUNC\\nID=%s", node->nodeRep.defFuncNode.id);
             printDefFuncInfo(file, node->nodeRep.defFuncNode);
-            break;
+            fprintf(file, "\",shape=square, color=\"green\"];\n");
+            return;
         case AST_NODE_RETURN:
             fprintf(file, "RETURN");
             break;
@@ -462,7 +498,12 @@ void printASTNodeLabel(FILE *file, astNode *node){
 
 }
 
-
+/**
+ * @brief Prints edges of the node with labels based on its type.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node Pointer to an astNode to print edges of.
+ */
 void printASTEdges(FILE *file, astNode *node){
         switch (node->type) {
         case AST_NODE_WHILE:
@@ -472,8 +513,8 @@ void printASTEdges(FILE *file, astNode *node){
             break;
         case AST_NODE_IFELSE:
             fprintf(file, "  node_%p -> node_%p [label=\"condition\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.condition);
-            fprintf(file, "  node_%p -> node_%p [label=\"ifPart\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.ifPart);
-            fprintf(file, "  node_%p -> node_%p [label=\"elsePart\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.elsePart);
+            fprintf(file, "  node_%p -> node_%p [label=\"ifPart\", color=\"green\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.ifPart);
+            fprintf(file, "  node_%p -> node_%p [label=\"elsePart\", color=\"red\"];\n", (void *)node, (void *)node->nodeRep.ifElseNode.elsePart);
             printASTNext(file, node);
             break;
         case AST_NODE_IF:
@@ -530,7 +571,13 @@ void printASTEdges(FILE *file, astNode *node){
 }
 
 
-
+/**
+ * @brief      Prints ID of id_without_null for ifElse and while statements.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param null Flag, whether id_without_null is present, print if true.
+ * @param id   Actual ID of the constant without null.
+ */
 void printIdWithoutNull(FILE *file, bool null, char *id){
     if(null){
         fprintf(file ,"\n ID=%s ", id);
@@ -540,6 +587,14 @@ void printIdWithoutNull(FILE *file, bool null, char *id){
     }
 }
 
+/**
+ * @brief Prints additional information about literal.
+ *        
+ *        Type and value based on the representation.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node astLiteral representation of the node containing information.
+ */
 void printLiteralInfo(FILE *file, astLiteral node){
     switch(node.dataT){
         case i32:
@@ -556,6 +611,13 @@ void printLiteralInfo(FILE *file, astLiteral node){
     }
     return;
 }
+
+/**
+ * @brief      Prints additional information about variable definitions.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node astDefVar representation of the node containing information.
+ */
 
 void printDefVarInfo(FILE *file, astDefVar node){
     if(node.symtableEntry->data.data.vData.isConst){
@@ -584,6 +646,14 @@ void printDefVarInfo(FILE *file, astDefVar node){
     
 }
 
+
+/**
+ * @brief      Prints additional information about function definitions.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node astDefFunc representation of the node.
+ */
+
 void printDefFuncInfo(FILE *file, astDefFunc node){
 
     fprintf(file, "\n RET: ");
@@ -608,6 +678,15 @@ void printDefFuncInfo(FILE *file, astDefFunc node){
     }
 }
 
+/**
+ * @brief      Prints the operator type for binary operations.
+ * 
+ *             This function prints the type of binary operator (e.g., `+`, `-`, `*`, `/`, `==`, `!=`) 
+ *             based on the type of binary operation node.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param type The type of binary operator.
+ */
 
 void printBinopType(FILE *file, symbol_number type) {
     switch (type) {
@@ -654,10 +733,20 @@ void printBinopType(FILE *file, symbol_number type) {
     fprintf(file, "\n"); 
 }
 
+/**
+ * @brief Prints the "next" edge of a node if it exists.
+ * 
+ *        Checks if the node has a "next" node.
+ *        If the next node exists, it recursively prints it with a dotted edge
+ *        to represent the next node in sequence.
+ * 
+ * @param file Pointer to an opened file to print to.
+ * @param node Pointer to the astNode to print information about.
+ */
 
 void printASTNext(FILE *file, astNode *node){
     if(node->next != NULL){
-        fprintf(file, "  node_%p -> node_%p [label=\"next\"];\n", (void *)node, (void *)node->next);
+        fprintf(file, "  node_%p -> node_%p [label=\"next\", style=dotted];\n", (void *)node, (void *)node->next);
         printASTNode(file, node->next);
         return;
     }
