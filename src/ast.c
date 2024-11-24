@@ -562,6 +562,9 @@ void printASTree(FILE *file, astNode *tree){
  * @param node Pointer to an astNode to print.
  */
 void printASTNode(FILE *file, astNode *node){
+    if(node == NULL){
+        return;
+    }
     printASTNodeLabel(file, node);
     printASTEdges(file, node);
     switch(node->type){
@@ -625,7 +628,6 @@ void printASTNode(FILE *file, astNode *node){
 void printASTNodeLabel(FILE *file, astNode *node){
 
     fprintf(file, "  node_%p [label=\"", (void *)node);
-
     switch (node->type) {
         case AST_NODE_WHILE:
             fprintf(file, "WHILE");
