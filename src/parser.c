@@ -74,10 +74,10 @@ bool prolog(){
         ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
     }
     GT
-    if (currentToken.type == tokentype_string && strcmp(currentToken.value, "ifj24.zig") == 0) { 
-        GT
-        correct = false;
-    }else{ERROR(ERR_SYNTAX, "Incorrect expression in prologue. Expected: \"ifj24.zig\".\n");}
+    if (currentToken.type != tokentype_string || strcmp(currentToken.value, "ifj24.zig") != 0) { 
+        ERROR(ERR_SYNTAX, "Incorrect expression in prologue. Expected: \"ifj24.zig\".\n");
+    }
+    GT
     if (currentToken.type != tokentype_rbracket) {
         ERROR(ERR_SYNTAX, "Expected: \")\"  .\n");
     }
@@ -131,7 +131,7 @@ bool def_func_first(symNode *functionEntry, char *funID){
 
     GT
 
-        if(currentToken.type != tokentype_lbracket){
+    if(currentToken.type != tokentype_lbracket){
         ERROR(ERR_SYNTAX, "Expected: \"(\".\n");
     }
     
@@ -163,7 +163,7 @@ bool def_func_first(symNode *functionEntry, char *funID){
     entrySymData.varOrFun   = 1;
 
     if(strcmp(funID, "main") == 0){
-        entrySymData.used = true;
+        entrySymData.used = true; // avoid false negative by allUsed() semantic check
     }
     else{
         entrySymData.used = false;
@@ -173,7 +173,7 @@ bool def_func_first(symNode *functionEntry, char *funID){
 
     GT
 
-    while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){
+    while(currentToken.type != tokentype_kw_pub && currentToken.type != tokentype_EOF){ // skip through the body
         GT
     }
 
@@ -182,22 +182,25 @@ bool def_func_first(symNode *functionEntry, char *funID){
 }
 
 bool def_func_sec(symNode *functionEntry, char *funID){
-    astNode  *funcAstNode = createAstNode();  // allocate node with no representation yet
-    astNode  *bodyAstRoot = createRootNode(); // create root node for body (statements in body will be connected to this)
 
-    symtable *symtableFun = functionEntry->data.data.fData.tbPtr;
-    dataType returnType = getReturnType(funID);
-    char    **paramNames = functionEntry->data.data.fData.paramNames;
-    int paramNum = functionEntry->data.data.fData.paramNum;
-    bool nullableRType = functionEntry->data.data.fData.nullableRType;
-    while(currentToken.type != tokentype_lcbracket){
+    astNode  *funcAstNode   = createAstNode();  // allocate node with no representation yet
+    astNode  *bodyAstRoot   = createRootNode(); // create root node for body (statements in body will be connected to this)
+
+    symtable *symtableFun   = functionEntry->data.data.fData.tbPtr;
+    dataType  returnType    = getReturnType(funID);
+    char    **paramNames    = functionEntry->data.data.fData.paramNames;
+    int       paramNum      = functionEntry->data.data.fData.paramNum;
+    bool      nullableRType = functionEntry->data.data.fData.nullableRType;
+    bool      inMain        = (strcmp(funID, "main") == 0); 
+
+    while(currentToken.type != tokentype_lcbracket){ // skip the function header (already done in first traverse)
         GT
     }
+
     GT
 
     push(&symtableStack, symtableFun);
 
-    bool inMain = (strcmp(funID, "main") == 0); 
     body(returnType,nullableRType, bodyAstRoot, inMain);
     if(currentToken.type != tokentype_rcbracket){
         ERROR(ERR_SYNTAX, "Expected: %d\"}\".\n",currentToken.type);
@@ -207,11 +210,12 @@ bool def_func_sec(symNode *functionEntry, char *funID){
 
     allUsed(symtableFun->rootPtr); // perform semantic check of used variables
     if(returnType != void_){
-        if(!allReturns(bodyAstRoot)){
+        if(!allReturns(bodyAstRoot)){ // semantic check that all executable paths have return statement
                 ERROR(ERR_SEM_RETURN, "Function \"%s\" include path with no \"return\" statement.", funID);
         }
     }
     
+    // build AST node
     createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType, nullableRType); 
     connectToBlock(funcAstNode, ASTree.root);
     GT
@@ -272,6 +276,8 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **par
         paramID = currentToken.value;
         symNode *entry = findInStack(&symtableStack, paramID);
         if(entry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",paramID);}
+        entry = findSymNode(funSymtable->rootPtr, paramID);
+        if(entry != NULL){ERROR(ERR_SEM_REDEF, "Shadowing function (%s) is not allowed.\n",paramID);}
         
         GT
 
@@ -351,7 +357,8 @@ bool def_variable(astNode *block){
         varName = currentToken.value;
         symNode *varEntry = findInStack(&symtableStack, varName);
         if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",varName);}
-
+        varEntry = findSymNode(funSymtable->rootPtr, varName);
+        if(varEntry != NULL){ERROR(ERR_SEM_REDEF, "Shadowing function (%s) is not allowed.\n",varName);}
         variData.isConst = isConst;
         entryData.used = false;
         entryData.changed = false;
@@ -567,15 +574,17 @@ bool type_var_def(bool *nullable, dataType *datatype, bool *inheritedDType){
         || currentToken.type == tokentype_kw_f64
         || currentToken.type == tokentype_lsbracket 
         || currentToken.type == tokentype_nullid){ 
-            correct = type(nullable, datatype);
-        }
+
+            type(nullable, datatype);
+
+        }else{ERROR(ERR_SYNTAX, "Expecting valid data type.\n");}
     }
     // RULE 23 <type_var_def> -> ε
     else if(currentToken.type == tokentype_assign){
         correct = true;
         *inheritedDType = true;
         
-    }else{ERROR(ERR_SYNTAX, "Expected: \"f64\" or \"i32\" or \"[\" or \"?\" or \"=\".\n");}
+    }else{ERROR(ERR_SYNTAX, "Expected: \":\" or \"=\".\n");}
     return correct;
 }
 
@@ -645,12 +654,13 @@ bool return_(dataType expReturnType, bool nullableRetType, astNode *block, bool 
     // RULE 41 <return> -> return <exp_func_ret> ;
     if(currentToken.type == tokentype_kw_return){ 
         GT
-        if(exp_func_ret(expReturnType, nullableRetType, &exprNode)){
-            if(currentToken.type == tokentype_semicolon){
-                correct = true;
-            }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
-            GT
-        }
+        exp_func_ret(expReturnType, nullableRetType, &exprNode);
+
+        if(currentToken.type == tokentype_semicolon){
+            correct = true;
+        }else{ERROR(ERR_SYNTAX, "Expected: \";\" (check line above as well).\n");}
+        GT
+
     }else{ERROR(ERR_SYNTAX, "Expected: \"return\".\n");}
 
     createReturnNode(returnNode, exprNode, expReturnType, block, inMain);
@@ -682,7 +692,7 @@ bool exp_func_ret(dataType expRetType, bool nullableRetType, astNode **exprNode)
             ERROR(ERR_SEM_RETURN, "Extra return value in void function.\n");
         }
         if(exprType != expRetType){
-            if( !(nullableRetType && exprType == null_) ){
+            if( !(nullableRetType && exprType == null_) ){ // check whether returning "null" and if it is possible
                 ERROR(ERR_SEM_FUN, "Returning expression data type does not match function return type.\n");
             }
         }
@@ -703,7 +713,8 @@ bool id_without_null(bool *withNull, char **id_wout_null){
             *id_wout_null = currentToken.value;
             symNode *symEntry = findInStack(&symtableStack, currentToken.value);
             if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Redefining variable (%s) is not allowed.\n",*id_wout_null);}
-
+            symEntry = findSymNode(funSymtable->rootPtr, currentToken.value);
+            if(symEntry != NULL){ERROR(ERR_SEM_REDEF, "Shadowing function (%s) is not allowed.\n",*id_wout_null);}
             // add the ID_WITHOUT_NULL to symtable for if/while
             varData variData = {.inheritedType = true, .isConst = true, .isNullable = false}; // TODO CHECK THIS
             symData data = {.varOrFun = 0, .used = false, .data.vData = variData};
@@ -726,6 +737,7 @@ bool id_without_null(bool *withNull, char **id_wout_null){
 }
 
 bool while_statement(dataType expRetType, bool nullableRType, astNode *block, bool inMain){
+
     bool correct = false;    // prepare empty nodes
     astNode *whileAstNode = createAstNode(); 
     astNode *condExprNode = createAstNode();
@@ -740,46 +752,48 @@ bool while_statement(dataType expRetType, bool nullableRType, astNode *block, bo
     push(&symtableStack, whileSymTable);
 
     // RULE 46 <while_statement> -> while ( expression ) <id_without_null> { <body> }
-    if(currentToken.type == tokentype_kw_while){ 
-        GT
-        if(currentToken.type == tokentype_lbracket){
-            GT
-            if(expression(condExprNode)){
-                if(currentToken.type == tokentype_rbracket){
-                    GT
-                    if(id_without_null(&withNull, &id_wout_null)){
+    if(currentToken.type != tokentype_kw_while){
+        ERROR(ERR_SYNTAX, "Expected: \"while\" .\n");
+    }
+    GT
+    if(currentToken.type != tokentype_lbracket){
+        ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");
+    }
+    GT
 
-                        if(!withNull){
-                            if(!checkIfExprLogic(condExprNode)){
-                                ERROR(ERR_SEM_TYPE, "Expression in while statement is not of logic type.\n");
-                            }
-                        }
-                        else{
-                            findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExprNode->nodeRep.exprNode.dataT;
-                            if(!checkIfNullable(condExprNode)){
-                                ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
-                            }
-                        }
+    expression(condExprNode);
 
-                        if(currentToken.type == tokentype_lcbracket){
-                            GT
-                            if(body(expRetType, nullableRType, bodyAstNode, inMain)){
-                                if(currentToken.type == tokentype_rcbracket){
-                                    correct = true;
-                                }else{ERROR(ERR_SYNTAX, "Expected: \"}\" at the end of \"while\" .\n");}
-                                GT
-                            }
-                        }else{
-                            ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
-                        }
-                    }
-                }else{ERROR(ERR_SYNTAX, "Expected: \")\" .\n");}
-            }
-        }else{ERROR(ERR_SYNTAX, "Expected: \"(\" .\n");}
-    }else{ERROR(ERR_SYNTAX, "Expected: \"while\" .\n");}
-
-
+    if(currentToken.type != tokentype_rbracket){
+        ERROR(ERR_SYNTAX, "Expected: \")\" .\n");
+    }
+    GT
     
+    id_without_null(&withNull, &id_wout_null);
+
+    if(!withNull){
+        if(!checkIfExprLogic(condExprNode)){
+            ERROR(ERR_SEM_TYPE, "Expression in while statement is not of logic type.\n");
+        }
+    }
+    else{
+        findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExprNode->nodeRep.exprNode.dataT;
+        if(!checkIfNullable(condExprNode)){
+            ERROR(ERR_SEM_TYPE, "Expression in while statement with null is not nullable.\n");
+        }
+    }
+
+    if(currentToken.type != tokentype_lcbracket){
+        ERROR(ERR_SYNTAX, "Expected: \"{\" .\n");
+    }
+    GT
+
+    body(expRetType, nullableRType, bodyAstNode, inMain);
+
+    if(currentToken.type != tokentype_rcbracket){
+        ERROR(ERR_SYNTAX, "Expected: \"}\" at the end of \"while\" .\n");
+    }
+    GT
+    correct = true;
     allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block while
     // create node with correct info and connect it to block
     pop(&symtableStack); // pop, so scopes are not disturbed
@@ -828,10 +842,10 @@ bool if_statement(dataType expRetType, bool nullableRType, astNode *block, bool 
                 }
             }
             else{
-                findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExrpNode->nodeRep.exprNode.dataT;
-                // TODO ADD THE CHECK
+                // inherit datatype of id_wout_null from expression in condition 
+                findInStack(&symtableStack, id_wout_null)->data.data.vData.type = condExrpNode->nodeRep.exprNode.dataT; 
                 if(!checkIfNullable(condExrpNode)){
-                    ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n"); // TODO CHECK ERROR TYPE
+                    ERROR(ERR_SEM_TYPE, "Expression in if statement with null is not nullable.\n");
                 }
             }
 
@@ -1083,7 +1097,7 @@ bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterI
  *         when the return type is not void or there are defined parameters of a
  *         function.
  * 
- * @see findSymNode
+ * @see    findSymNode
  * 
  * @return True if all correct, false if an error occurs.
  */
@@ -1110,17 +1124,17 @@ bool mainDefined(){
 }
 
 /**
- * @brief        Validates that all entries that were defined are also used in scope and checks if all called
- *               functions were defined.
+ * @brief      Validates that all entries that were defined are also used in scope and checks if all called
+ *             functions were defined.
  * 
- *               Function uses resursive preorder traversal to go through the BST.
- *               When an entry of a variable or function which "used" flag is false is found, function
- *               triggers error.
- *               When an entry of a function with "defined" flag is false, function triggers error.
+ *             Function uses resursive preorder traversal to go through the BST.
+ *             When an entry of a variable or function which "used" flag is false is found, function
+ *             triggers error.
+ *             When an entry of a function with "defined" flag is false, function triggers error.
  * 
- * @see          symData
+ * @see        symData
  * 
- * @param root   Root of a (sub)tree to traverse through.
+ * @param root Root of a (sub)tree to traverse through.
  * 
  */
 void allUsed(symNode *root){
@@ -1151,11 +1165,11 @@ void allUsed(symNode *root){
 
 
 /**
- * @brief           Function checks whether variable was defined in scope or before current scope.
+ * @brief     Function checks whether variable was defined in scope or before current scope.
  * 
- * @param ID        Name of the function or variable.
+ * @param ID  Name of the function or variable.
  * 
- * @return          True if was defined, false if not.
+ * @return    True if was defined, false if not.
  */
 bool wasDefined(char *ID, symNode **node){
 
@@ -1346,8 +1360,6 @@ void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData
     }
 
 }
-
-
 
 
 /**
