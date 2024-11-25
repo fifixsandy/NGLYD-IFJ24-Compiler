@@ -153,7 +153,7 @@ bool add_int(int val){
 }
 
 // Help function for adding const float value
-bool add_float(float val){
+bool add_float(double val){
     add_code("float@");
     if(!buf_add_float(buf, val)) return false;
     return true;

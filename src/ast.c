@@ -302,7 +302,7 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
         newLiteral.value.intData = *(int *)(value); // TODO change data type
     } 
     else if (dataT == f64) {
-        newLiteral.value.floatData = *(float *)(value); // MIKULAŠ NAHE FOTKY TERAZ !!!!!
+        newLiteral.value.floatData = *(double *)(value); // MIKULAŠ NAHE FOTKY TERAZ !!!!!
     } 
     else if (dataT == u8) {
         newLiteral.value.charData = value;

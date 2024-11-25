@@ -60,7 +60,7 @@ typedef struct varData{
    bool knownDuringCompile; // 1 if value is known during compile time, 0 if not
   
    union{
-      float floatData;
+      double floatData;
       int   intData;
       char *charData;
    }value; // value in case it is known during compile time, used in expression parsing

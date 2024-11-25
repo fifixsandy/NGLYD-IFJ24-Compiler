@@ -1141,7 +1141,7 @@ void allUsed(symNode *root){
         }
 
         if(root->data.varOrFun == 0 && !root->data.data.vData.isConst && !root->data.changed){
-            ERROR(ERR_SEM_UNUSED, "Modifiable variable \"%s\" has no chance of changing after initialization.\n", root->key);
+            ERROR(ERR_SEM_UNUSED, "Modifiable variable \"%s\" has no chance of changing after initialization within block.\n", root->key);
         }
         allUsed(root->l);
         allUsed(root->r);

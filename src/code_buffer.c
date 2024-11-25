@@ -87,7 +87,7 @@ bool buf_add_int(Buffer_ll *buf, int num){
     return true;
 }
 
-bool buf_add_float(Buffer_ll *buf, float num){
+bool buf_add_float(Buffer_ll *buf, double num){
     char str[100];  
     sprintf(str, "%a", num);
     if(!buf_add(buf, str)) return false;

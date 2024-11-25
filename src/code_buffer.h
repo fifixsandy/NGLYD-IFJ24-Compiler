@@ -50,7 +50,7 @@ bool buf_add_push(Buffer_ll *buf, char *str);
 void buf_add_flag(Buffer_ll *buf);
 void buf_delete_flag(Buffer_ll *buf);
 bool buf_add_int(Buffer_ll *buf, int num);
-bool buf_add_float(Buffer_ll *buf, float num);
+bool buf_add_float(Buffer_ll *buf, double num);
 bool buf_add_string(Buffer_ll *buf, char *str);
 bool buf_push_after_flag(Buffer_ll *buf);
 bool fprint_buffer(Buffer_ll *buf, FILE *stream);

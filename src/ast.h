@@ -162,7 +162,7 @@ typedef struct astLiteral {
 
     dataType dataT;
     union{
-        float floatData;
+        double floatData;
         int   intData;
         char *charData;
     }value;

@@ -452,7 +452,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                         dataType type = symnode->data.data.vData.type;
 
                         if(type == f64){   // when value of node is float (or double float)
-                            float fdata = symnode->data.data.vData.value.floatData;
+                            double fdata = symnode->data.data.vData.value.floatData;
                             if((int) fdata == fdata){ //can be converted into int
                                     createLiteralNode(node, f64, &fdata, NULL);
                                     control->is_convertable = true;
@@ -510,7 +510,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         }
         case tokentype_exponentialnum:
         case tokentype_float :{
-            float fvalue = strtof(token.value, NULL);
+            double fvalue = strtod(token.value, NULL);
             createLiteralNode(node, f64, &fvalue, NULL);
 
             control->is_nullable = false;
@@ -697,11 +697,11 @@ void retype(astNode *operand){
         if(type == i32){
             int value = operand->nodeRep.literalNode.value.intData;
             operand->nodeRep.literalNode.dataT = f64;
-            operand->nodeRep.literalNode.value.floatData = (float) value; 
+            operand->nodeRep.literalNode.value.floatData = (double) value; 
             return;
         }
         else if(type == f64){
-            float value = operand->nodeRep.literalNode.value.floatData;
+            double value = operand->nodeRep.literalNode.value.floatData;
             operand->nodeRep.literalNode.dataT = i32;
             operand->nodeRep.literalNode.value.intData = (int) value;
             return; 
