@@ -661,8 +661,8 @@ void printASTNodeLabel(FILE *file, astNode *node){
             fprintf(file, "VAR\\nID=%s", node->nodeRep.varNode.id);
             break;
         case AST_NODE_FUNC_CALL:
-            fprintf(file, "FUNC_CALL\\nID=%s", node->nodeRep.funcCallNode.id);
-            break;
+            fprintf(file, "FUNC_CALL\\nID=%s\", color=\"blue\"];\n", node->nodeRep.funcCallNode.id);
+            return;
         case AST_NODE_DEFVAR:
             fprintf(file, "DEFVAR\\nID=%s", node->nodeRep.defVarNode.id);
             printDefVarInfo(file, node->nodeRep.defVarNode);
