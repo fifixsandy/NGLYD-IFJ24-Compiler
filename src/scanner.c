@@ -147,7 +147,7 @@ void reset_scanner() {
  * @brief   Main scanner function which tokenizes the input.
  * 
  * @return  getToken functions returns a single token which contains its value,
- *          its type and its line number
+ *          its type its line and column number
  * 
  */
 Token getToken() {
@@ -169,14 +169,13 @@ Token getToken() {
         }
     }
 
-    Column_Number++;
+    Column_Number++;                       
     FirstCharOfToken = Column_Number;       //Saving the index of first char of token
 
     if(c == EOF) {                              //We reached the end of file
         current_token.type = tokentype_EOF;     //set the type to EOF
         current_token.line = Line_Number;       //and assign the line number 
         current_token.column = Column_Number;
-        //current_token.column = Column_Number;   //and column number to token
         return current_token;
     }
     switch(c) {       //switch for making decisions based on the first character read
@@ -304,7 +303,6 @@ Token getToken() {
         default:                        //if none of conditions above were met, default will handle all the rest
             if(c >= '0' && c <= '9') {
                 current_token = process_Number_Token(c);
-                
             }
 
             else if (c == '_') {
@@ -312,8 +310,6 @@ Token getToken() {
                 if(!isalnum(nextchar) && nextchar != '_') {     //Deciding if its a pseudovariable or an ID
                     current_token.type = tokentype_pseudovar;
                     ungetc(nextchar, stdin);
-
-                    //printf("%d\n", current_token.type);
                 }
                 else {
                     ungetc(nextchar, stdin);
@@ -392,7 +388,7 @@ Token process_Number_Token(char firstchar) {
         }
         Column_Number++;
     }
-    if(nextchar == 'e' || nextchar == 'E') {
+    if((nextchar == 'e' || nextchar == 'E') && current_token.value[index-1]!= '.') {
         if(current_token.type == tokentype_zeroint) {
             ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line %d, column %d.\n", Line_Number, Column_Number);
         }
@@ -611,7 +607,7 @@ Token process_Import() {
  * 
  * @return Proccessed multiline string token.
  */
-Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
+Token process_Multiline_String_Token() {
     char nextchar;
     Token current_token;
     int index = 0;
@@ -682,7 +678,7 @@ Token process_Multiline_String_Token() { //TODO PRIDAT COLUMN TO MULTILINE
  //   }
    // free_all_values();
 
-    //return 0;
+ //   return 0;
  // }
 
 /* END OF FILE scanner.c */
