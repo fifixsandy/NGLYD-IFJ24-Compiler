@@ -662,16 +662,16 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "concat") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
                     
-                    char var_tmp[] = "%1";
+                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
+                    
+                    char var_tmp[] = "_concat_tmp";
                     // define var if it is not defined on begining
                     if(!def_var(TF_vars,var_tmp, COMPILER)) return false;
 
-                    add_code("MOVE "); TF_ARGS(var_tmp); space(); GF(); endl();
-                    if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[1], TF_vars)) return false;
+                    add_code("POPS"); add_param(RETVAL); endl();
+                    add_code("POPS "); TF_ARGS(var_tmp); endl();
 
-                    add_code("POPS "); GF(); endl();
                     add_code("CONCAT"); add_param(RETVAL); space(); TF_ARGS(var_tmp); add_param(RETVAL); endl();
                     goto code_generator_end;
                 }
