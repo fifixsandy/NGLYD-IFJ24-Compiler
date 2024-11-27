@@ -23,6 +23,7 @@
 Buffer_ll *BUFFER;
 
 
+
 void inint_def_vars(Defined_vars *vars){
     vars->names = NULL;
     vars->num_of_vars = 0;
@@ -61,8 +62,6 @@ void delete_def_vars(Defined_vars *vars){
     vars->names = NULL;
     vars->num_of_vars = 0;
 }
-
-// Add code to buffer with error handling
 #define add_push_code(val) \
     do { \
         if (!buf_add_push(BUFFER, val)) { \
@@ -124,13 +123,6 @@ void delete_def_vars(Defined_vars *vars){
         } \
     } while (0)
 
-#define GF() \
-    do { \
-        if (!buf_add(BUFFER, RETVAL)) { \
-            return false; \
-        } \
-    } while (0)
-// Add newline to buffer with error handling
 #define endl() \
     do { \
         if (!buf_add_push(BUFFER, "\n")) { \
@@ -144,7 +136,6 @@ void delete_def_vars(Defined_vars *vars){
             return false; \
         } \
     } while (0)
-
 // Help function for adding const int value
 bool add_int(int val){
     add_code("int@");
@@ -405,7 +396,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             if(!code_generator(ast->nodeRep.exprNode.exprTree, TF_vars)) return false;
             if(ast->nodeRep.exprNode.exprTree != NULL){
                 if(ast->nodeRep.exprNode.exprTree->type == AST_NODE_FUNC_CALL){
-                    add_code("PUSHS "); GF(); endl();
+                    add_code("PUSHS"); add_param(RETVAL);; endl();
                 }
             }
             break;
@@ -414,13 +405,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             // Check if left operand is function call, if so push the return value to data stack
             if(!code_generator(ast->nodeRep.binOpNode.left, TF_vars)) return false;
             if(ast->nodeRep.binOpNode.left != NULL && ast->nodeRep.binOpNode.left->type == AST_NODE_FUNC_CALL){
-                add_code("PUSHS "); GF(); endl();
+                add_code("PUSHS"); add_param(RETVAL);; endl();
             }
 
             // Check if right operand is function call, if so push the return value to data stack
             if(!code_generator(ast->nodeRep.binOpNode.right, TF_vars)) return false;
             if(ast->nodeRep.binOpNode.right != NULL && ast->nodeRep.binOpNode.right->type == AST_NODE_FUNC_CALL){
-                add_code("PUSHS "); GF(); endl();
+                add_code("PUSHS"); add_param(RETVAL);; endl();
             }
 
             // Handle binary operations based on the operator type in the AST node
@@ -602,7 +593,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
         case AST_NODE_RETURN:
             if(!code_generator(ast->nodeRep.returnNode.returnExp, TF_vars)) return false;
             if(ast->nodeRep.returnNode.returnType != void_){
-                add_code("POPS "); GF(); endl();
+                add_code("POPS"); add_param(RETVAL);; endl();
             }
             if(ast->nodeRep.returnNode.inMain){
                 add_code("JUMP $$end"); endl();
@@ -633,30 +624,30 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "write") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     if(!add_write(RETVAL)) return false;
                     goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     if(!add_i2f(RETVAL, RETVAL)) return false;
                     goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     if(!add_f2i(RETVAL, RETVAL)) return false;
                     goto code_generator_end;
                 }
                  else if(strcmp(ast->nodeRep.funcCallNode.id, "string") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     if(!add_str_len(RETVAL, RETVAL)) return false;
                     goto code_generator_end;
                 }
@@ -677,7 +668,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
-                    add_code("POPS "); GF(); endl();
+                    add_code("POPS"); add_param(RETVAL);; endl();
                     if(!add_chr(RETVAL, RETVAL)) return false;
                     goto code_generator_end;
                 }
@@ -690,7 +681,7 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
                 if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
                 add_code("POPS "); TF_ARGS(var_tmp); endl();
-                // add_code("MOVE "); TF(var_tmp); space(); GF(); endl();
+                // add_code("MOVE "); TF(var_tmp); space(); add_param(RETVAL);; endl();
             }
             add_code("CALL $");
             if(ast->nodeRep.funcCallNode.builtin) add_code("$");        // adding second $, because builin functions have $$ before name

@@ -193,13 +193,6 @@ typedef struct{
 
 
 /**
- * @brief Add a parameter to the code buffer.
- * @param param The parameter to be added.
- * @return true if the operation was successful, false otherwise.
- */
-bool add_param(char *param);
-
-/**
  * @brief Add formatted int value to the code buffer.
  * @param val The int value to be added.
  * @return true if the operation was successful, false otherwise.
