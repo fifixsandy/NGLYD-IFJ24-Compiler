@@ -17,18 +17,18 @@
 #include "symtable.h"
 #include "scanner.h"
 
-#define ERR_LEX           1  // chyba v programu v rámci lexikální analýzy (chybná struktura aktuálního lexému)
-#define ERR_SYNTAX        2  // chyba v programu v rámci syntaktické analýzy (chybná syntaxe programu, chybějící hlavička, atp.)
-#define ERR_SEM_UNDEF     3  // sémantická chyba v programu – nedefinovaná funkce či proměnná
-#define ERR_SEM_FUN       4  // sémantická chyba v programu – špatný počet/typ parametrů u volání funkce; špatný typ či nepovolené zahození návratové hodnoty z funkce
-#define ERR_SEM_REDEF     5  // sémantická chyba v programu – redefinice proměnné nebo funkce; přiřazení do nemodifikovatelné proměnné
-#define ERR_SEM_RETURN    6  // sémantická chyba v programu – chybějící/přebývající výraz v příkazu návratu z funkce
-#define ERR_SEM_TYPE      7  // sémantická chyba typové kompatibility v aritmetických, řetězcových a relačních výrazech; nekompatibilní typ výrazu (např. při přiřazení)
-#define ERR_SEM_INHERIT   8  // sémantická chyba odvození typu – typ proměnné není uveden a nelze odvodit od použitého výrazu 
-#define ERR_SEM_UNUSED    9  // sémantická chyba nevyužité proměnné v jejím rozsahu platnosti; modifikovatelná proměnná bez možnosti změny po její inicializaci
-#define ERR_SEM_ELSE      10 // ostatní sémantické chyby
+#define ERR_LEX           1  // Error in the program during lexical analysis (invalid structure of the current lexeme)
+#define ERR_SYNTAX        2  // Error in the program during syntax analysis (incorrect program syntax, missing header, etc.)
+#define ERR_SEM_UNDEF     3  // Semantic error in the program – undefined function or variable
+#define ERR_SEM_FUN       4  // Semantic error in the program – incorrect number/type of parameters in a function call; invalid or unauthorized discarding of a function's return value
+#define ERR_SEM_REDEF     5  // Semantic error in the program – redefinition of a variable or function; assignment to an immutable variable
+#define ERR_SEM_RETURN    6  // Semantic error in the program – missing/extraneous expression in a return statement
+#define ERR_SEM_TYPE      7  // Semantic error in type compatibility in arithmetic, string, and relational expressions; incompatible expression type (e.g., during assignment)
+#define ERR_SEM_INHERIT   8  // Semantic error in type inference – variable type is not specified and cannot be inferred from the used expression
+#define ERR_SEM_UNUSED    9  // Semantic error of unused variable within its scope of validity; mutable variable without a possibility of change after its initialization
+#define ERR_SEM_ELSE      10 // Other semantic errors
 
-#define ERR_INTERNAL      99 // interní chyba překladače tj. neovlivněná vstupním programem (např. chyba alokace paměti atd.)
+#define ERR_INTERNAL      99 // Internal error of compiler
 
 /** this is and example error message you put into ERROR after errNum
  * "Wrong ID in prologue section.\nExpected: \"ifj\"\nGot: %s\n", currentToken.value
