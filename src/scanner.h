@@ -7,7 +7,7 @@
  *         of functions used in scanner.c to tokenize
  *         input.
  *         
- * @author xmalegt00
+ * @author xmalegt00 Tibor Malega
  * @date   15.11.2024
 */
 
@@ -24,7 +24,7 @@
 #define NUM_OF_KEYWORDS 13 //Defining the number of keywords.
 
 extern int Line_Number;    //Global variable for tracking the line number.
-extern int Column_Number;
+extern int Column_Number;  //Global variable for tracking the column number.
 
 /*
 An enum holding each of the types of token possible.

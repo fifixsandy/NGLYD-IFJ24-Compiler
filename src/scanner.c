@@ -9,7 +9,7 @@
  *         recognizes lexical errors and calls an error function
  *         when needed.
  *         
- * @author xmalegt00
+ * @author xmalegt00 Tibor Malega
  * @date   15.11.2024
 */
 
@@ -174,7 +174,7 @@ Token getToken() {
 
     if(c == EOF) {                              //We reached the end of file
         current_token.type = tokentype_EOF;     //set the type to EOF
-        current_token.line = Line_Number;       //and assign the line number 
+        current_token.line = Line_Number;       //and assign the line number and column number 
         current_token.column = Column_Number;
         return current_token;
     }
@@ -196,7 +196,7 @@ Token getToken() {
                 goto here;                      //Jump to the beginning of getToken to start reading again.
             }       
             else {
-                ungetc(c, stdin);                     //if its only a single "/", 
+                ungetc(c, stdin);                          //if its only a single "/", 
                 current_token.type = tokentype_divide;     //assign token type.
                 break;
             }
@@ -418,7 +418,7 @@ Token process_Number_Token(char firstchar) {
 
     current_token.value[index] = '\0';  //terminating the array of chars with null string
        
-    return current_token;              //returning processed number token
+    return current_token;               //returning processed number token
 }
 
 /**
@@ -454,6 +454,7 @@ Token process_String_Token() {
             
             nextchar = getc(stdin);
             Column_Number++;
+            
             //correctly assigning each escape sequence directly into string value
             if(nextchar == 'n') {
                 current_token.value[index++] = '\n';
@@ -532,7 +533,7 @@ Token process_ID_Token(char firstchar) {
 
     init_value(&current_token.value, buffer_size); //initializing value of token
     
-    if(isalpha(firstchar) || firstchar == '_') {  //ID must start with a letter or an underscore
+    if(isalpha(firstchar) || firstchar == '_') {   //ID must start with a letter or an underscore
         current_token.type = tokentype_id;
     }
 
@@ -552,7 +553,7 @@ Token process_ID_Token(char firstchar) {
     }
     current_token.value[index] = '\0'; //terminating character array with null string
 
-    ungetc(nextchar, stdin);      //return the last read character back since we dont need it
+    ungetc(nextchar, stdin);           //return the last read character back since we dont need it
 
     is_keyword(current_token.value, &current_token);    //decide whether the ID is a keyword or not
 
@@ -599,7 +600,7 @@ Token process_Multiline_String_Token() {
 
     init_value(&current_token.value, buffer_size); //initalize value
     
-    if((nextchar = getc(stdin)) == '\\') {   //multiline string begins with two backslashes
+    if((nextchar = getc(stdin)) == '\\') {         //multiline string begins with two backslashes
         current_token.type = tokentype_string;
 
         while(1) {
@@ -625,7 +626,7 @@ Token process_Multiline_String_Token() {
                     continue;
                 }
                 else {
-                    Line_Number--;  //decrement line number if the string doesnt continue
+                    Line_Number--;             //decrement line number if the string doesnt continue
                     ungetc(tempchar, stdin);   //return back the characters we read and dont need
                     ungetc(nextchar, stdin);
                     break;
@@ -643,13 +644,5 @@ Token process_Multiline_String_Token() {
 
     return current_token; //Return processed token
 }
-
-//  int main() {
-
-//    for(int i = 0; i < 10; i++) {
-//        getToken();
-//    }
-//    return 0;
-//  }
 
 /* END OF FILE scanner.c */
