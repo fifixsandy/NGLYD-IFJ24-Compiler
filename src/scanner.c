@@ -326,11 +326,6 @@ Token getToken() {
 
     current_token.line = Line_Number;           //Assigning line number to token.
     current_token.column = FirstCharOfToken;    //Assigning index of first char of token to token
-    
-    //printf("L: %d, C: %d\n", current_token.line, current_token.column);
-    //printf("COLNUM: %d\n", Column_Number);
-    //printf("%s\n", current_token.value);
-    //printf("%d\n", current_token.type);
 
     return current_token;                       //Return processed token.
 }   
@@ -389,9 +384,7 @@ Token process_Number_Token(char firstchar) {
         Column_Number++;
     }
     if((nextchar == 'e' || nextchar == 'E') && current_token.value[index-1]!= '.') {
-        if(current_token.type == tokentype_zeroint) {
-            ERRORLEX(ERR_LEX, "Number zero cannot have an exponent. Line %d, column %d.\n", Line_Number, Column_Number);
-        }
+
         current_token.type = tokentype_exponentialnum;
         current_token.value[index++] = (char) nextchar; //adding character to array
 
@@ -424,10 +417,7 @@ Token process_Number_Token(char firstchar) {
     ungetc(nextchar, stdin);   //returning a character back to the input
 
     current_token.value[index] = '\0';  //terminating the array of chars with null string
-    
-    //printf("%s\n", current_token.value);
-    //printf("%d\n", current_token.type);
-    
+       
     return current_token;              //returning processed number token
 }
 
@@ -522,8 +512,6 @@ Token process_String_Token() {
     Column_Number++;
 
     current_token.value[index] = '\0';  //Terminating the string with a null string
-    //printf("%s\n", current_token.value);
-    //printf("%d\n", current_token.type);
 
     return current_token;   //Return processed token of type string.
 }
@@ -568,9 +556,6 @@ Token process_ID_Token(char firstchar) {
 
     is_keyword(current_token.value, &current_token);    //decide whether the ID is a keyword or not
 
-    //printf("%s\n", current_token.value);
-    //printf("%d\n", current_token.type);
-
     return current_token; //return processed token of type ID
 }
 
@@ -598,7 +583,6 @@ Token process_Import() {
         i++; 
     }
     
-    //printf("%d\n", current_token.type);
     return current_token;
 }
 
@@ -657,28 +641,15 @@ Token process_Multiline_String_Token() {
         ERRORLEX(ERR_LEX, "Invalid character on line %d, column %d.\n", Line_Number, Column_Number);
     }
 
-    //printf("%s\n", current_token.value);
-    //printf("%d\n", current_token.type);
-
     return current_token; //Return processed token
 }
 
-//TODO FUNCKCIA NA BUILTIN FUNKCIE
+//  int main() {
 
- // int main() {
-
-     // for(int i = 0; i < 10; i++) {
-     //     getToken();
-    //  }
-   // free_all_values();
-    //reset_scanner();
- //   printf("\nEND\n");
- //   for(int i = 0; i < 10; i++) {
- //       getToken();
- //   }
-   // free_all_values();
-
- //   return 0;
- // }
+//    for(int i = 0; i < 10; i++) {
+//        getToken();
+//    }
+//    return 0;
+//  }
 
 /* END OF FILE scanner.c */
