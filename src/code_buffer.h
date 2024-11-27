@@ -1,7 +1,8 @@
 /**
  * @file   code_buffer.h
- * @brief  Header file for managing a dynamic buffer that stores and manipulates strings and other data types such as integers and floats.
+ * @brief  Header file for managing a dynamic buffer that stores stirngs.
  *         The buffer supports dynamic expansion and safe data pushing.
+ *         Also support to add Flag to node, and store contentet after flagged node.
  * 
  * @author xskovaj00
  * @date   6.11.2024
@@ -27,17 +28,28 @@
     #endif
 #endif
 
-
+/**
+ * @struct Buffer_node
+ * @brief  Represents a single node in the linked list buffer.
+ * 
+ * Each node contains a dynamically allocated string and a pointer to the next node.
+ */
 typedef struct Buffer_node{
-    char *str;
-    struct Buffer_node *next;
+    char *str;  ///< Pointer to the stored string
+    struct Buffer_node *next;   ///< Pointer to the next node in the list
 } Buffer_node;
 
+
+/**
+ * @struct Buffer_ll
+ * @brief  Represents the linked list buffer structure.
+ * 
+ */
 typedef struct {
-    Buffer_node *first;
-    Buffer_node *last;
-    Buffer_node *flag;
-    char *tmp;
+    Buffer_node *first; ///< Pointer to the first node in the list
+    Buffer_node *last;  ///< Pointer to the last node in the list
+    Buffer_node *flag;  ///< Pointer to a flagged node
+    char *tmp;           ///< Accumulator string
 } Buffer_ll;
 
 
