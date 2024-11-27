@@ -5,7 +5,7 @@
  * 
  * @brief  AVL-balanced binary search (vv-BVS) tree implementation of a table of symbols for a compiler.
  * 
- *         File contains implementation for functions declared in symtable.h. Table of symbols is
+ *         File contains implementation for functions declared in symtable.h. Table of symbols (symtable) is
  *         implemented as a height-balanced binary search tree. Most of the functions are implemented recursively.
  *         The tree balances when inserting or deleting a node, when necessary using rotations.
  *         Symtables can be stored in a stack, so that representation of scopes in code is possible.
@@ -569,7 +569,6 @@ int max(int a, int b){
 
 /**************************************************************************************************************
                                          SECTION Builtin
-
  **************************************************************************************************************/
 
 void prepareBuiltinSymtable(){

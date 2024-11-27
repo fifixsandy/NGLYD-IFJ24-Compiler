@@ -68,3 +68,5 @@ bool buf_push_after_flag(Buffer_ll *buf);
 bool fprint_buffer(Buffer_ll *buf, FILE *stream);
 
 #endif // CODE_BUFFER_H
+
+/* EOF code_buffer.h */

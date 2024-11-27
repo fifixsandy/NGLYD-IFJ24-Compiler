@@ -282,6 +282,6 @@ void printBinopType(FILE *file, symbol_number type);
 void printDefVarInfo(FILE *file, astDefVar node);
 
 
-#endif
+#endif //AST_H
 
 /* EOF ast.h */

@@ -34,7 +34,6 @@
  * "Wrong ID in prologue section.\nExpected: \"ifj\"\nGot: %s\n", currentToken.value
  */
 
-// ADD CLEANUP
 #define ERROR(errNum, ...) do { \
     fprintf(stderr, "\nERROR NUMBER %d at line %d column %d: ", errNum, currentToken.line, currentToken.column); \
     fprintf(stderr, __VA_ARGS__); \
@@ -49,9 +48,8 @@
     exit(errNum); \
 } while (0)
 
-/*
-controls all allocations in program and deletes everything
-*/
 void delete_all_allocated();
 
 #endif //ERROR_H
+
+/* EOF error.h */

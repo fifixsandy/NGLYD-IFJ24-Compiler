@@ -293,4 +293,6 @@ bool code_generator(astNode *ast,  Defined_vars *TF_vars);
 bool generate_code(astNode *ast);
 
 
-#endif
+#endif //CODE_GENERATOR_H
+
+/* EOF code_generator.h */

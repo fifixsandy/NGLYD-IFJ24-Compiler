@@ -227,3 +227,5 @@ bool fprint_buffer(Buffer_ll *buf, FILE *stream) {
     }
     return true;
 }
+
+/* EOF code_buffer.c */

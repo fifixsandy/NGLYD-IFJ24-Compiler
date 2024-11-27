@@ -80,4 +80,4 @@ void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *
 void retype(astNode *operand);
 
 
-#endif
+#endif // EXPRESSION_PARSER_H

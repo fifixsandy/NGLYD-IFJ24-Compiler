@@ -14,7 +14,9 @@
 #include "scanner.h"
 #include "parser.h"
 
-
+/** 
+ * @brief Controls all allocations in program and deletes everything.
+*/
 void delete_all_allocated(){
 
     freeASTNode(ASTree.root);
@@ -23,4 +25,6 @@ void delete_all_allocated(){
     free_all_values();
     
 }
+
+/* EOF error.c */
  

@@ -4,7 +4,7 @@
  * @file   parser.h
  * 
  * @brief  Function declarations, macros and extern declarations for a recursive
- *         parser based on LL1 grammar defined in parser.c
+ *         parser based on LL1 grammar.
  * 
  * @author xnovakf00 Filip Novák
  * @date   21.11.2024
@@ -34,6 +34,8 @@ extern AST   ASTree;
 
 
 astNode *parser();
+
+/* LL1 NON-TERMINALS AS FUNCTIONS */
 
 bool prog(bool firstTraverse);
 bool prolog();
@@ -66,18 +68,24 @@ bool assign_or_f_call(astNode *block);
 bool builtin(char *id, symNode **symtableNode, bool *builtinCall, char **betterID);
 
 void funCallHandle(char *id, astNode *node, bool inExpr);
-bool mainDefined();
-void allUsed(symNode *root);
-bool wasDefined(char *ID, symNode **node);
+void assignmentHandle(char *id, astNode *block);
+
+/* HELPER FUNCTIONS */
+
+bool     mainDefined();
+void     allUsed(symNode *root);
+bool     wasDefined(char *ID, symNode **node);
 dataType getReturnType(char *ID);
 dataType getVarType(char *ID);
-bool checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex);
-bool checkParameterNullability(bool *expected, astNode **given, int paramNum, int *badIndex);
+bool     checkParameterTypes(dataType *expected, astNode **given, int paramNum, int *badIndex);
+bool     checkParameterNullability(bool *expected, astNode **given, int paramNum, int *badIndex);
 symNode *checkBuiltinId(char *id);
-bool checkIfNullable(astNode *expr);
-bool checkIfExprLogic(astNode *expr);
-void extractValueToConst(dataType exprType, astNode *exprTree, varData *variData);
-bool allReturns(astNode *statement);
+bool     checkIfNullable(astNode *expr);
+bool     checkIfExprLogic(astNode *expr);
+void     extractValueToConst(dataType exprType, astNode *exprTree, varData *variData);
+bool     allReturns(astNode *statement);
 
 
-#endif
+#endif //PARSER_H
+
+/* EOF parser.h */

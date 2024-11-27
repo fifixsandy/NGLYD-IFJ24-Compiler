@@ -877,3 +877,5 @@ bool generate_code(astNode *ast){
     fprint_buffer(BUFFER, stdout);  // Output the generated code from the buffer
     return true;
 }
+
+/* EOF code_generator.c */

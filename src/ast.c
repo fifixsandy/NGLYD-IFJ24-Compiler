@@ -941,3 +941,5 @@ void printASTNext(FILE *file, astNode *node){
         return;
     }
 }
+
+/* EOF ast.c */
