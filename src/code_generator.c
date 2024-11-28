@@ -12,30 +12,22 @@
 #include "code_buffer.h"
 #include "ast.h"
 
-#define BUFFER buf
-#define RETVAL "GF@retval"
-#define NIL "nil@nil"
-#define TMP1 "tmp_1"
-#define TMP2 "tmp_2"
-#define COMPILER true
-#define USER false
+#define BUFFER buf          // Global buffer for code generation
+#define RETVAL "GF@retval"  // Global variable name for storing the return value of functions in generated code
+#define NIL "nil@nil"       // Represents a nil value in the generated code
+#define TMP1 "_tmp_1"       // Temporary variable 1 used for generating bin operator ">=" and "<="
+#define TMP2 "_tmp_2"       // Temporary variable 1 used for generating bin operator ">=" and "<="
+#define COMPILER true       // Flag to indicate compiler-defined variables
+#define USER false          // Flag to indicate user-defined variables
 
-Buffer_ll *BUFFER;
+Buffer_ll *BUFFER;  // Pointer to the buffer structure for code generation.
 
-#define add_push_code(val) \
-    do { \
-        if (!buf_add_push(BUFFER, val)) { \
-            return false; \
-        } \
-    } while (0)
-
-#define push_code(val) \
-    do { \
-        if (!buf_push(BUFFER, val)) { \
-            return false; \
-        } \
-    } while (0)
-
+/**
+ * @brief Adds a string to the accumulator string.
+ * 
+ * @param val String to be added to the accumulator string.
+ * @return `false` if the operation fails; otherwise, execution continues.
+ */
 #define add_code(val) \
     do { \
         if (!buf_add(BUFFER, val)) { \
@@ -43,6 +35,15 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+
+/**
+ * @brief Adds a string to accumlator string in buffer and insert space charatceter before that string.
+ *
+ * @param val String to be added
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define add_param(val) \
     do { \
         if (!buf_add(BUFFER, " ")) { \
@@ -53,6 +54,14 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+/**
+ * @brief Adds a integer to accumlator string in buffer and insert '%' before that integer.
+ *
+ * @param int_val The interger to be added
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define PARAM(int_val) \
     do { \
         if (!buf_add(BUFFER, "%")) { \
@@ -63,6 +72,14 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+/**
+ * @brief Adds a string to accumlator string in buffer and insert 'TF@' before that string.
+ *
+ * @param val String to be added
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define TF_ARGS(val) \
     do { \
         if (!buf_add(BUFFER, "TF@")) { \
@@ -73,6 +90,14 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+/**
+ * @brief Adds a string to accumlator string in buffer and insert 'TF@_' before that string.
+ *
+ * @param val String to be added
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define TF(val) \
     do { \
         if (!buf_add(BUFFER, "TF@_")) { \
@@ -83,6 +108,13 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+/**
+ * @brief Adds a newline to accumaltor and pushes accumulator stirng it into the linked list.
+ *
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define endl() \
     do { \
         if (!buf_add_push(BUFFER, "\n")) { \
@@ -90,6 +122,13 @@ Buffer_ll *BUFFER;
         } \
     } while (0)
 
+
+/**
+ * @brief Adds a space charatceter to accumulator string.
+ *
+ * @return `false` if the operation fails; otherwise, execution continues.
+ *
+ */
 #define space() \
     do { \
         if (!buf_add(BUFFER, " ")) { \
@@ -585,15 +624,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 // Handle <= comparison by combining LTS and EQS
                 if(!def_var(TF_vars, TMP1, COMPILER)) return false;
                 if(!def_var(TF_vars, TMP2, COMPILER)) return false;
-                add_code("POPS TF@tmp_2"); endl();
-                add_code("POPS TF@tmp_1"); endl();
+                add_code("POPS "); TF_ARGS(TMP2); endl();
+                add_code("POPS "); TF_ARGS(TMP1); endl();
 
-                add_code("PUSHS TF@tmp_1"); endl();
-                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("PUSHS "); TF_ARGS(TMP1); endl();
+                add_code("PUSHS "); TF_ARGS(TMP2); endl();
                 add_code("LTS");endl();     // Check if tmp_2 < tmp_1
 
-                add_code("PUSHS TF@tmp_1"); endl();
-                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("PUSHS "); TF_ARGS(TMP1); endl();
+                add_code("PUSHS "); TF_ARGS(TMP2); endl();
                 add_code("EQS");endl();  // Check if tmp_2 == tmp_1
                 
                 add_code("ORS");endl(); // Combine LTS and EQS results                            
@@ -602,15 +641,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                 // Handle >= comparison by combining GTS and EQS
                 if(!def_var(TF_vars, TMP1, COMPILER)) return false;
                 if(!def_var(TF_vars, TMP2, COMPILER)) return false;
-                add_code("POPS TF@tmp_2"); endl();
-                add_code("POPS TF@tmp_1"); endl();
+                add_code("POPS "); TF_ARGS(TMP2); endl();
+                add_code("POPS "); TF_ARGS(TMP1); endl();
 
-                add_code("PUSHS TF@tmp_1"); endl();
-                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("PUSHS "); TF_ARGS(TMP1); endl();
+                add_code("PUSHS "); TF_ARGS(TMP2); endl();
                 add_code("GTS");endl();     // Check if tmp_2 > tmp_1
 
-                add_code("PUSHS TF@tmp_1"); endl();
-                add_code("PUSHS TF@tmp_2"); endl();
+                add_code("PUSHS "); TF_ARGS(TMP1); endl();
+                add_code("PUSHS "); TF_ARGS(TMP2); endl();
                 add_code("EQS");endl();     // Check if tmp_2 == tmp_1
 
                 add_code("ORS");endl();      // Combine GTS and EQS results
@@ -756,49 +795,45 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
             // Handle function call node in AST
 
 
-            if(ast->nodeRep.funcCallNode.builtin){
+            if(    ast->nodeRep.funcCallNode.builtin 
+                && (strcmp(ast->nodeRep.funcCallNode.id, "substring") != 0)
+                && (strcmp(ast->nodeRep.funcCallNode.id, "strcmp") != 0)
+                && (strcmp(ast->nodeRep.funcCallNode.id, "ord") != 0)
+            ){
                 // Handle built-in functions
                 // Each built-in function is processed differently depending on its type
                 if(strcmp(ast->nodeRep.funcCallNode.id, "readstr") == 0){
                     if(!add_read(RETVAL, STRING)) return false;
-                    goto code_generator_end;     // Skip the rest of the function call processing
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readi32") == 0){
                     if(!add_read(RETVAL, INT)) return false;
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "readf64") == 0){
                     if(!add_read(RETVAL, FLOAT)) return false;
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "write") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
                     if(!add_write(RETVAL)) return false;
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "i2f") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
                     if(!add_i2f(RETVAL, RETVAL)) return false;
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "f2i") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
                     if(!add_f2i(RETVAL, RETVAL)) return false;
-                    goto code_generator_end;
                 }
                  else if(strcmp(ast->nodeRep.funcCallNode.id, "string") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "length") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
                     if(!add_str_len(RETVAL, RETVAL)) return false;
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "concat") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
@@ -813,16 +848,15 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
                     add_code("POPS "); TF_ARGS(var_tmp); endl();
 
                     add_code("CONCAT"); add_param(RETVAL); space(); TF_ARGS(var_tmp); add_param(RETVAL); endl();
-                    goto code_generator_end;
                 }
                 else if(strcmp(ast->nodeRep.funcCallNode.id, "chr") == 0){
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[0], TF_vars)) return false;
                     add_code("POPS"); add_param(RETVAL); endl();
                     if(!add_chr(RETVAL, RETVAL)) return false;
-                    goto code_generator_end;
                 }
             }   
-                // For non-built-in function calls, generate code for each parameter
+            else{
+                // For other functions generate code for each parameter
                 for(int i = 0; i < ast->nodeRep.funcCallNode.paramNum; i++){
                     char var_tmp[30];
                     sprintf(var_tmp, "%%%d", i);
@@ -831,15 +865,13 @@ bool code_generator(astNode *ast, Defined_vars *TF_vars){
 
                     if(!code_generator(ast->nodeRep.funcCallNode.paramExpr[i], TF_vars)) return false;
                     add_code("POPS "); TF_ARGS(var_tmp); endl();
-                    // add_code("MOVE "); TF(var_tmp); space(); add_param(RETVAL); endl();
                 }
 
                 // Call the function with the specified parameters
                 add_code("CALL $");
                 if(ast->nodeRep.funcCallNode.builtin) add_code("$");        // adding second $, because builin functions have $$ before name
                 add_code(ast->nodeRep.funcCallNode.id);endl();
-            
-        code_generator_end:
+            }
             // Continue processing the next node in the AST
             if(!code_generator(ast->next, TF_vars)) return false;
             break;

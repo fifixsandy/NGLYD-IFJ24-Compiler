@@ -22,6 +22,14 @@ typedef enum {INT, FLOAT, STRING} Types;
 
 typedef enum {WHILE_COND, WHILE_END, IF_ELSE, IF_END} LABEL_TYPES;
 
+
+/**
+ * @struct Defined_vars
+ * @brief Structure to manage a list of defined variable names.
+ *
+ * This structure contains a dynamic array of strings (names) and a count of
+ * the number of variables in the array.
+ */
 typedef struct{
     char ** names;
     int num_of_vars;
@@ -208,11 +216,7 @@ bool add_null();
  */
 bool add_float(double val);
 
-/**
- * @brief Add formatted string value to the code buffer.
- * @param str The string value to be added.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool add_string(char *str);
 
 /**
@@ -238,49 +242,22 @@ bool add_write(char *term);
  */
 bool add_i2f(char *var, char *symb);
 
-/**
- * @brief Add FLOAT2INT instruction to the code buffer.
- * @param var The variable where the conversion result will be assigned.
- * @param symb The symbol (string or variable) from which the conversion is performed.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool add_f2i(char *var, char *symb);
 
-/**
- * @brief Add STRLEN instruction to the code buffer.
- * @param var The variable where the result will be assigned.
- * @param symb The symbol (string or variable) whose length will be calculated.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool add_str_len(char *var, char *symb);
 
-/**
- * @brief Add CONCAT instruction to the code buffer.
- * @param var The variable where the concatenation result will be assigned.
- * @param symb1 The first symbol to concatenate.
- * @param symb2 The second symbol to concatenate.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool add_str_concat(char *var, char *symb1, char *symb2);
 
-/**
- * @brief Add INT2CHAR instruction to the code buffer.
- * @param var The variable where the character result will be assigned.
- * @param symb The symbol (integer or variable) to be converted to a character.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool add_chr(char *var, char *symb);
 
-/**
- * @brief Generate built-in functions in the code buffer.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool generate_build_in_functions();
 
-/**
- * @brief Generate the header for the code.
- * @return true if the operation was successful, false otherwise.
- */
+
 bool generate_header();
 
 
