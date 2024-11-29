@@ -514,11 +514,15 @@ bool def_variable(astNode *block){
         GT
         
         bool literalIsNull = false;
+        bool isString = false;
 
         // is the value explicitly null?
         if(exprNode->nodeRep.exprNode.exprTree->type == AST_NODE_LITERAL){
             if(exprNode->nodeRep.exprNode.exprTree->nodeRep.literalNode.dataT == null_){
                 literalIsNull = true;
+            }
+            if(exprNode->nodeRep.exprNode.exprTree->nodeRep.literalNode.dataT == string){
+                isString = true;
             }
         }
 
@@ -526,6 +530,9 @@ bool def_variable(astNode *block){
         if(variData.inheritedType == true){
             if(literalIsNull){
                 ERROR(ERR_SEM_INHERIT, "Data type for variable \"%s\" cannot be deduced from \"null\".\n", varName);
+            }
+            if(isString){
+                ERROR(ERR_SEM_INHERIT, "Cannot assign string literal to variable \"%s\". Use ifj.string()\n", varName);
             }
 
             variData.type          = exprNode->nodeRep.exprNode.dataT;
