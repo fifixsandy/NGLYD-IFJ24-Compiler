@@ -5,6 +5,7 @@
     \usepackage{times}
     \usepackage{graphics}
     \usepackage{subcaption}
+    \usepackage{hyperref}
 
 \begin{document}
 
@@ -18,13 +19,14 @@
         \Large{extensions: \textsc{funexp}}\\
         \vspace{\stretch{0.618}}
     \end{center}
-    \Large{xfignam00 - 25\%\\
-            xmalegt00 - 25\%\\
-            xnovakf00 - team leader - 25\%\\
-            xskovaj00 - 25\%\hfill \today}
+    \Large{Matúš Fignár xfignam00\,--\,25\%\\
+            Tibor Malega xmalegt00\,--\,25\%\\
+            Filip Novák xnovakf00\,--\,team leader\,--\,25\%\\
+            Ján Skovajsa xskovaj00\,--\,25\%\hfill \today}
 \end{titlepage}
 
 \tableofcontents
+\newpage
 \listoffigures
 \newpage
 
@@ -38,9 +40,60 @@
 % ITALICS \textit{TEXT}
 % KEBY HOCICO INE POTREBUJETE TAK TAG ME
 
+\section{Design and implementation of the compiler}
+Compiler uses double-traversal method of the source code based on "top-down" recursive parsing specified by
+LL1 grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
+analysis. Lexical analyser (scanner) processes source code and tokenizes it based on deterministic finite automaton\footnote{See figure \ref{automaton}.}.
+During parsing, semantic analysis is performed and abstract syntactic tree (AST) is constructed for internal representation.
+Compiler uses table of symbols (symtable), implemented as height-balanced binary search tree for keeping information about defined functions and variables.
+Code is generated through recursive traversal of constructed AST.
+
+\section{Lexical analysis}
+
+\section{Syntactic analysis}
+Syntactic analysis is divided into two parts\,--\,expression parser (found in \verb|expression_parser.c, expression_parser.h|) and
+recursive parser processing the rest of the source code (found in \verb|parser.c, parser.h|). These two are closely entertwined.
+Both call scanner to receive tokens to evaluate.\par
+When recursive parser expects an expression in source code (denoted as \verb|expression| in LL1 grammar~(\ref{ll1rules})), 
+expression parser is called for processing.
+\subsection{"Top-down" syntactic analysis}
+
+\subsection{"Bottom-up" syntactic analysis of expressions}
+
+\section{Semantic analysis}
+
+\section{Table of symbols}
+
+\section{Abstract syntactic tree}
+Abstract syntactic tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised nodes.
+Based on the type of a node, different information is stored and number of child nodes varies as well.
+\section{Code generation}
+
 \section{Teamwork}
+Implementing a compiler is not an easy task, that is why the work has begun as soon as 
+the assignment was published. Firstly, tasks were distributed among all members based on 
+preferences.\par 
+Test submission was set as deadline for implementation. This deadline
+was successfuly met with time left for fixing errors and further testing. Pair programming as well as 
+code reviews were practised. 
 
+\subsection{Communication}
+Discord was chosen as primary mean of communication. In specialised voice and text channels meetings were
+held at least once a week. Git was used as versioning system with remote repository hosted by team leader at
+GitHub. Using webhook, Discord bot for notifications about changes on remote repository was added.\par
+Email addresses and telephone numbers were shared among all members in case of an unexpected situation.
+Luckily, no problems were encountered and communication ran smoothly for the whole duration of the project.
 
+\subsection{Task distribution}
+\begin{itemize}
+
+    \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
+    \item \textbf{Tibor Malega xmalegt00}\,--\,finite automaton design, lexical analysis
+    \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols
+    \item \textbf{Ján Skovajsa xskovaj00}\,--\,code generation, testing
+
+\end{itemize}
+The remaining parts of the project were developed by all members of the team simultaneously.
 
 
 
@@ -60,7 +113,7 @@
 \begin{figure}[ht]
     \begin{center}
         \scalebox{0.25}{\includegraphics{doc/automaton.pdf}}
-        \caption{Finite automaton for lexical analysis}
+        \caption{Deterministic finite automaton for lexical analysis}
         \label{automaton}
     \end{center}
 \end{figure}
@@ -109,7 +162,7 @@
         \item \textless st\textgreater\ $\to$ \textless return\textgreater
         \item \textless body\textgreater\ $\to$ $\varepsilon$
         \item \textless body\textgreater\ $\to$ \textless st\textgreater\ \textless body\textgreater
-        \item \textless return\textgreater\ $\to$ return \textless exp\_func\_ret\textgreater ;
+        \item \textless return\textgreater\ $\to$ return \textless exp\_func\_ret\textgreater  ;
         \item \textless exp\_func\_ret\textgreater\ $\to$ $\varepsilon$
         \item \textless exp\_func\_ret\textgreater\ $\to$ expression
         \item \textless id\_without\_null\textgreater\ $\to$ | id |
