@@ -45,7 +45,7 @@ bool prog(bool firstTraverse){
         ASTree.root = createRootNode(); // initialize ASTree
     }
 
-    // RULE 1 <prog> -> <prolog> <code> EOF
+    // RULE 1 <prog> -> <prolog> <code>
     if(currentToken.type != tokentype_kw_const){
         ERROR(ERR_SYNTAX, "Expected: \"const\".\n");
     }
@@ -1226,7 +1226,7 @@ bool expr_params(astNode **params, int *paramCnt){
  * @return True if processing successful.
  */
 bool expr_params_n(astNode **params, int *paramCnt){
-    // RULE 26 <expr_params_n> -> , <expr_params> // TODO CHECK THIS
+    // RULE 26 <expr_params_n> -> , <expr_params>
     if(currentToken.type == tokentype_comma){
         GT
         expr_params(params, paramCnt);
