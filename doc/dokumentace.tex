@@ -1,0 +1,133 @@
+\documentclass[a4paper, 11pt]{article}
+    \usepackage[left=2cm, top=3cm, text={17cm,24cm}]{geometry}
+    \usepackage[utf8]{inputenc}
+    \usepackage[T1]{fontenc}
+    \usepackage{times}
+    \usepackage{graphics}
+    \usepackage{subcaption}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \textsc{\Huge{Brno University of Technology\\[0.4em]}
+        \huge{Faculty of Information Technology}}\\        
+        \vspace{\stretch{0.382}}
+        \huge{\textbf{Documentation of compiler for language \textsc{IFJ24}}}\\
+        \LARGE{Team xnovakf00\,--\,variant vv-BVS}\\
+        \Large{extensions: \textsc{funexp}}\\
+        \vspace{\stretch{0.618}}
+    \end{center}
+    \Large{xfignam00 - 25\%\\
+            xmalegt00 - 25\%\\
+            xnovakf00 - team leader - 25\%\\
+            xskovaj00 - 25\%\hfill \today}
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+\newpage
+
+% ODTADE PISTE CO CHCETE, KED CHCETE ODSEK POUZITE \section{NAZOV}, KED PODODSEK \subsection{NAZOV},
+% ESTE MENSI TA \subsubsection....
+% KOMENTARE CEZ %
+
+% KED KOD/NIECO TECHNICKE tak \verb | TEXT |
+% KED VSETKO VELKYM (AKO NAPR FUNEXP NA TITULKE) TAK \textsc{TEXT}
+% HRUBE \textbf{TEXT}
+% ITALICS \textit{TEXT}
+% KEBY HOCICO INE POTREBUJETE TAK TAG ME
+
+\section{Teamwork}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Attachments}
+\begin{figure}[ht]
+    \begin{center}
+        \scalebox{0.25}{\includegraphics{doc/automaton.pdf}}
+        \caption{Finite automaton for lexical analysis}
+        \label{automaton}
+    \end{center}
+\end{figure}
+
+\begin{figure}[ht]
+    \begin{center}
+    \begin{enumerate}
+        \itemsep-0.5em
+        \item \textless prog\textgreater\  $\to$ \textless prolog\textgreater\ \textless code\textgreater
+        \item \textless prolog\textgreater\ $\to$ const id = @import ( expression ) ;
+        \item \textless code\textgreater\ $\to$ \textless def\_func\textgreater\ \textless code\textgreater
+        \item \textless code\textgreater\ $\to$ $\varepsilon$
+        \item \textless def\_func\textgreater\ $\to$ pub fn id ( \textless params\textgreater ) \textless type\_func\_ret\textgreater\ \{ \textless body\textgreater \}
+        \item \textless params\textgreater\ $\to$ id : \textless type\textgreater\ \textless params\_n\textgreater
+        \item \textless params\textgreater\ $\to$ $\varepsilon$
+        \item \textless params\_n\textgreater\ $\to$ , \textless params\textgreater
+        \item \textless params\_n\textgreater\ $\to$ $\varepsilon$
+        \item \textless def\_variable\textgreater\ $\to$ \textless varorconst\textgreater\ id \textless type\_var\_def\textgreater\ = expression ;
+        \item \textless varorconst\textgreater\ $\to$ const
+        \item \textless varorconst\textgreater\ $\to$ var
+        \item \textless unused\_decl\textgreater\ $\to$ \_ = expression ;
+        \item \textless type\_normal\textgreater\ $\to$ i32
+        \item \textless type\_normal\textgreater\ $\to$ f64
+        \item \textless type\_normal\textgreater\ $\to$ [ ] u8
+        \item \textless type\_null\textgreater\ $\to$ ? \textless type\_normal\textgreater
+        \item \textless type\textgreater\ $\to$ \textless type\_normal\textgreater
+        \item \textless type\textgreater\ $\to$ \textless type\_null\textgreater
+        \item \textless type\_func\_ret\textgreater\ $\to$ \textless type\textgreater
+        \item \textless type\_func\_ret\textgreater\ $\to$ void
+        \item \textless type\_var\_def\textgreater\ $\to$ : \textless type\textgreater
+        \item \textless type\_var\_def\textgreater\ $\to$ $\varepsilon$
+        \item \textless expr\_params\textgreater\ $\to$ expression \textless expr\_params\_n\textgreater
+        \item \textless expr\_params\textgreater\ $\to$ $\varepsilon$
+        \item \textless expr\_params\_n\textgreater\ $\to$ , \textless expr\_params\textgreater
+        \item \textless expr\_params\_n\textgreater\ $\to$ $\varepsilon$
+        \item \textless after\_id\textgreater\ $\to$ = expression ;
+        \item \textless after\_id\textgreater\ $\to$ \textless builtin\textgreater\ ( \textless expr\_params\textgreater ) ;
+        \item \textless assign\_or\_f\_call\textgreater\ $\to$ id \textless after\_id\textgreater
+        \item \textless builtin\textgreater\ $\to$ . id
+        \item \textless builtin\textgreater\ $\to$ $\varepsilon$
+        \item \textless st\textgreater\ $\to$ \textless def\_variable\textgreater
+        \item \textless st\textgreater\ $\to$ \textless assign\_or\_f\_call\textgreater
+        \item \textless st\textgreater\ $\to$ \textless unused\_decl\textgreater
+        \item \textless st\textgreater\ $\to$ \textless while\_statement\textgreater
+        \item \textless st\textgreater\ $\to$ \textless if\_statement\textgreater
+        \item \textless st\textgreater\ $\to$ \textless return\textgreater
+        \item \textless body\textgreater\ $\to$ $\varepsilon$
+        \item \textless body\textgreater\ $\to$ \textless st\textgreater\ \textless body\textgreater
+        \item \textless return\textgreater\ $\to$ return \textless exp\_func\_ret\textgreater ;
+        \item \textless exp\_func\_ret\textgreater\ $\to$ $\varepsilon$
+        \item \textless exp\_func\_ret\textgreater\ $\to$ expression
+        \item \textless id\_without\_null\textgreater\ $\to$ | id |
+        \item \textless id\_without\_null\textgreater\ $\to$ $\varepsilon$
+        \item \textless while\_statement\textgreater\ $\to$ while ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \}
+        \item \textless if\_statement\textgreater\ $\to$ if ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \} else \{ \textless body\textgreater \}
+    \end{enumerate}
+    \caption{LL1 rules}
+    \label{ll1rules}
+\end{center}
+\end{figure}
+
+\begin{figure}[ht]
+    \begin{center}
+        \scalebox{0.7}{\includegraphics{doc/LL1_table.pdf}}
+        \caption{LL1 table for parsing}
+        \label{ll1table}
+    \end{center}
+\end{figure}
+
+\end{document}
