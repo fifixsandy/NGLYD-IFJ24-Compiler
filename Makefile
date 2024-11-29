@@ -42,6 +42,9 @@ $(OBJFOLDER)/%.o: $(SRCFOLDER)/%.c
 	mkdir -p $(OBJFOLDER)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+doc: ./doc/dokumentace.tex
+	pdflatex ./doc/dokumentace.tex
+
 # Clean up the compiled files and the executable
 clean:
 	rm -rf $(OBJFOLDER)/
