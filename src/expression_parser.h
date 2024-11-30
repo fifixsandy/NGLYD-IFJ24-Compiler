@@ -28,7 +28,6 @@ typedef enum{
     EQ,     // equal                                        1
     GR,     // greater than                                 2
     ND,     // not definied or specific behavior or end     3
-    AC,     // accept                                       4 -???
 } precedence ;
 
 
@@ -48,9 +47,9 @@ typedef struct control_items{
 // Represents a single item in the expression stack.
 typedef struct stack_item{
     astNode *node;
-    symbol_number expr;                 //Represents the type or role of the stack item 
+    symbol_number expr;                 // Represents the role of the stack item 
     struct stack_item *next;
-    struct control_items *control;      //Pointer to the control_items struct containing semantic metadata
+    struct control_items *control;      // Pointer to the control_items struct containing semantic metadata
 } stack_item;
 
 
@@ -62,7 +61,7 @@ typedef struct exp_stack{
 } exp_stack;
 
 
-
+/******* Functions for expression stack *******/
 exp_stack *exp_stack_create();
 void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_items *control);
 astNode *exp_stack_pop(exp_stack *estack, bool control_needed);
@@ -70,7 +69,7 @@ symbol_number exp_stack_top_term_symb(exp_stack *estack);
 void exp_stack_free_stack(exp_stack *estack);
 bool exp_stack_find_lbr(exp_stack *estack);
 
-
+/******* Functions for expression parser *******/
 bool expression(astNode *expr_node);
 bool process_expr(exp_stack *estack);
 symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node, control_items *control); 
@@ -81,3 +80,5 @@ void retype(astNode *operand);
 
 
 #endif // EXPRESSION_PARSER_H
+
+/* EOF expression_parser.h */

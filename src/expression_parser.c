@@ -11,7 +11,7 @@
  * 
  *         Functionalities:
  *                      - Defines a precedence table for expression parsing.
- *                      - Implements stack-based operations such as push, pop, and top-terminal retrieval.
+ *                      - Implements stack-based operations such as push, pop,top-terminal retrieval and  check for pairing left bracket.
  *                      - Handles the evaluation of tokens and reduction rules for expression tree construction.
  *                      - Includes semantic checks for type compatibility and retyping as needed.
  *                      - Manages memory efficiently by freeing stack resources and AST nodes.
@@ -66,9 +66,9 @@ precedence precedence_table[14][14] = {
 
 
 /**
-* @brief Creates and initializes stack for expressions
+* @brief Creates and initializes stack for expressions.
 *
-* @return
+* @return Empty expression stack.
 */
 exp_stack *exp_stack_create(){
     exp_stack *Stack = (exp_stack *)malloc(sizeof(exp_stack));
@@ -82,11 +82,12 @@ exp_stack *exp_stack_create(){
 
 
 /** 
-* @brief "Pushes a new item onto the expression stack
+* @brief Pushes a new item onto the expression stack.
 * 
-* @param estack pointer to stack
-* @param node pointer to node that is added on stack
-* @param op opearnd or type of expression character
+* @param estack Pointer to stack.
+* @param node Pointer to node that is added on stack.
+* @param op Opearnd or type of expression character.
+* @param control Pointer to struct with additional control values. 
 */
 void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_items *control){
     stack_item *new_item = (stack_item *)malloc(sizeof(stack_item));
@@ -98,16 +99,20 @@ void exp_stack_push(exp_stack *estack, astNode *node, symbol_number op, control_
     new_item->expr = op;
     new_item->next = estack->top;
     estack->top = new_item;
-    estack->count++;  
+    estack->count++;
+    return;  
 }
 
 
 
 
 /**
- * @brief Pop top AST node from expression stack 
+ * @brief Pop top AST node from expression stack.
  * 
- * @param estack Pointer to stack  
+ * @param estack Pointer to stack.
+ * @param control_needed False if we can free allocated control struct. True if we need control struct.
+ * 
+ * @return Node of top stack item.
  */
 astNode *exp_stack_pop(exp_stack *estack, bool control_needed){
     if (estack->top == NULL){
@@ -125,7 +130,9 @@ astNode *exp_stack_pop(exp_stack *estack, bool control_needed){
 }
 
 /**
- * @brief funcion to find terminal that is on the top of stack
+ * @brief Funcion to find terminal that is on the top of stack.
+ * 
+ * @param estack Pointer to expression stack.
  * 
  * @return Symbol number of the terminal closest to the top of the stack.
  */
@@ -143,7 +150,9 @@ symbol_number exp_stack_top_term_symb(exp_stack *estack){
 
 
 /**
- * @brief Frees all memory allocated for the stack and its contents
+ * @brief Frees all memory allocated for the stack and its contents.
+ * 
+ * @param estack Pointer to expression stack.
  */
 void exp_stack_free_stack(exp_stack *estack){
     stack_item *curr = estack->top;
@@ -160,6 +169,8 @@ void exp_stack_free_stack(exp_stack *estack){
 
 /**
  * @brief Search for left bracket in stack.
+ * 
+ * @param estack Pointer to expression stack.
  * 
  * @return True if in the stack is left bracket; False if left bracket isn't in the stack
  */
@@ -183,16 +194,16 @@ bool exp_stack_find_lbr(exp_stack *estack){
 
 
 /**
-* @brief A funcion that calls helper funcions to build an expression tree
+* @brief A funcion that calls helper funcions to build an expression tree.
 *
-* @return True if build was successful; False if build wasn't successful
+* @param expr_node Pointer to expression node.
+*
+* @return True if build was successful; False if build wasn't successful.
 */
 bool expression(astNode *expr_node){
-    DEBPRINT("entered expression func\n");
-    exp_stack *estack = exp_stack_create();
 
+    exp_stack *estack = exp_stack_create();
     exp_stack_push(estack, NULL, STOP, NULL);    //push stop symbol on top of the stack
-    DEBPRINT("pushed stop sign to stack\n");
 
     if(process_expr(estack)){
         
@@ -211,13 +222,20 @@ bool expression(astNode *expr_node){
     return false;
 }
 
+/**
+ * @brief Creates AST node for expression Initialize its control values and recursively call itself until expression is fully processed
+ * 
+ * @param estack Pointer to expression stack.
+ * 
+ * @return True if expression was processed successfully. False if it wasn't.
+ */
 bool process_expr(exp_stack *estack){
     astNode *curr_node = createAstNode();
     
 
     control_items *control =(control_items *)malloc(sizeof(struct control_items));
     if(control == NULL){
-        ERROR(ERR_INTERNAL, "Failed to allocate memory for control struct"); //TODO internal Error
+        ERROR(ERR_INTERNAL, "Failed to allocate memory for control struct"); 
     }
 
     // initialization of empty controls
@@ -248,17 +266,18 @@ bool process_expr(exp_stack *estack){
     else{
         return false;
     }
-    return false;
     
 }
 
 /**
 * @brief A function that evaluates the precedence of a token with the precedence of the highest terminal symbol and applies a rule according to precedence parsing.
 *
-* @param estack A pointer to an expression stack
-* @param pointer to a node of an expression tree
+* @param estack     A pointer to an expression stack.
+* @param curr_node  Pointer to a node of an expression tree.
+* @param control    Pointer to struct with control values of expression element.
+* @param curr_symb  Symbol_number of current token from input.
 * 
-* @return true if the expression has been fully processed; false if the expression has not been fully processed.
+* @return True if the expression has been fully processed. False if the expression has not been fully processed.
 */
 int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_number curr_symb){
     
@@ -310,26 +329,26 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
  *          E -> E == E
  *          E -> E != E
  * 
- * @param stack Pointer to the stack containing elements of the expression.
+ * @param estack Pointer to the stack containing elements of the expression.
  */
-void reduce(exp_stack *stack){
-    symbol_number top_term = exp_stack_top_term_symb(stack);
+void reduce(exp_stack *estack){
+    symbol_number top_term = exp_stack_top_term_symb(estack);
     switch(top_term){
         case ID :
-            stack->top->expr = NO_TERMINAL;
+            estack->top->expr = NO_TERMINAL;
             return;
  
         case RBR :{
-            astNode *rbr = exp_stack_pop(stack, false);    // delete right bracket item from stack
+            astNode *rbr = exp_stack_pop(estack, false);                // delete right bracket item from stack
             freeASTNode(rbr); 
-            control_items *operand_items = stack->top->control;
-            astNode *expr = exp_stack_pop(stack, true);
-            if(stack->top->expr != LBR){
+            control_items *operand_items = estack->top->control;
+            astNode *expr = exp_stack_pop(estack, true);
+            if(estack->top->expr != LBR){
                 ERROR(ERR_SYNTAX, "Unexpected \")\" in expression ");
             }
-            astNode *lbr = exp_stack_pop(stack, false); // delete left bracket item from stack
+            astNode *lbr = exp_stack_pop(estack, false);                // delete left bracket item from stack
             freeASTNode(lbr);
-            exp_stack_push(stack, expr, NO_TERMINAL, operand_items);
+            exp_stack_push(estack, expr, NO_TERMINAL, operand_items);
             return;
         }
 
@@ -342,11 +361,11 @@ void reduce(exp_stack *stack){
         case GREATER_OR_EQUAL:
         case EQUAL:
         case NOT_EQUAL:
-            if(stack->count < 4 ){
+            if(estack->count < 4 ){
                     ERROR(ERR_SYNTAX, "Invalid character in expression\n");
                 }
-            if(stack->top->next->next->node->type == AST_NODE_BINOP){   // for cases when logical operator was reduced to nonterminal due to E -> (E) rule
-                symbol_number operator = stack->top->next->next->node->nodeRep.binOpNode.op;
+            if(estack->top->next->next->node->type == AST_NODE_BINOP){      // for cases when logical operator was reduced to nonterminal due to E -> (E) rule
+                symbol_number operator = estack->top->next->next->node->nodeRep.binOpNode.op;
                 if(operator == LOWER || operator == LOWER_OR_EQUAL || operator == GREATER || operator == GREATER_OR_EQUAL || operator == EQUAL || operator == NOT_EQUAL){
                     ERROR(ERR_SYNTAX, "Invalid expression.\n");
                 }
@@ -357,34 +376,35 @@ void reduce(exp_stack *stack){
             break;
     }
 
-    if(stack->count < 4 ){
+    if(estack->count < 4 ){
         ERROR(ERR_SYNTAX, "Invalid character in expression\n");
     }
     
     control_items *operation_item = (control_items *)malloc(sizeof(struct control_items));
     
-    semantic_check(stack->top->next->next, stack->top->next, stack->top, operation_item);
+    semantic_check(estack->top->next->next, estack->top->next, estack->top, operation_item);
     
-    astNode *right_elem = exp_stack_pop(stack, false);
-    astNode *operator = exp_stack_pop(stack, false);
-    astNode *left_elem = exp_stack_pop(stack, false);
+    astNode *right_elem = exp_stack_pop(estack, false);
+    astNode *operator = exp_stack_pop(estack, false);
+    astNode *left_elem = exp_stack_pop(estack, false);
 
     createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL); 
-    exp_stack_push(stack, operator, NO_TERMINAL, operation_item);
+    exp_stack_push(estack, operator, NO_TERMINAL, operation_item);
     return;
 
       
 }
 
 /**
- * @brief           Evalutates given token assigns proper symbol number for expression precedence
+ * @brief Evalutates given token, assigns propper symbol number for expression precedence and if needed 
+ *        assigns propper values in control struct.
  * 
- * @param stack     pointer to stack where are all elements of expression stored
- * @param token     current token that is processed
- * @param node      pointer to node that will create part of expression in case of id or funcion call
- * @param control   pointer to control struct that stores informations about node needed for future handling
+ * @param estack    Pointer to stack where are all elements of expression stored.
+ * @param token     Current token that is processed.
+ * @param node      Pointer to node that will create part of expression in case of id or funcion call.
+ * @param control   Pointer to control struct that stores informations about node needed for future handling.
  * 
- * @return          Symbol number of expression character
+ * @return Symbol number of expression character
  */
 symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node, control_items *control){
     symNode *symnode;
@@ -434,7 +454,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             return LBR;
 
         case tokentype_rbracket :
-            if(exp_stack_find_lbr(estack)){
+            if(exp_stack_find_lbr(estack)){     // check if ")" is STOP sign
                 
                 return RBR;
             }
@@ -445,15 +465,15 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         case tokentype_id :
             if(wasDefined(token.value, &symnode)){
 
-                if(symnode->data.data.vData.knownDuringCompile == true){    //if variable has value known during compile check if it can be converted to different type and set flag in control struct
+                if(symnode->data.data.vData.knownDuringCompile == true){                // if variable has value known during compile check if it can be converted to different type and set flag in control struct
                     control->known_during_compile = true;
 
-                    if(symnode->data.data.vData.isNullable == false){   // Nullable variable has to be checked for possible null value by user (if not this check needs to be redone) 
+                    if(symnode->data.data.vData.isNullable == false){                   // nullable variable has to be checked for possible null value by user, so it cannot be convertable. 
                         dataType type = symnode->data.data.vData.type;
 
-                        if(type == f64){   // when value of node is float (or double float)
+                        if(type == f64){                                                // when value of node is f64, it needs a check if it has 0s after decimal point
                             double fdata = symnode->data.data.vData.value.floatData;
-                            if((int) fdata == fdata){ //can be converted into int
+                            if((int) fdata == fdata){                                   // can be converted into i32
                                     createLiteralNode(node, f64, &fdata, NULL);
                                     control->is_convertable = true;
                                     control->is_nullable = false;
@@ -463,9 +483,9 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                         }
 
                         else if(type == i32){
-                            int idata = symnode->data.data.vData.value.intData; //TODO shouldn't this be long int?
+                            int idata = symnode->data.data.vData.value.intData; 
                             createLiteralNode(node, i32, &idata, NULL);
-                            control->is_convertable = true;                     //every i32 can be converted to f64
+                            control->is_convertable = true;                             // every i32 can be converted to f64
                             control->is_nullable = false;
                             control->type = i32;
                             return ID;
@@ -483,7 +503,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             else{
                 char *id = currentToken.value;
                 GT
-                if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){
+                if(currentToken.type == tokentype_lbracket || currentToken.type == tokentype_dot){  // check if id is function call
                     
                     funCallHandle(id, node, true);
                     
@@ -493,6 +513,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     control->is_convertable = false;
                     return ID;
                 }
+
                 else{
                     ERROR(ERR_SEM_UNDEF, ("Variable undefined.\n")); 
                 }
@@ -508,6 +529,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
             control->known_during_compile = true;
             return ID;
         }
+
         case tokentype_exponentialnum:
         case tokentype_float :{
             double fvalue = strtod(token.value, NULL);
@@ -566,12 +588,19 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 }
 
 /**
- * @brief                   Function that performs semantic checks for binary operations.  
+ * @brief Performs semantic checks for binary operations and updates the control structure.
+ *        This function ensures that binary operations comply with the following rules:
+ *        - Both operands must not be NO_TERMINALS (syntactic error if violated).
+ *        - For the EQUAL  or NOT_EQUAL  operators, if one operand is null, the other must also be null or nullable.
+ *        - Neither string nor u8 types are allowed in binary operations.
+ *        - Nullable or null operands are only allowed with the EQUAL or NOT_EQUAL operators.
+ *        - The types of the operands must either match or be retypeable to a compatible type.
  * 
- * @param left_operand      Pointer to a stack element representing the left operand.  
- * @param operator          Pointer to a stack element representing the operator.
- * @param right_operand     Pointer to a stack element representing the right operand.
- * @param control           Pointer to a control structure storing information about the new stack element needed for future handling.  
+ * @param left_operand    Pointer to a stack item representing the left operand.
+ * @param operator        Pointer to a stack item representing the operator.
+ * @param right_operand   Pointer to a stack item representing the right operand.
+ * @param control         Pointer to a control structure that stores information about 
+ *                        the new stack element for future handling.
  */
 void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *right_operand, control_items *control){
     if(left_operand->expr != NO_TERMINAL || left_operand->expr != NO_TERMINAL){
@@ -678,9 +707,9 @@ void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *
 }
 
 /**
- * @brief           Function that retypes nodes in an expression tree.  
+ * @brief Function that retypes nodes in an expression tree.  
  * 
- * @param operand   Pointer to a node in the tree that needs to be retyped.  
+ * @param operand   Pointer to a node (subtree) in the expression tree that needs to be retyped.  
  */
 void retype(astNode *operand){
     
