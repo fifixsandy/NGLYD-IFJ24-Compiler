@@ -61,8 +61,8 @@ typedef struct varData{
   
    union{
       double floatData;
-      int   intData;
-      char *charData;
+      int    intData;
+      char  *charData;
    }value; // value in case it is known during compile time, used in expression parsing
     bool nullValue; // if it holds null
 }varData;
@@ -115,6 +115,10 @@ extern stack symtableStack;
    symtable.h is included */
 extern symtable* funSymtable;
 
+/* global variable of symtable for builtin functions, 
+   function prepareBuiltinSymtable() should be called on it
+   in exactly one file, accessible everywhere where
+   symtable.h is included */
 extern symtable* builtinSymtable;
                            
 
