@@ -44,6 +44,7 @@ $(OBJFOLDER)/%.o: $(SRCFOLDER)/%.c
 
 doc: ./doc/dokumentace.tex
 	pdflatex ./doc/dokumentace.tex
+	pdflatex ./doc/dokumentace.tex
 
 # Clean up the compiled files and the executable
 clean:

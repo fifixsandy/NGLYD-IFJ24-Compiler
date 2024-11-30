@@ -42,34 +42,96 @@
 
 \section{Design and implementation of the compiler}
 Compiler uses double-traversal method of the source code based on "top-down" recursive parsing specified by
-LL1 grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
+LL(1) grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
 analysis. Lexical analyser (scanner) processes source code and tokenizes it based on deterministic finite automaton\footnote{See figure \ref{automaton}.}.
 During parsing, semantic analysis is performed and abstract syntactic tree (AST) is constructed for internal representation.
-Compiler uses table of symbols (symtable), implemented as height-balanced binary search tree for keeping information about defined functions and variables.
+Compiler uses table of symbols, implemented as height-balanced binary search tree for keeping information about defined functions and variables.
 Code is generated through recursive traversal of constructed AST.
 
-\section{Lexical analysis}
+\section{Lexical analysis}\label{sec:LEX}
 
-\section{Syntactic analysis}
-Syntactic analysis is divided into two parts\,--\,expression parser (found in \verb|expression_parser.c, expression_parser.h|) and
-recursive parser processing the rest of the source code (found in \verb|parser.c, parser.h|). These two are closely entertwined.
+\section{Syntactic analysis}\label{sec:SYNTACTIC}
+Syntactic analysis is divided into two parts\,--\,expression parser and
+recursive parser processing the rest of the source code. These two are closely entertwined.
 Both call scanner to receive tokens to evaluate.\par
-When recursive parser expects an expression in source code (denoted as \verb|expression| in LL1 grammar~(\ref{ll1rules})), 
+When recursive parser expects an expression in source code (denoted as \verb|expression| in LL(1) grammar~(\ref{ll1rules})), 
 expression parser is called for processing.
-\subsection{"Top-down" syntactic analysis}
+\subsection{"Top-down" syntactic analysis}\label{sec:PARSER}
+Rescursive parser is implemented as a set of functions, each representing certain non-terminal of LL(1) grammar, found in
+\verb|parser.c, parser.h|.
+Functions validate sequence of tokens received by invoking scanner with function \verb|getToken()| (or macro \verb|GT| for 
+compactness). When another non-terminal is expected, function representing it is called.
+Each function returns \verb|0| when processing of the non-terminal was successful. If an error occurs, \verb|ERROR| is called\footnote{See section
+about errors \ref{sec:ERR}.}.
+\par
+In the first traversal, information about user-defined functions are collected. This includes:
+\begin{itemize}
+\item function IDs
+\item return data types
+\item number of parameters
+\item parameter names 
+\item parater data types
+\end{itemize}
+Other tokens, not representing function headers are skipped 
+.This is implemented as loop with break condition being encountering token \verb|pub|, signaling start of the next function definiton.
+\par
+Second traversal performs regular parsing of the source code with validation of token sequence, performing semantic analysis and constructing
+AST.
+\par
+To support double traversal, function processing user-defined functions was split into two separate with 
+adjusted logic: \verb|def_func_first()| and \verb|def_func_sec()|. For readibility and reusability, \verb|after_id|~
+function was split into two parts: \verb|funCallHandle()|, processing standalone function calls in source code (or function calls 
+in expressions) and \verb|assignmentHandle()|, processing assignment to variables.
+\par
+Validating compulsory prologue in source code is hanlded in LL(1) grammar as rule 2. For simplicity, 
+\verb|ifj| namespace and string literal \verb|"ifj24.zig"| are represented as id terminal and expression.
+Further validation of their correctness is done in \verb|prog()|. If either of them is incorrect, syntax error
+is raised and program exits with error code \verb|2|.
 
-\subsection{"Bottom-up" syntactic analysis of expressions}
+\subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
 
-\section{Semantic analysis}
+\section{Semantic analysis}\label{sec:SEMANTIC}
 
-\section{Table of symbols}
+\section{Table of symbols}\label{sec:SYMTABLE}
+Data structure representing symbol tables in implementation is height-balanced binary search tree.
+Functions for working with symbol tables, structs representing nodes or node data and functions for printing
+.dot visualisation of symbol table can be found in \verb|symtable.c| and \verb|symtable.h|. Recursive approach was adopted because the binary tree itself is recursive in nature.
+\par
+Compiler utilizes three distinct types of symbol tables: 
+\begin{itemize}
+    \item symbol table for user-defined functions
+    \item symbol table for built-in functions
+    \item symbol table for defined variables
+\end{itemize}
+ For all types, ID of an element, represented as
+an array of characters, is used as key based on which the tree is arranged. Node representation (\verb|struct symNode|) is the same for all, one thing that varies
+is data representation in union \verb|data| (\verb|struct funData| for functions and \verb|struct varData| for variables).
+\par
+Symbol table for \textbf{user-defined functions} is a global variable \verb|symtable funSymtable| declared in \newline\verb|symtable.h|. Parser calls
+\verb|createSymtable()| to initialise it. Nodes include information collected during first traversal of parser and pointer 
+to a symbol table for variables defined within the function.
+\par
+Symbol table for \textbf{built-in functions} is also a global variable \verb|symtable builtinSymtable| declared in \verb|symtable.h| sharing
+the same information as symbol table for user-defined functions. It is populated by parser using function \verb|prepareBuiltinSymtable()|.
+All data are pre-initialised based on assignment. No new entry is added into this function after initialisation\,--\,it is only used
+for semantic checks and AST construction. For built-in functions \verb|ifj.write(term)| and \verb|ifj.string(term)|, extra
+data types (\verb|any, stringOru8|) in \verb|enum dataType| were introduced, as parameters in these functions can take multiple data types.
+\par
+Symbol tables for \textbf{defined variables} are created during parsing of blocks of code bounded by curly brackets (functions, while and if-else statements).
+Scopes, in which defined variable is accessible are implemented using stack of symbol tables (global variable \verb|stack symtableStack|).
+Stack is implemented as singly linked list. Function \verb|findInStack()| is used to traverse symbol table stack and look for nodes with given key.
+If no entry is found in the whole stack, \verb|NULL| is returned.
 
-\section{Abstract syntactic tree}
+
+\section{Abstract syntactic tree}\label{sec:AST}
 Abstract syntactic tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised nodes.
 Based on the type of a node, different information is stored and number of child nodes varies as well.
-\section{Code generation}
 
-\section{Teamwork}
+\section{Code generation}\label{sec:CODEGEN}
+
+\section{Error handling and memory management}\label{sec:ERR}
+
+\section{Teamwork}\label{sec:TEAM}
 Implementing a compiler is not an easy task, that is why the work has begun as soon as 
 the assignment was published. Firstly, tasks were distributed among all members based on 
 preferences.\par 
@@ -77,14 +139,14 @@ Test submission was set as deadline for implementation. This deadline
 was successfuly met with time left for fixing errors and further testing. Pair programming as well as 
 code reviews were practised. 
 
-\subsection{Communication}
+\subsection{Communication}\label{sec:COMM}
 Discord was chosen as primary mean of communication. In specialised voice and text channels meetings were
 held at least once a week. Git was used as versioning system with remote repository hosted by team leader at
 GitHub. Using webhook, Discord bot for notifications about changes on remote repository was added.\par
 Email addresses and telephone numbers were shared among all members in case of an unexpected situation.
 Luckily, no problems were encountered and communication ran smoothly for the whole duration of the project.
 
-\subsection{Task distribution}
+\subsection{Task distribution}\label{sec:TASKS}
 \begin{itemize}
 
     \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
@@ -170,15 +232,15 @@ The remaining parts of the project were developed by all members of the team sim
         \item \textless while\_statement\textgreater\ $\to$ while ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \}
         \item \textless if\_statement\textgreater\ $\to$ if ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \} else \{ \textless body\textgreater \}
     \end{enumerate}
-    \caption{LL1 rules}
+    \caption{LL(1) rules}
     \label{ll1rules}
 \end{center}
 \end{figure}
 
 \begin{figure}[ht]
     \begin{center}
-        \scalebox{0.7}{\includegraphics{doc/LL1_table.pdf}}
-        \caption{LL1 table for parsing}
+        \scalebox{0.6}{\includegraphics{doc/LL1_table.pdf}}
+        \caption{LL(1) table for parsing}
         \label{ll1table}
     \end{center}
 \end{figure}
