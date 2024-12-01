@@ -94,17 +94,17 @@ is raised and program exits with error code \verb|2|.
 ADD TEXT
 \subsection{Semantic analysis in "top-down" parser}
 \subsubsection{Variables}
-When defining a variable, it must be checked, whether \textbf{redefintion} of already
-existing variable within the same nested blocks occurs. This is perfomed by searching current stack using
-\verb|findInStack()|. When \verb|NULL| is returned, no redefiniton occurs. Similarly,
+When defining a variable, parser ensures no \textbf{redefintion} of already
+existing variable occurs within the same nested blocks. This is achieved by searching stack using
+\verb|findInStack()|. If \verb|NULL| is returned, redefinition is not detected. Similarly,
 \verb|funSymtable| is also searched for an entry with matching ID.
-\par Assignment cannot be performed on \textbf{undefined variables}. Verification is similar to redefinition check,
+\par Assignment to \textbf{undefined variables} are not allowed. Verification is similar to redefinition check,
 however non-\verb|NULL| value is expected.
-\par \textbf{Matching data types} when assigning and defining of the variable and the assigned expression must be confirmed.
+\par \textbf{Matching data types} of the variable and the assigned expression in assigning and defining must be confirmed.
 This is done by examining data type of the \verb|astNode| representing expression. Expression cannot be logical.
 \par As explicit data type of a variable during definiton can be ommitted, it is necessary to \textbf{inherit data type
 from expression}. If it is not possible (e.g. expression is \verb|null| or \verb|string| literal), an error is raised.
-If the data type can be deduced, it is set to symbol table of a variable along with nullability of the variable.
+If the data type can be deduced, it is set to symbol table entry of a variable along with nullability of the variable.
 \par When parser is finished with processing block of code bounded with curly brackets, symbol table on the top of the stack
 is recursively traversed (preorder traversal, function \verb|allUsed()|) and flags \verb|changed| and \verb|used| are observed,
 ensuring that \textbf{all modifiable variables were modified} and \textbf{all defined variables within block were used}. This includes
@@ -112,11 +112,10 @@ ensuring that \textbf{all modifiable variables were modified} and \textbf{all de
 
 \subsubsection{Functions}
 \textbf{Redefiniton of functions} is checked during the first traversal of the parser (same concept as variable redefiniton check).
-With separate symbol table for built-in function, matching IDs are allowed (e.g. \verb|ifj.write()| and user-defined \verb|write()|).
-Parameters of functions are also analysed in the same manner.
+With separate symbol table for built-in functions, matching IDs are allowed (e.g. \verb|ifj.write()| and user-defined \verb|write()|).
 \par
 Validation that all user-defined functions are \textbf{used within program} is performed at the very end of second traversal of parser,
-by examining \verb|used| flag in \verb|funSymtable| nodes.
+by examining \verb|used| flag in \verb|funSymtable| nodes. Function \verb|main()| has this flag set to \verb|true| implicitly. 
 \par
 \textbf{Non-void function not containing any return statements} in all possible execution paths is evaluated as semantic error.
 This is analysed by \verb|allReturns()| function, using depth-first recursive traversal of AST of a function body.
@@ -136,7 +135,7 @@ When a function is called outside of an expression, it must be \verb|void|. Retu
 symbol table entry.
 \par
 \textbf{Presence of main function} in source code is validated by \verb|mainDefined()| at the end of first traversal.
-At the same time, \textbf{parameters and return type of main} are checked, whether they match with expected ones.
+At the same time, \textbf{parameters and return type of main} are checked, ensuring they match the expected specification.
 
 \subsubsection{Other semantic checks}
 When \verb|while| or \verb|if-else| statements are being processed by parser, condition expression is checked.
@@ -176,8 +175,66 @@ If no entry is found in the whole stack, \verb|NULL| is returned.
 
 
 \section{Abstract syntactic tree}\label{sec:AST}
-Abstract syntactic tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised nodes.
-Based on the type of a node, different information is stored and number of child nodes varies as well.
+Abstract syntactic tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised node types to represent
+different components of the source code.
+The AST includes the following node types, each representing a specific syntactic construct: 
+\newline
+\noindent
+\begin{minipage}[t]{0.3\textwidth}
+\begin{itemize}
+    \item \textbf{Control Flow}
+    \begin{itemize}
+        \itemsep-0.1em
+        \item while
+        \item if-else
+        \item if
+        \item else
+    \end{itemize}
+\end{itemize}
+\end{minipage}%
+\begin{minipage}[t]{0.3\textwidth}
+\begin{itemize}
+    \item \textbf{Statements}
+    \begin{itemize}
+        \itemsep-0.1em
+        \item assign
+        \item unused declaration
+        \item variable definition
+        \item function definition
+        \item return
+    \end{itemize}
+\end{itemize}
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+\begin{itemize}
+    \item \textbf{Expressions}
+    \begin{itemize}
+        \itemsep-0.1em
+        \item expression
+        \item binary operator
+        \item function call
+        \item literal
+        \item variable
+    \end{itemize}
+\end{itemize}
+\end{minipage}
+\par
+Each node has distinct set of information needed for semantic analysis or code generation, implemented with
+\verb|struct|. Nodes may include pointer to a different nodes (e.g. condition in while or if-else, expression node in assign or return).
+All nodes in constructed AST are \verb|struct astNode|, which serves a purpose of general representation.
+Information included in \verb|astNode|:
+\begin{itemize}
+    \item type of node
+    \item pointer to the next statement in block (in case node itself represent a statement)
+    \item union of node representations (exact representation of a node, as mentioned before)
+\end{itemize}
+
+Each node type has a designated function for its creation (\verb|create*Node()|, where \verb|*| is the type of the node)
+with all information needed to be stored.
+\par Special node \verb|root| only includes a \verb|next| pointer, which serves as a connecting piece for
+bodies of functions, if-else or while statements. Global variable \verb|AST ASTree|, declared in \verb|main.c| is an
+encapsulation of the \verb|root| of the AST of the whole source code. It is the product of syntactic analysis.
+\par  Functions for printing .dot representation for visualisaton of AST are also implemented.
 
 \section{Code generation}\label{sec:CODEGEN}
 

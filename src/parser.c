@@ -405,10 +405,10 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **par
  * 
  * @see   params()
  * 
- * @param[out] paramNum      Pointer to variable representing number of parameters to set.
- * @param[out] paramTypes    Pointer to an array of parameter data types to set.
- * @param[out] paramNames    Pointer to an array of parameter names to set.
- * @param[out] paramNullable Pointer to an array of flags whether parameters are nullable to set.
+ * @param paramNum      Pointer to variable representing number of parameters to set.
+ * @param paramTypes    Pointer to an array of parameter data types to set.
+ * @param paramNames    Pointer to an array of parameter names to set.
+ * @param paramNullable Pointer to an array of flags whether parameters are nullable to set.
  * 
  * @return True if processing is successful.       
  */
@@ -1349,6 +1349,16 @@ void assignmentHandle(char *id, astNode *block){
  *        statement can be standalone when it is void-returning function, or 
  *        in expressions. This separation allows using this function both in
  *        top-down parsing as well as in bottom-up parsing of expressions.
+ * 
+ *        Semantic checks in this function:
+ * 
+ *              - is called function defined?
+ * 
+ *              - is void function called in expression?
+ * 
+ *              - is non-void function return value discarted?
+ * 
+ *              - correct number and types of parameters?
  * 
  * @param id     Name of function to process.
  * @param node   Pointer to astNode where to save created funcCallNode
