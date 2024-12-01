@@ -238,6 +238,58 @@ encapsulation of the \verb|root| of the AST of the whole source code. It is the 
 
 \section{Code generation}\label{sec:CODEGEN}
 
+Code generation was performed by traversing the \textsc{Abstract Syntax Tree} (AST). This traversal involved an iterative approach for the overall structure and recursive processing for function bodies.
+
+\subsection{Code Buffer}
+
+For code generation, an additional data structure, \verb|Buffer_ll|, was developed and implemented in the modules \verb|code_buffer.h| and \verb|code_buffer.c|. The \verb|Buffer_ll| structure is designed as a linked list where each node contains a pointer to a string, typically representing one line of code. Exceptions include cases like generating headers or built-in functions.
+
+The \verb|Buffer_ll| also incorporates:
+\begin{itemize}
+    \item A pointer to an \textbf{accumulator string} for temporarily storing a string before adding it to a node.
+    \item A special pointer, \verb|flag|, that marks a specific node. This allows inserting a new node after the flagged node instead of appending it to the end of the list. This feature was primarily used for managing variable declarations.
+\end{itemize}
+
+
+\subsection{Header and Built-In Functions}
+
+At the start of code generation, a header is generated. This includes:
+\begin{itemize}
+    \item The declaration of the intermediate code header: \verb|.IFJcode24|.
+    \item Global variable declarations for storing function return values.
+    \item Proper initialization for code execution.
+\end{itemize}
+
+Next, built-in functions without a direct representation in \verb|IFJcode24| are implemented as standalone functions. These built-in functions are prefixed with \verb|$$| to differentiate them from user-defined functions and keywords in \verb |IFJcode24|. Other built-in functions, which correspond directly to \verb|IFJcode24| instructions, are generated when called, primarily for optimization purposes.
+
+\subsection{User-Defined Functions}
+
+User-defined functions are prefixed with \verb|$| to distinguish them from built-in functions and keywords in \verb|IFJcode24|. After generating the corresponding label for a function, the code generator flags a node in \verb|Buffer_ll|. This enables the declaration of all variables that are used in fuction at the beginning of the function, ensuring that in generated code will be no reinitialization. Note that reinitialization is not supported in \verb|IFJcode24|. 
+
+For every user-defined variable, compiler adds the prefix \verb|_| to differentiate it from other variables used by the compiler for various purposes.
+
+Function bodies are generated recursively by traversing the \textsc{AST} and producing the corresponding code for each node.
+
+\subsection{Generating \textit{if} and \textit{while} Statements}
+
+For generating \textit{if} and \textit{while} statements, unique labels are required throughout the generated code. To achieve this:
+\begin{itemize}
+    \item A static variable, \verb|count|, is used to store the number of generated labels.
+    \item Before generating a new statement, \verb|count| is incremented.
+    \item A special function is called to generate a unique and relevant label for the statement.
+\end{itemize}
+
+\subsection{Expressions}
+
+Expressions are generated using a stack, which supports \verb|IFJcode24| instructions. This approach simplifies the processing of expressions derived from a binary tree. Expression generation involves:
+\begin{itemize}
+    \item Traversing the top-level binary tree for expression recursively using \textit{post-order} traversal.
+    \item For binary operators, invoking the corresponding \verb|IFJcode24| instruction ensures the correct order of values is maintained in the stack.
+\end{itemize}
+
+This design ensures efficient and reliable processing of expressions during code generation.
+
+
 \section{Error handling and memory management}\label{sec:ERR}
 
 \section{Teamwork}\label{sec:TEAM}
@@ -260,7 +312,7 @@ Luckily, no problems were encountered and communication ran smoothly for the who
 
     \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
     \item \textbf{Tibor Malega xmalegt00}\,--\,finite automaton design, lexical analysis
-    \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols
+    \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols, testing, AST
     \item \textbf{Ján Skovajsa xskovaj00}\,--\,code generation, testing
 
 \end{itemize}
