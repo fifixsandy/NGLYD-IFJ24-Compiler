@@ -46,7 +46,7 @@
 Compiler uses double-traversal method of the source code based on "top-down" recursive parsing specified by
 LL(1) grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
 analysis. Lexical analyser (scanner) processes source code and tokenizes it based on deterministic finite automaton\footnote{See figure \ref{automaton}.}.
-During parsing, semantic analysis is performed and abstract syntactic tree (AST) is constructed for internal representation.
+During parsing, semantic analysis is performed and abstract syntax tree (AST) is constructed for internal representation.
 Compiler uses table of symbols, implemented as height-balanced binary search tree for keeping information about defined functions and variables.
 Code is generated through recursive traversal of constructed AST.
 
@@ -54,12 +54,12 @@ Code is generated through recursive traversal of constructed AST.
 
 \section{Syntactic analysis}\label{sec:SYNTACTIC}
 Syntactic analysis is divided into two parts\,--\,expression parser and
-recursive parser processing the rest of the source code. These two are closely entertwined.
+recursive parser processing the rest of the source code. These two are closely intertwined.
 Both call scanner to receive tokens to evaluate.\par
 When recursive parser expects an expression in source code (denoted as \verb|expression| in LL(1) grammar~(\ref{ll1rules})), 
 expression parser is called for processing.
 \subsection{"Top-down" syntactic analysis}\label{sec:PARSER}
-Rescursive parser is implemented as a set of functions, each representing certain non-terminal of LL(1) grammar, found in
+Recursive parser is implemented as a set of functions, each representing certain non-terminal of LL(1) grammar, found in
 \verb|parser.c, parser.h|.
 Functions validate sequence of tokens received by invoking scanner with function \verb|getToken()| (or macro \verb|GT| for 
 compactness). When another non-terminal is expected, function representing it is called.
@@ -72,20 +72,20 @@ In the first traversal, information about user-defined functions are collected. 
 \item return data types
 \item number of parameters
 \item parameter names 
-\item parater data types
+\item parameter data types
 \end{itemize}
 Other tokens, not representing function headers are skipped 
-.This is implemented as loop with break condition being encountering token \verb|pub|, signaling start of the next function definiton.
+.This is implemented as loop with break condition being encountering token \verb|pub|, signaling start of the next function definition.
 \par
 Second traversal performs regular parsing of the source code with validation of token sequence, performing semantic analysis and constructing
 AST.
 \par
 To support double traversal, function processing user-defined functions was split into two separate with 
-adjusted logic: \verb|def_func_first()| and \verb|def_func_sec()|. For readibility and reusability, \verb|after_id|~
+adjusted logic: \verb|def_func_first()| and \verb|def_func_sec()|. For readability and reusability, \verb|after_id|~
 function was split into two parts: \verb|funCallHandle()|, processing standalone function calls in source code (or function calls 
 in expressions) and \verb|assignmentHandle()|, processing assignment to variables.
 \par
-Validating compulsory prologue in source code is hanlded in LL(1) grammar as rule 2. For simplicity, 
+Validating compulsory prologue in source code is handled in LL(1) grammar as rule 2. For simplicity, 
 \verb|ifj| namespace and string literal \verb|"ifj24.zig"| are represented as id terminal and expression.
 Further validation of their correctness is done in \verb|prog()|. If either of them is incorrect, syntax error
 is raised and program exits with error code \verb|2|.
@@ -96,7 +96,7 @@ is raised and program exits with error code \verb|2|.
 ADD TEXT
 \subsection{Semantic analysis in "top-down" parser}
 \subsubsection{Variables}
-When defining a variable, parser ensures no \textbf{redefintion} of already
+When defining a variable, parser ensures no \textbf{redefinition} of already
 existing variable occurs within the same nested blocks. This is achieved by searching stack using
 \verb|findInStack()|. If \verb|NULL| is returned, redefinition is not detected. Similarly,
 \verb|funSymtable| is also searched for an entry with matching ID.
@@ -104,16 +104,16 @@ existing variable occurs within the same nested blocks. This is achieved by sear
 however non-\verb|NULL| value is expected.
 \par \textbf{Matching data types} of the variable and the assigned expression in assigning and defining must be confirmed.
 This is done by examining data type of the \verb|astNode| representing expression. Expression cannot be logical.
-\par As explicit data type of a variable during definiton can be ommitted, it is necessary to \textbf{inherit data type
+\par As explicit data type of a variable during definition can be omitted, it is necessary to \textbf{inherit data type
 from expression}. If it is not possible (e.g. expression is \verb|null| or \verb|string| literal), an error is raised.
 If the data type can be deduced, it is set to symbol table entry of a variable along with nullability of the variable.
 \par When parser is finished with processing block of code bounded with curly brackets, symbol table on the top of the stack
 is recursively traversed (preorder traversal, function \verb|allUsed()|) and flags \verb|changed| and \verb|used| are observed,
 ensuring that \textbf{all modifiable variables were modified} and \textbf{all defined variables within block were used}. This includes
-\verb|id_without_null| in if-else and while statements as well as function parameters.
+\verb|id_without_null| in \textit{if-else} and \textit{while} as well as function parameters.
 
 \subsubsection{Functions}
-\textbf{Redefiniton of functions} is checked during the first traversal of the parser (same concept as variable redefiniton check).
+\textbf{Redefinition of functions} is checked during the first traversal of the parser (same concept as variable redefinition check).
 With separate symbol table for built-in functions, matching IDs are allowed (e.g. \verb|ifj.write()| and user-defined \verb|write()|).
 \par
 Validation that all user-defined functions are \textbf{used within program} is performed at the very end of second traversal of parser,
@@ -145,7 +145,7 @@ In statements without the nullable variable part, logical expression is expected
 condition has to be nullable.
 
 \section{Table of symbols}\label{sec:SYMTABLE}
-Data structure representing symbol tables in implementation is height-balanced binary search tree.
+Data structure representing symbol tables in implementation is \textit{height-balanced binary search tree}.
 Functions for working with symbol tables, structs representing nodes or node data and functions for printing
 .dot visualisation of symbol table can be found in \verb|symtable.c| and \verb|symtable.h|. Recursive approach was adopted because the binary tree itself is recursive in nature.
 \par
@@ -158,26 +158,27 @@ Compiler utilizes three distinct types of symbol tables:
  For all types, ID of an element, represented as
 an array of characters, is used as key based on which the tree is arranged. Node representation (\verb|struct symNode|) is the same for all, one thing that varies
 is data representation in union \verb|data| (\verb|struct funData| for functions and \verb|struct varData| for variables).
-\par
+\subsection{User-defined functions}
 Symbol table for \textbf{user-defined functions} is a global variable \verb|symtable funSymtable| declared in \newline\verb|symtable.h|. Parser calls
 \verb|createSymtable()| to initialise it. Nodes include information collected during first traversal of parser and pointer 
 to a symbol table for variables defined within the function.
-\par
+\subsection{Built-in functions}
 Symbol table for \textbf{built-in functions} is also a global variable \verb|symtable builtinSymtable| declared in \verb|symtable.h| sharing
 the same information as symbol table for user-defined functions. It is populated by parser using function \verb|prepareBuiltinSymtable()|.
 All data are pre-initialised based on assignment. No new entry is added into this function after initialisation\,--\,it is only used
-for semantic checks and AST construction. For built-in functions \verb|ifj.write(term)| and \verb|ifj.string(term)|, extra
-data types (\verb|any, stringOru8|) in \verb|enum dataType| were introduced, as parameters in these functions can take multiple data types. Separation
-of symbol tables for built-in and user-defined functions was realised for support of user-defined functions with the same ID as an existing built-in one.
-\par
-Symbol tables for \textbf{defined variables} are created during parsing of blocks of code bounded by curly brackets (functions, while and if-else statements).
+for semantic checks and AST construction. 
+\par For built-in functions \verb|ifj.write(term)| and \verb|ifj.string(term)|, extra
+data types (\verb|any, stringOru8|) in \verb|enum dataType| were introduced, as parameters in these functions can take multiple data types. 
+\par Separation of symbol tables for built-in and user-defined functions was realised for support of user-defined functions with the same ID as an existing built-in one.
+\subsection{Variables}
+Symbol tables for \textbf{defined variables} are created during parsing of blocks of code bounded by curly brackets (functions, \textit{while} and \textit{if-else}).
 Scopes, in which defined variable is accessible are implemented using stack of symbol tables (global variable \verb|stack symtableStack|).
 Stack is implemented as singly linked list. Function \verb|findInStack()| is used to traverse symbol table stack and look for nodes with given key.
 If no entry is found in the whole stack, \verb|NULL| is returned.
 
 
-\section{Abstract syntactic tree}\label{sec:AST}
-Abstract syntactic tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised node types to represent
+\section{Abstract syntax tree}\label{sec:AST}
+Abstract syntax tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised node types to represent
 different components of the source code.
 The AST includes the following node types, each representing a specific syntactic construct: 
 \newline
@@ -220,9 +221,10 @@ The AST includes the following node types, each representing a specific syntacti
     \end{itemize}
 \end{itemize}
 \end{minipage}
+\newline
 \par
 Each node has distinct set of information needed for semantic analysis or code generation, implemented with
-\verb|struct|. Nodes may include pointer to a different nodes (e.g. condition in while or if-else, expression node in assign or return).
+\verb|struct|. Nodes may include pointer to a different nodes (e.g. condition in \textit{while} or \textit{if-else}, expression node in assign or return).
 All nodes in constructed AST are \verb|struct astNode|, which serves a purpose of general representation.
 Information included in \verb|astNode|:
 \begin{itemize}
@@ -232,9 +234,9 @@ Information included in \verb|astNode|:
 \end{itemize}
 
 Each node type has a designated function for its creation (\verb|create*Node()|, where \verb|*| is the type of the node)
-with all information needed to be stored.
+with all information needed to be stored as parameters.
 \par Special node \verb|root| only includes a \verb|next| pointer, which serves as a connecting piece for
-bodies of functions, if-else or while statements. Global variable \verb|AST ASTree|, declared in \verb|main.c| is an
+bodies of functions, \textit{if-else} or \textit{while}. Global variable \verb|AST ASTree|, declared in \verb|main.c| is an
 encapsulation of the \verb|root| of the AST of the whole source code. It is the product of syntactic analysis.
 \par  Functions for printing .dot representation for visualisaton of AST are also implemented.
 
@@ -266,7 +268,7 @@ Next, built-in functions without a direct representation in \verb|IFJcode24| are
 
 \subsection{User-Defined Functions}
 
-User-defined functions are prefixed with \verb|$| to distinguish them from built-in functions and keywords in \verb|IFJcode24|. After generating the corresponding label for a function, the code generator flags a node in \verb|Buffer_ll|. This enables the declaration of all variables that are used in fuction at the beginning of the function, ensuring that in generated code will be no reinitialization. Note that reinitialization is not supported in \verb|IFJcode24|. 
+User-defined functions are prefixed with \verb|$| to distinguish them from built-in functions and keywords in \verb|IFJcode24|. After generating the corresponding label for a function, the code generator flags a node in \verb|Buffer_ll|. This enables the declaration of all variables that are used in function at the beginning of the function, ensuring that in generated code will be no reinitialization. Note that reinitialization is not supported in \verb|IFJcode24|. 
 
 For every user-defined variable, compiler adds the prefix \verb|_| to differentiate it from other variables used by the compiler for various purposes.
 
@@ -299,7 +301,7 @@ Implementing a compiler is not an easy task, that is why the work has begun as s
 the assignment was published. Firstly, tasks were distributed among all members based on 
 preferences.\par 
 Test submission was set as deadline for implementation. This deadline
-was successfuly met with time left for fixing errors and further testing. Pair programming as well as 
+was successfully met with time left for fixing errors and further testing. Pair programming as well as 
 code reviews were practised. 
 
 \subsection{Communication}\label{sec:COMM}
