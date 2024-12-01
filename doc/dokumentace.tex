@@ -91,6 +91,57 @@ is raised and program exits with error code \verb|2|.
 \subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
 
 \section{Semantic analysis}\label{sec:SEMANTIC}
+ADD TEXT
+\subsection{Semantic analysis in "top-down" parser}
+\subsubsection{Variables}
+When defining a variable, it must be checked, whether \textbf{redefintion} of already
+existing variable within the same nested blocks occurs. This is perfomed by searching current stack using
+\verb|findInStack()|. When \verb|NULL| is returned, no redefiniton occurs. Similarly,
+\verb|funSymtable| is also searched for an entry with matching ID.
+\par Assignment cannot be performed on \textbf{undefined variables}. Verification is similar to redefinition check,
+however non-\verb|NULL| value is expected.
+\par \textbf{Matching data types} when assigning and defining of the variable and the assigned expression must be confirmed.
+This is done by examining data type of the \verb|astNode| representing expression. Expression cannot be logical.
+\par As explicit data type of a variable during definiton can be ommitted, it is necessary to \textbf{inherit data type
+from expression}. If it is not possible (e.g. expression is \verb|null| or \verb|string| literal), an error is raised.
+If the data type can be deduced, it is set to symbol table of a variable along with nullability of the variable.
+\par When parser is finished with processing block of code bounded with curly brackets, symbol table on the top of the stack
+is recursively traversed (preorder traversal, function \verb|allUsed()|) and flags \verb|changed| and \verb|used| are observed,
+ensuring that \textbf{all modifiable variables were modified} and \textbf{all defined variables within block were used}. This includes
+\verb|id_without_null| in if-else and while statements as well as function parameters.
+
+\subsubsection{Functions}
+\textbf{Redefiniton of functions} is checked during the first traversal of the parser (same concept as variable redefiniton check).
+With separate symbol table for built-in function, matching IDs are allowed (e.g. \verb|ifj.write()| and user-defined \verb|write()|).
+Parameters of functions are also analysed in the same manner.
+\par
+Validation that all user-defined functions are \textbf{used within program} is performed at the very end of second traversal of parser,
+by examining \verb|used| flag in \verb|funSymtable| nodes.
+\par
+\textbf{Non-void function not containing any return statements} in all possible execution paths is evaluated as semantic error.
+This is analysed by \verb|allReturns()| function, using depth-first recursive traversal of AST of a function body.
+Function returns \verb|true|, if:
+\begin{itemize}
+    \item \verb|return| AST node is encountered
+    \item all paths in \verb|if| and \verb|else| blocks return true
+    \item all paths in \verb|while| block return true
+\end{itemize}
+When a different AST node is encountered, \verb|allReturns()| is called on the \verb|next| of the AST node.
+\par
+\textbf{Type compatibility in returning expression} is checked with each \verb|return| statement. If it is not compatible with
+expected return type (from function definition), error is raised. Similarly, when a \verb|void| function returns an expression,
+error is raised.
+\par
+When a function is called outside of an expression, it must be \verb|void|. Return type of function is examined in 
+symbol table entry.
+\par
+\textbf{Presence of main function} in source code is validated by \verb|mainDefined()| at the end of first traversal.
+At the same time, \textbf{parameters and return type of main} are checked, whether they match with expected ones.
+
+\subsubsection{Other semantic checks}
+When \verb|while| or \verb|if-else| statements are being processed by parser, condition expression is checked.
+In statements without the nullable variable part, logical expression is expected. In statements with \verb|id_without_null|,
+condition has to be nullable.
 
 \section{Table of symbols}\label{sec:SYMTABLE}
 Data structure representing symbol tables in implementation is height-balanced binary search tree.
@@ -115,7 +166,8 @@ Symbol table for \textbf{built-in functions} is also a global variable \verb|sym
 the same information as symbol table for user-defined functions. It is populated by parser using function \verb|prepareBuiltinSymtable()|.
 All data are pre-initialised based on assignment. No new entry is added into this function after initialisation\,--\,it is only used
 for semantic checks and AST construction. For built-in functions \verb|ifj.write(term)| and \verb|ifj.string(term)|, extra
-data types (\verb|any, stringOru8|) in \verb|enum dataType| were introduced, as parameters in these functions can take multiple data types.
+data types (\verb|any, stringOru8|) in \verb|enum dataType| were introduced, as parameters in these functions can take multiple data types. Separation
+of symbol tables for built-in and user-defined functions was realised for support of user-defined functions with the same ID as an existing built-in one.
 \par
 Symbol tables for \textbf{defined variables} are created during parsing of blocks of code bounded by curly brackets (functions, while and if-else statements).
 Scopes, in which defined variable is accessible are implemented using stack of symbol tables (global variable \verb|stack symtableStack|).
@@ -170,7 +222,7 @@ The remaining parts of the project were developed by all members of the team sim
 
 
 
-
+\newpage
 \section{Attachments}
 \begin{figure}[ht]
     \begin{center}
