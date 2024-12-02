@@ -51,22 +51,48 @@ Compiler uses table of symbols, implemented as height-balanced binary search tre
 Code is generated through recursive traversal of constructed AST.
 
 \section{Lexical analysis}\label{sec:LEX}
-\textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it 
-into \textbf{tokens}. It is entirely based on the \textbf{deterministic finite state automaton}. The lexical 
-analysis starts in \verb|getToken()| function and works based on the first character read from input and, according to it, 
-continues to process the token. More complicated tokens such as number, ID or string tokens have its own functions which 
-process tokens of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls 
- \verb|ERRORLEX| to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
+\textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it into \textbf{tokens}.
+It is entirely based on the \textbf{deterministic finite state automaton}. The lexical analysis starts in \textbf{getToken} function and works based on the 
+first character read from input and, according to it, continues to process the token. 
+More complicated tokens such as number, ID or string tokens have its own functions which process tokens of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls function \textbf{ERRORLEX} 
+to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
 Each token contains: 
 \begin{itemize}
-\item a \textbf{type}, represented by an element from an enumeration \verb|token\_types|
+\item a \textbf{type}, represented by an element from an enumeration token\_types
 \item a \textbf{value} holding the content of the token, represented as a string of characters
 \item \textbf{line} and \textbf{column number} of the currently processed token
 \end{itemize}
-The value of token is dynamically resized when necessary to ensure sufficient memory for tokens of 
-any length and saved into a linked list \verb|TokenValues|, which is used to correctly free all 
-allocated memory for token values. Since scanner and specifically \verb|getToken()| function is called many times during the compiling process, 
-line and column number are defined as global variables in order to keep track of them even when the process of a single token ends.
+The value of token is dynamically resized when necessary to ensure sufficient memory for tokens of any length and saved 
+into a linked list \textbf{TokenValues}, which is used to correctly free all allocated memory for token values. 
+Every not empty value of a token is terminated with a null string at the end of processing the token. 
+Since scanner and specifically getToken function is called many times during the compiling process, line and column 
+number are defined as global variables in order to keep track of them even when the process of a single token ends. 
+
+\subsection{Functionality}
+A \textbf{single character} tokens are processed directly in \textbf{getToken} function by assigning a type, line and 
+column number before returning the token.
+\par
+\textbf{Number} tokens are recognized in getToken function by their first character and \textbf{process\_Number\_Token} 
+function is called. This function reads through input and accepts characters as shown in the finite state automaton. 
+\textbf{whole}, \textbf{decimal}, \textbf{exponential} and \textbf{zero} tokens are all processed in this function 
+and all lexical errors regarding those types are covered here. 
+\par
+\textbf{String} tokens are recognized by their first character '"' in getToken function. The token is then processed 
+in \textbf{process\_String\_Token} function. This function reads and saves all characters until it reaches the second '"' 
+or ends in lexical error. All \textbf{escape sequences} in the string are directly transformed to what they represent 
+and inserted into the \textbf{token value}. \textbf{Hexadecimal numbers} in string are also transformed into their 
+\textbf{decimal value} and then assigned to the token value. The other type of string, \textbf{multiline string}, 
+is handled in a separate \textbf{process\_Multiline\_String\_Token} function. This function is called after encountering 
+a \textbf{backslash} as the first character read. This function has a similar purpose to process\_String\_Token but it \textbf{doesn't} 
+support escape sequences nor hexadecimal numbers and is used purely for Multiline strings.
+\par
+Tokens of type \textbf{ID} are processed in function \textbf{process\_ID\_Token} which is called as a \textbf{default case} 
+in switch located in getToken. Token is processed in this function if none of the above token types criteria were met.
+\par
+\textbf{Keyword} tokens are initially recognized as ID tokens and are processed in the \textbf{ID function}. After the ID token 
+is processed, a function for recognizing ID as a keyword is called and assigns it the correct keyword type as \textbf{element} from enumeration \textbf{token\_types}.
+\par
+\textbf{Import} type tokens are processed in \textbf{process\_Import} function after getting a '@' as the first character. 
 
 \section{Syntactic analysis}\label{sec:SYNTACTIC}
 Syntactic analysis is divided into two parts\,--\,expression parser and
