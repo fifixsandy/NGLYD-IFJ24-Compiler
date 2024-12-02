@@ -27,23 +27,23 @@
 typedef struct astNode astNode;
 
 typedef enum{
-    MULTIPLICATION,         // 0
-    DIVISION,               // 1
-    ADDITION,               // 2
-    SUBSTRACTION,           // 3
-    EQUAL,                  // 4
-    NOT_EQUAL,              // 5
-    LOWER,                  // 6
-    GREATER,                // 7
-    LOWER_OR_EQUAL,         // 8
-    GREATER_OR_EQUAL,       // 9
-    LBR,                    // 10
-    RBR,                    // 11
+    MULTIPLICATION,         //   *
+    DIVISION,               //   /
+    ADDITION,               //   +
+    SUBSTRACTION,           //   -
+    EQUAL,                  //   ==
+    NOT_EQUAL,              //   !=
+    LOWER,                  //   <
+    GREATER,                //   >
+    LOWER_OR_EQUAL,         //   <=
+    GREATER_OR_EQUAL,       //   >=
+    LBR,                    //   (
+    RBR,                    //   )
+    ID,                     //   i
+    STOP,                   //   $
 
-    ID,                     // 12
-    STOP,                   // 13
-    NO_TERMINAL,            // 14 
-    ERROR                   // 15
+    NO_TERMINAL,            //   E
+    ERROR                   
 } symbol_number;
 
 

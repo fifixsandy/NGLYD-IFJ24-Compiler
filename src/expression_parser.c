@@ -317,7 +317,7 @@ int shift(exp_stack *estack, astNode *curr_node, control_items *control, symbol_
  * @brief Performs reduction rules for expressions.
  *
  *      Reduction rules include:
- *          E -> id
+ *          E -> i              
  *          E -> (E)
  *          E -> E * E
  *          E -> E / E
@@ -397,7 +397,7 @@ void reduce(exp_stack *estack){
 }
 
 /**
- * @brief Evalutates given token, assigns propper symbol number for expression precedence and if needed 
+ * @brief Evalutates given token, assigns propper symbol number (see ast.h) for expression precedence and if needed 
  *        assigns propper values in control struct.
  * 
  * @param estack    Pointer to stack where are all elements of expression stored.
