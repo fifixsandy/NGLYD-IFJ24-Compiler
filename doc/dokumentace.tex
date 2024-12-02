@@ -133,7 +133,7 @@ Further validation of their correctness is done in \verb|prog()|. If either of t
 is raised and program exits with error code \verb|2|.
 
 \subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
-The analysis involves processing expressions using a \textbf{precedence table}, which defines the relationships between operands, arithmetic 
+The analysis involves processing expressions using a \textbf{precedence table}\footnote{See figure \ref{prectable}}, which defines the relationships between operands, arithmetic 
 and relational operators. A \textbf{stack} is employed to facilitate this analysis. The functions responsible for the analysis are implemented 
 in the files \verb|expression_parser.c|, \verb|expression_parser.h|.
 \par
@@ -144,7 +144,7 @@ over to the parser via the \verb|wasDefined()| or \verb|funCallHandle()| functio
 table, it is assigned the symbol \verb|STOP|, signaling the termination of processing.
 \par
 Each terminal symbol from the input is placed on the stack according to the rules of precedence analysis 
-(via the \verb|shift()| function) and subsequently reduced to \textbf{non-terminal symbols} based on reduction rules (via the \verb|reduce()| function). 
+(via the \verb|shift()| function) and subsequently reduced to \textbf{non-terminal symbols} based on reduction rules (via the \verb|reduce()| function)\footnote{See figure \ref{Precedence_grammar}}. 
 If the precedence rules are violated, the program raises a \textbf{syntax error}.
 \par
 The analysis concludes when the terminal symbol in the input is \verb|STOP| and the topmost terminal symbol 
@@ -382,6 +382,18 @@ This design ensures efficient and reliable processing of expressions during code
 
 
 \section{Error handling and memory management}\label{sec:ERR}
+
+\section{FUNEXP}
+\subsection{function call in expression}
+If a token of type \verb|id| is encountered as input, it is first checked whether it represents a variable 
+or a constant. If not, it is verified whether it might be a function call. For a token to be considered a 
+function call, the next token must be of type \verb|lbracket| (left bracket) or \verb|dot| (period). In such a 
+case, the function \verb|funCallHandle()| is invoked.
+\par
+This approach was chosen due to the existence of the \verb|funCallHandle()| function, which the parser already 
+uses to process function calls in the program. A \textbf{valid} function call is further processed in the expression 
+as a type \verb|ID|.
+
 
 \section{Teamwork}\label{sec:TEAM}
 Implementing a compiler is not an easy task, that is why the work has begun as soon as 
