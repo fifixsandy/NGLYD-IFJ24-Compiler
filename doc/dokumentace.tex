@@ -107,6 +107,24 @@ Further validation of their correctness is done in \verb|prog()|. If either of t
 is raised and program exits with error code \verb|2|.
 
 \subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
+The analysis involves processing expressions using a \textbf{precedence table}, which defines the relationships between operands, arithmetic 
+and relational operators. A \textbf{stack} is employed to facilitate this analysis. The functions responsible for the analysis are implemented 
+in the files \verb|expression_parser.c|, \verb|expression_parser.h|.
+\par
+At the start of the analysis, the symbol \verb|STOP| is added to the stack. Each subsequent element of the expression is retrieved using the \verb|getToken()| 
+function (the \verb|GT| macro). The retrieved token is then assigned a symbol that represents its \textbf{role} in the expression, determined by the 
+\verb|evaluate_given_token()| function. If the token represents a \textbf{variable}, a \textbf{constant}, or a \textbf{function call}, control is handed 
+over to the parser via the \verb|WasDefined()| or \verb|funCallHandle()| functions. However, if a token does not conform to the rules defined in the precedence 
+table, it is assigned the symbol \verb|STOP|, signaling the termination of processing.
+\par
+Each terminal symbol from the input is placed on the stack according to the rules of precedence analysis 
+(via the \verb|shift()| function) and subsequently reduced to \textbf{non-terminal symbols} based on reduction rules (via the \verb|reduce()| function). 
+If the precedence rules are violated, the program raises a \textbf{syntax error}.
+\par
+The analysis concludes when the terminal symbol in the input is \verb|STOP| and the topmost terminal symbol 
+on the stack is also \verb|STOP|. The result of this analysis is an Abstract Syntax Tree (AST) representing the expression, 
+which is then passed to the parser. \textbf{The parser} must verify whether the token represented by the \verb|STOP| symbol 
+during precedence analysis is valid within the program context. If it is not, a \textbf{syntax error} is reported.
 
 \section{Semantic analysis}\label{sec:SEMANTIC}
 ADD TEXT
@@ -159,6 +177,33 @@ At the same time, \textbf{parameters and return type of main} are checked, ensur
 When \verb|while| or \verb|if-else| statements are being processed by parser, condition expression is checked.
 In statements without the nullable variable part, logical expression is expected. In statements with \verb|id_without_null|,
 condition has to be nullable.
+
+\subsection{Semantic analysis in "bottom-up" parser}
+\subsubsection{Semantic Analysis of ID Symbols}
+In the \verb|evaluate_given_token()| function, when the parser evaluates a variable or a function call as valid, semantic 
+type-casting verification is performed. Castable variables (\textbf{constants} with values \textbf{known at compile-time}) 
+are stored in the AST as \textbf{literal nodes} to facilitate easier manipulation during subsequent semantic checks.
+\par
+For elements of type \textbf{ID} (variables, function calls, or literals), the \verb|control| structure is populated during token 
+evaluation. This structure stores additional information necessary for further semantic checks of the given element.
+
+\subsubsection{Semantic check for binary operations}
+When the reduction of binary operations is required, the \verb|semantic_check()| function is invoked to verify the compatibility 
+of operand types with each other and with the given operation. This function ensures that:
+
+\begin{itemize}
+    \item \textbf{Retyping:} Retyping is allowed only for operands whose values are known at \textbf{compile-time} and are of type 
+        \verb|i32| or \verb|f64| (with zero decimal part). Priority is given to retyping from \verb|i32| to \verb|f64|. The 
+        \verb|retype()| function is called to traverse the entire operand \textbf{subtree} and retype all nodes to the required type. 
+        Based on the retypeability of both operands, it is determined whether the operands in the operation can be retyped for future use.
+    \item \textbf{Prohibited Types:} Operands of type \verb|string| or \verb|u8| are not allowed.
+    \item \textbf{Nullable Variables:} Binary operations (except \textbf{EQUAL} or \textbf{NOT EQUAL}) cannot involve operands with 
+        \verb|null| or \verb|nullable| types.
+    \item \textbf{Null Comparisons:} A \verb|null| value can only be compared with operands of type \verb|null| or \verb|nullable|.
+\end{itemize}
+
+Violating any of these rules results in a \textbf{semantic type error}.
+
 
 \section{Table of symbols}\label{sec:SYMTABLE}
 Data structure representing symbol tables in implementation is \textit{height-balanced binary search tree}.
