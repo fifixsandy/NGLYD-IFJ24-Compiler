@@ -11,13 +11,13 @@
  * 
  *         Functionalities:
  *                      - Defines a precedence table for expression parsing.
- *                      - Implements stack-based operations such as push, pop,top-terminal retrieval and  check for pairing left bracket.
- *                      - Handles the evaluation of tokens and reduction rules for expression tree construction.
+ *                      - Implements stack-based operations such as creation of stack, push, pop, top-terminal retrieval and check for pairing left bracket.
+ *                      - Handles the evaluation of tokens, shift and reduction rules for expression tree construction.
  *                      - Includes semantic checks for type compatibility and retyping as needed.
  *                      - Manages memory efficiently by freeing stack resources and AST nodes.
  * 
  *         During evaluation, if a variable identifier or function identifier is encountered, control is handed to the parser
- *         to verify whether the identifier is defined.
+ *         to verify whether the function or identifier is defined.
  *         In case of errors, the `ERROR(...)` macro (defined in error.h) is called, and the program terminates with the appropriate error code.
  * 
  * @see    parser.h, ast.h, error.h
@@ -270,7 +270,8 @@ bool process_expr(exp_stack *estack){
 }
 
 /**
-* @brief A function that evaluates the precedence of a token with the precedence of the highest terminal symbol and applies a rule according to precedence parsing.
+* @brief A function that evaluates the precedence of a token with the precedence 
+*        of the highest terminal symbol and applies a rule according to precedence parsing.
 *
 * @param estack     A pointer to an expression stack.
 * @param curr_node  Pointer to a node of an expression tree.
