@@ -383,16 +383,16 @@ This design ensures efficient and reliable processing of expressions during code
 
 \section{Error handling and memory management}\label{sec:ERR}
 
-\section{FUNEXP}
-\subsection{function call in expression}
-If a token of type \verb|id| is encountered as input, it is first checked whether it represents a variable 
+\section{\textsc{Funexp}}
+If a token of type \verb|id| is encountered as input during precedence syntactic analysis, it is first checked whether it represents a variable 
 or a constant. If not, it is verified whether it might be a function call. For a token to be considered a 
-function call, the next token must be of type \verb|lbracket| (left bracket) or \verb|dot| (period). In such a 
+function call, the next token must be of type \verb|lbracket| (left bracket) or \verb|dot| (period). In such
 case, the function \verb|funCallHandle()| is invoked.
 \par
 This approach was chosen due to the existence of the \verb|funCallHandle()| function, which the parser already 
 uses to process function calls in the program. A \textbf{valid} function call is further processed in the expression 
-as a type \verb|ID|.
+as a type \verb|ID|. This reuse efficiently and effectively handles function calls as well as expressions as function call parameters
+\footnote{See rule 29. in LL(1) grammar (\ref{ll1rules}).}.
 
 
 \section{Teamwork}\label{sec:TEAM}
