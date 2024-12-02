@@ -51,6 +51,22 @@ Compiler uses table of symbols, implemented as height-balanced binary search tre
 Code is generated through recursive traversal of constructed AST.
 
 \section{Lexical analysis}\label{sec:LEX}
+\textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it 
+into \textbf{tokens}. It is entirely based on the \textbf{deterministic finite state automaton}. The lexical 
+analysis starts in \textbf{getToken} function and works based on the first character read from input and, according to it, 
+continues to process the token. More complicated tokens such as number, ID or string tokens have its own functions which 
+process tokens of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls 
+function \textbf{ERRORLEX} to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
+Each token contains: 
+\begin{itemize}
+\item a \textbf{type}, represented by an element from an enumeration token\_types
+\item a \textbf{value} holding the content of the token, represented as a string of characters
+\item \textbf{line} and \textbf{column number} of the currently processed token
+\end{itemize}
+The value of token is dynamically resized when necessary to ensure sufficient memory for tokens of 
+any length and saved into a linked list \textbf{TokenValues}, which is used to correctly free all 
+allocated memory for token values. Since scanner and specifically getToken function is called many times during the compiling process, 
+line and column number are defined as global variables in order to keep track of them even when the process of a single token ends.
 
 \section{Syntactic analysis}\label{sec:SYNTACTIC}
 Syntactic analysis is divided into two parts\,--\,expression parser and
