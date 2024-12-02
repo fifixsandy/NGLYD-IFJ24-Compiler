@@ -53,19 +53,19 @@ Code is generated through recursive traversal of constructed AST.
 \section{Lexical analysis}\label{sec:LEX}
 \textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it 
 into \textbf{tokens}. It is entirely based on the \textbf{deterministic finite state automaton}. The lexical 
-analysis starts in \textbf{getToken} function and works based on the first character read from input and, according to it, 
+analysis starts in \verb|getToken()| function and works based on the first character read from input and, according to it, 
 continues to process the token. More complicated tokens such as number, ID or string tokens have its own functions which 
 process tokens of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls 
-function \textbf{ERRORLEX} to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
+ \verb|ERRORLEX| to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
 Each token contains: 
 \begin{itemize}
-\item a \textbf{type}, represented by an element from an enumeration token\_types
+\item a \textbf{type}, represented by an element from an enumeration \verb|token\_types|
 \item a \textbf{value} holding the content of the token, represented as a string of characters
 \item \textbf{line} and \textbf{column number} of the currently processed token
 \end{itemize}
 The value of token is dynamically resized when necessary to ensure sufficient memory for tokens of 
-any length and saved into a linked list \textbf{TokenValues}, which is used to correctly free all 
-allocated memory for token values. Since scanner and specifically getToken function is called many times during the compiling process, 
+any length and saved into a linked list \verb|TokenValues|, which is used to correctly free all 
+allocated memory for token values. Since scanner and specifically \verb|getToken()| function is called many times during the compiling process, 
 line and column number are defined as global variables in order to keep track of them even when the process of a single token ends.
 
 \section{Syntactic analysis}\label{sec:SYNTACTIC}
@@ -114,7 +114,7 @@ in the files \verb|expression_parser.c|, \verb|expression_parser.h|.
 At the start of the analysis, the symbol \verb|STOP| is added to the stack. Each subsequent element of the expression is retrieved using the \verb|getToken()| 
 function (the \verb|GT| macro). The retrieved token is then assigned a symbol that represents its \textbf{role} in the expression, determined by the 
 \verb|evaluate_given_token()| function. If the token represents a \textbf{variable}, a \textbf{constant}, or a \textbf{function call}, control is handed 
-over to the parser via the \verb|WasDefined()| or \verb|funCallHandle()| functions. However, if a token does not conform to the rules defined in the precedence 
+over to the parser via the \verb|wasDefined()| or \verb|funCallHandle()| functions. However, if a token does not conform to the rules defined in the precedence 
 table, it is assigned the symbol \verb|STOP|, signaling the termination of processing.
 \par
 Each terminal symbol from the input is placed on the stack according to the rules of precedence analysis 
@@ -458,7 +458,7 @@ The remaining parts of the project were developed by all members of the team sim
         \item \textless while\_statement\textgreater\ $\to$ while ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \}
         \item \textless if\_statement\textgreater\ $\to$ if ( expression ) \textless id\_without\_null\textgreater\ \{ \textless body\textgreater \} else \{ \textless body\textgreater \}
     \end{enumerate}
-    \caption{LL(1) rules}
+    \caption{LL(1) grammar}
     \label{ll1rules}
 \end{center}
 \end{figure}
@@ -466,8 +466,16 @@ The remaining parts of the project were developed by all members of the team sim
 \begin{figure}[ht]
     \begin{center}
         \scalebox{0.6}{\includegraphics{doc/LL1_table.pdf}}
-        \caption{LL(1) table for parsing}
+        \caption{LL(1) table}
         \label{ll1table}
+    \end{center}
+\end{figure}
+
+\begin{figure}[ht]
+    \begin{center}
+        \scalebox{0.2}{\includegraphics{doc/precedence_table.pdf}}
+        \caption{Precedence table}
+        \label{prectable}
     \end{center}
 \end{figure}
 
