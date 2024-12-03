@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   ast.c
  * 
@@ -12,9 +12,8 @@
  * @author xnovakf00 Filip Novák
  *         xfignam00 Matúš Fignár     
  * 
- * @todo delete parents
  * 
- * @date   24.11.2024
+ * @date   03.12.2024
 */
 
 
@@ -40,7 +39,6 @@ astNode *createAstNode(){
     }
 
     new->next   = NULL;
-    new->parent = NULL;
     new->type   = AST_INVALID;
 
     return new;
@@ -60,7 +58,7 @@ astNode *createAstNode(){
  * @param body      astNode of body of while (root)
  * @param symtableW Pointer to the symtable of while.
  */
-void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent){
+void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW){
 
     astWhile newWhile = {
         .body = body,
@@ -72,7 +70,6 @@ void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNod
 
     dest->type = AST_NODE_WHILE;
     dest->nodeRep.whileNode =  newWhile;
-    dest->parent = parent;
     dest->next = NULL;
 
     return;
@@ -90,7 +87,7 @@ void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNod
  * @param elsePart astNode representing the body of the "else" block.
  * @param withNull Flag indicating if the condition is withNull.
  */
-void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent){
+void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull){
     astIfElse newIfElse = {
         .condition = cond,
         .ifPart = ifPart,
@@ -100,7 +97,6 @@ void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *el
 
     dest->type = AST_NODE_IFELSE;
     dest->nodeRep.ifElseNode = newIfElse;
-    dest->parent = parent;
     dest->next = NULL;
 }
 
@@ -115,7 +111,7 @@ void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *el
  * @param body            astNode of the body of the if statement (root).
  */
 
-void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body, astNode *parent){
+void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body){
     astIf newIf = {
         .body = body,
         .id_without_null = id_without_null,
@@ -124,7 +120,6 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
 
     dest->next = NULL;
     dest->type = AST_NODE_IF;
-    dest->parent = parent;
     dest->nodeRep.ifNode = newIf;
 }
 
@@ -139,13 +134,12 @@ void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astN
  * @param body          astNode of the body of the else statement (root).
  */
 
-void createElseNode(astNode *dest, symtable *symtableElse, astNode *body, astNode *parent) {
+void createElseNode(astNode *dest, symtable *symtableElse, astNode *body) {
     astElse newElse = {
         .symtableElse = symtableElse,
         .body = body
     };
 
-    dest->parent = parent;
     dest->type = AST_NODE_ELSE;
     dest->next = NULL;
     dest->nodeRep.elseNode = newElse;
@@ -161,14 +155,13 @@ void createElseNode(astNode *dest, symtable *symtableElse, astNode *body, astNod
  * @param expression  astNode representing the expression to be assigned.
  * @param dataT       The data type of the assignment.
  */
-void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT) {
+void createAssignNode(astNode *dest, char *id, astNode *expression, dataType dataT) {
     astAssign newAssign = {
         .id = id,
         .expression = expression,
         .dataT = dataT
     };
 
-    dest->parent = parent;
     dest->type = AST_NODE_ASSIGN;
     dest->next = NULL;
     dest->nodeRep.assignNode = newAssign;
@@ -185,7 +178,7 @@ void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *par
  * @param initExpr      Expression used to initialize the variable.
  * @param symtableEntry Symbol table entry for the variable.
  */
-void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent) {
+void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry) {
     astDefVar newDefVar = {
         .id = id,
         .initExpr = initExpr,
@@ -194,7 +187,6 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
 
     dest->next = NULL;
     dest->type = AST_NODE_DEFVAR;
-    dest->parent = parent;
     dest->nodeRep.defVarNode = newDefVar;
 }
 
@@ -213,7 +205,7 @@ void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symta
  * @param returnType    The return type of the function.
  * @param nullable      Whether the function return type can be nullable.
  */
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paramNames, int paramNum, dataType returnType, bool nullable) {
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, char **paramNames, int paramNum, dataType returnType, bool nullable) {
     astDefFunc newDefFunc = {
         .id          = id,
         .symtableFun = symtableFun,
@@ -226,7 +218,6 @@ void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *
 
     dest->next = NULL;
     dest->type = AST_NODE_DEFFUNC;
-    dest->parent = parent;
     dest->nodeRep.defFuncNode = newDefFunc;
 }
 
@@ -241,7 +232,7 @@ void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *
  * @param returnType    The return type of the expression.
  * @param inMain        Flag if the return is inside the main function.
  */
-void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain) {
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, bool inMain) {
     astReturn newReturn = {
         .returnExp = returnExp,
         .returnType = returnType,
@@ -250,7 +241,6 @@ void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, as
 
     dest->next = NULL;
     dest->type = AST_NODE_RETURN;
-    dest->parent = parent;
     dest->nodeRep.returnNode = newReturn;
 }
 
@@ -267,7 +257,7 @@ void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, as
  * @param right  Right operand of the operation.
  * @param dataT  The data type of the result of the operation.
  */
-void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent) {
+void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT) {
     astBinOp newBinOp = {
         .op = op,
         .left = left,
@@ -275,11 +265,9 @@ void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *ri
         .dataT = dataT
     };
 
-    left->parent = dest;
-    right->parent = dest;    
+   
     dest->next = NULL;
     dest->type = AST_NODE_BINOP;
-    dest->parent = parent;
     dest->nodeRep.binOpNode = newBinOp;
 }
 
@@ -293,7 +281,7 @@ void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *ri
  * @param dataT The data type of the literal value.
  * @param value The value of the literal.
  */
-void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent) {
+void createLiteralNode(astNode *dest, dataType dataT, void *value) {
     astLiteral newLiteral = {
         .dataT = dataT
     };
@@ -313,7 +301,6 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
 
     dest->next = NULL;
     dest->type = AST_NODE_LITERAL;
-    dest->parent = parent;
     dest->nodeRep.literalNode = newLiteral;
 }
 
@@ -327,7 +314,7 @@ void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *pare
  * @param dataT         The data type of the variable.
  * @param symtableEntry Symbol table entry for the variable.
  */
-void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent) {
+void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry) {
     astVar newVar = {
         .dataT = dataT,
         .id = id,
@@ -337,7 +324,6 @@ void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEnt
 
     dest->next = NULL;
     dest->type = AST_NODE_VAR;
-    dest->parent = parent;
     dest->nodeRep.varNode = newVar;
     symtableEntry->data.used = true; // set for semantic check
 }
@@ -356,7 +342,7 @@ void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEnt
  * @param paramNum      Number of parameters.
  * @param isNullable    Whether the return type is nullable.
  */
-void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **paramExpr, int paramNum, bool isNullable) {
+void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode **paramExpr, int paramNum, bool isNullable) {
     astFuncCall newFuncCall = {
         .retType         = retType,
         .nullableRetType = isNullable,
@@ -368,7 +354,6 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin,
     };
     dest->next = NULL;
     dest->type = AST_NODE_FUNC_CALL;
-    dest->parent = parent;
     dest->nodeRep.funcCallNode = newFuncCall;
     symtableEntry->data.used = true; // set for semantic check
 }
@@ -381,7 +366,7 @@ void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin,
  * @param dest Pointer to the astNode to initialize as an UNUSED node.
  * @param expr Expression that is unused.
  */
-void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
+void createUnusedNode(astNode *dest, astNode *expr){
 
     astUnused newUnused = {
         .expr = expr
@@ -389,7 +374,6 @@ void createUnusedNode(astNode *dest, astNode *expr, astNode *parent){
 
     dest->next               = NULL;
     dest->type               = AST_UNUSED;
-    dest->parent             = parent;
     dest->nodeRep.unusedNode = newUnused;
 
 }
@@ -416,7 +400,6 @@ void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool 
 
     dest->next               = NULL;
     dest->type               = AST_NODE_EXPR;
-    dest->parent             = NULL;
     dest->nodeRep.exprNode   = newExpr;
 }
 
@@ -569,7 +552,9 @@ void printASTNode(FILE *file, astNode *node){
     printASTEdges(file, node);
     switch(node->type){
         case AST_NODE_DEFFUNC:
+            fprintf(file, "subgraph %s{",node->nodeRep.defFuncNode.id);
             printASTNode(file, node->nodeRep.defFuncNode.body);
+            fprintf(file, "\n label=\"%s\"}",node->nodeRep.defFuncNode.id);
             break;
         case AST_NODE_IFELSE:
             printASTNode(file, node->nodeRep.ifElseNode.ifPart);
@@ -650,7 +635,7 @@ void printASTNodeLabel(FILE *file, astNode *node){
             fprintf(file, "EXPR");
             break;
         case AST_NODE_BINOP:
-            fprintf(file, "BINOP\\nOp=");
+            fprintf(file, "BINOP\\nOp: ");
             printBinopType(file, node->nodeRep.binOpNode.op);
             break;
         case AST_NODE_LITERAL:

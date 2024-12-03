@@ -1,4 +1,6 @@
 /**
+ *         Implementation of IFJ24 imperative language compiler.
+ * 
  * @file   scanner.c
  * 
  * @brief  Implementation of scanner for IFJ24

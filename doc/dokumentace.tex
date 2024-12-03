@@ -74,7 +74,7 @@ The remaining parts of the project were developed by all members of the team sim
 Compiler uses double-traversal method of the source code based on "top-down" recursive parsing specified by
 LL(1) grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
 analysis. Lexical analyser (scanner) processes source code and tokenizes it based on deterministic finite automaton\footnote{See figure \ref{automaton}.}.
-During parsing, semantic analysis is performed and abstract syntax tree (AST) is constructed for internal representation.
+During parsing, \newline semantic analysis is performed and abstract syntax tree (AST) is constructed for internal representation.
 Compiler uses table of symbols, implemented as height-balanced binary search tree for keeping information about defined functions and variables.
 Three-address code is generated through recursive traversal of constructed AST. Compiler is written exclusively in \verb|C| language.
 

@@ -1,4 +1,6 @@
 /**
+ *         Implementation of IFJ24 imperative language compiler.
+ * 
  * @file   code_buffer.h
  * @brief  Header file for managing a dynamic buffer that stores stirngs.
  *         The buffer supports dynamic expansion and safe data pushing.

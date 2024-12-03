@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   parser.c
  * 
@@ -285,7 +285,7 @@ bool def_func_sec(symNode *functionEntry, char *funID){
     }
     
     // build AST node
-    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, ASTree.root, paramNames, paramNum, returnType, nullableRType); 
+    createDefFuncNode(funcAstNode, funID, symtableFun, bodyAstRoot, paramNames, paramNum, returnType, nullableRType); 
     connectToBlock(funcAstNode, ASTree.root);
     GT
     return true;
@@ -564,7 +564,7 @@ bool def_variable(astNode *block){
 
         varEntry = findInStack(&symtableStack, varName); // get the pointer to entry in symtable
 
-        createDefVarNode(varAstNode ,varName, exprNode, varEntry, block); // create the correct representation
+        createDefVarNode(varAstNode, varName, exprNode, varEntry); // create the correct representation
         connectToBlock(varAstNode, block); // connect it to create subtree (root will be the body of block)
 
     return true;
@@ -631,7 +631,7 @@ bool unused_decl(astNode *block){
             
 
     // create node with correct data and connect it into block
-    createUnusedNode(newUnused, expr, block);
+    createUnusedNode(newUnused, expr);
     connectToBlock(newUnused, block);
 
     return true;
@@ -889,7 +889,7 @@ bool return_(dataType expReturnType, bool nullableRetType, astNode *block, bool 
     }
     GT
 
-    createReturnNode(returnNode, exprNode, expReturnType, block, inMain);
+    createReturnNode(returnNode, exprNode, expReturnType, inMain);
     connectToBlock(returnNode, block);
     
     return true;
@@ -1079,7 +1079,7 @@ bool while_statement(dataType expRetType, bool nullableRType, astNode *block, bo
     allUsed(symtableStack.top->tbPtr->rootPtr); // perform semantic check for used variables in block while
     // create node with correct info and connect it to block
     pop(&symtableStack); // pop, so scopes are not disturbed
-    createWhileNode(whileAstNode, withNull, id_wout_null, condExprNode, bodyAstNode, whileSymTable, block);
+    createWhileNode(whileAstNode, withNull, id_wout_null, condExprNode, bodyAstNode, whileSymTable);
     connectToBlock(whileAstNode, block);
 
     return true;
@@ -1182,9 +1182,9 @@ bool if_statement(dataType expRetType, bool nullableRType, astNode *block, bool 
 
 
     // create nodes with correct information and connect it to block
-    createIfNode(ifNode, id_wout_null, symtableForIf, bodyIfNode, block);
-    createElseNode(elseNode, symtableForElse, bodyElseNode, block);
-    createIfElseNode(ifElseNode, condExrpNode, ifNode, elseNode, withNull, block);
+    createIfNode(ifNode, id_wout_null, symtableForIf, bodyIfNode);
+    createElseNode(elseNode, symtableForElse, bodyElseNode);
+    createIfElseNode(ifElseNode, condExrpNode, ifNode, elseNode, withNull);
 
     connectToBlock(ifElseNode, block);
 
@@ -1335,7 +1335,7 @@ void assignmentHandle(char *id, astNode *block){
     // set data and build node
     entry->data.used    = true;
     entry->data.changed = true;
-    createAssignNode(newAssNode, id, newAssExpNode, NULL, varDataType);
+    createAssignNode(newAssNode, id, newAssExpNode, varDataType);
     connectToBlock(newAssNode, block);
     
     return;
@@ -1406,7 +1406,7 @@ void funCallHandle(char *id, astNode *node, bool inExpr){
         if(!checkParameterNullability(entry->data.data.fData.paramNullable, exprParamsArr, paramCnt, &badIndex)){
             ERROR(ERR_SEM_FUN, "Parameter number %d in \"%s\" function call cannot be nullable.\n", badIndex, betterID);
         }
-        createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, NULL, exprParamsArr, paramCnt, entry->data.data.fData.nullableRType);
+        createFuncCallNode(node, betterID, entry->data.data.fData.returnType, builtinCall, entry, exprParamsArr, paramCnt, entry->data.data.fData.nullableRType);
 }
 
 /**

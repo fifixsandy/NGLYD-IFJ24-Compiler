@@ -1,4 +1,6 @@
 /**
+ *         Implementation of IFJ24 imperative language compiler.
+ * 
  * @file   code_generator.h
  * @brief  Header file for managing the code generation functions for buffer manipulation and operations.
  * 

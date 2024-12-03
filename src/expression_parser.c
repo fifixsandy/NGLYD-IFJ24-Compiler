@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   expression_parser.c
  * 
@@ -389,7 +389,7 @@ void reduce(exp_stack *estack){
     astNode *operator = exp_stack_pop(estack, false);
     astNode *left_elem = exp_stack_pop(estack, false);
 
-    createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type, NULL); 
+    createBinOpNode(operator, top_term, left_elem, right_elem, operation_item->type); 
     exp_stack_push(estack, operator, NO_TERMINAL, operation_item);
     return;
 
@@ -475,7 +475,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                         if(type == f64){                                                // when value of node is f64, it needs a check if it has 0s after decimal point
                             double fdata = symnode->data.data.vData.value.floatData;
                             if((int) fdata == fdata){                                   // can be converted into i32
-                                    createLiteralNode(node, f64, &fdata, NULL);
+                                    createLiteralNode(node, f64, &fdata);
                                     control->is_convertable = true;
                                     control->is_nullable = false;
                                     control->type = f64;
@@ -485,7 +485,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
                         else if(type == i32){
                             int idata = symnode->data.data.vData.value.intData; 
-                            createLiteralNode(node, i32, &idata, NULL);
+                            createLiteralNode(node, i32, &idata);
                             control->is_convertable = true;                             // every i32 can be converted to f64
                             control->is_nullable = false;
                             control->type = i32;
@@ -494,7 +494,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
                     }
                 }
                 
-                createVarNode(node, token.value, symnode->data.data.vData.type, symnode, NULL);
+                createVarNode(node, token.value, symnode->data.data.vData.type, symnode);
                 control->known_during_compile = false;
                 control->is_convertable = false;
                 control->type = symnode->data.data.vData.type;
@@ -522,7 +522,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_int :{
             int ivalue = atoi(token.value);
-            createLiteralNode(node, i32, &ivalue,  NULL);
+            createLiteralNode(node, i32, &ivalue);
             control->is_nullable = false;
             control->type = i32;
            
@@ -534,7 +534,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         case tokentype_exponentialnum:
         case tokentype_float :{
             double fvalue = strtod(token.value, NULL);
-            createLiteralNode(node, f64, &fvalue, NULL);
+            createLiteralNode(node, f64, &fvalue);
 
             control->is_nullable = false;
             control->type = f64;
@@ -551,7 +551,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         }
 
         case tokentype_kw_null :
-            createLiteralNode(node, null_, NULL, NULL );
+            createLiteralNode(node, null_, NULL);
             control->known_during_compile = true;
             control->is_nullable = true;
             control->type = null_;
@@ -561,7 +561,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
 
         case tokentype_zeroint :{
             int zero_int = 0;
-            createLiteralNode(node, i32, &zero_int, NULL);
+            createLiteralNode(node, i32, &zero_int);
             control->known_during_compile = true;
             control->is_nullable = false;
             control->type = i32;
@@ -571,7 +571,7 @@ symbol_number evaluate_given_token(exp_stack *estack, Token token, astNode *node
         }
 
         case tokentype_string:
-            createLiteralNode(node, string, token.value, NULL); 
+            createLiteralNode(node, string, token.value); 
             control->known_during_compile = true;
             control->is_convertable = false;
             control->is_nullable = false;

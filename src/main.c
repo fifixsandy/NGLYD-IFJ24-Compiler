@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   main.c
  * 
@@ -22,6 +22,8 @@ Token currentToken;
 
 int main(){
     ASTree.root = parser();
+    FILE *file = fopen("file.txt", "w");
+    printASTree(file, ASTree.root);
     generate_code(ASTree.root);
     delete_all_allocated();
 }

@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   expression_parser.h
  * 

@@ -1,5 +1,5 @@
 /**
- *         Implementace překladače imperativního jazyka IFJ24.
+ *         Implementation of IFJ24 imperative language compiler.
  * 
  * @file   ast.h
  * 
@@ -217,7 +217,6 @@ typedef struct AST {
 struct astNode {
 
     astNodeType     type;
-    struct astNode *parent;  // in which block it is
     struct astNode *next;   // next in block of code
 
     union{
@@ -245,19 +244,19 @@ struct astNode {
 
 /** Functions for creating and manipulating AST nodes and AST */
 
-void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW, astNode *parent);
-void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull, astNode *parent);
-void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body, astNode *parent);
-void createElseNode(astNode *dest, symtable *symtableIf, astNode *body, astNode *parent);
-void createAssignNode(astNode *dest, char *id, astNode *expression, astNode *parent, dataType dataT);
-void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry, astNode *parent);
-void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, astNode *parent, char **paranNames, int paramNum, dataType returnType, bool nullable);
-void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, astNode *parent, bool inMain);
-void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT, astNode *parent);
-void createLiteralNode(astNode *dest, dataType dataT, void *value, astNode *parent);
-void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry, astNode *parent);
-void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode *parent, astNode **exprParams, int paramNum, bool isNullable);
-void createUnusedNode(astNode *dest, astNode *expr, astNode *parent);
+void createWhileNode(astNode *dest, bool withNull, char *id_without_null, astNode *cond, astNode *body, symtable *symtableW);
+void createIfElseNode(astNode *dest, astNode *cond, astNode *ifPart, astNode *elsePart, bool withNull);
+void createIfNode(astNode *dest, char *id_without_null, symtable *symtable, astNode *body);
+void createElseNode(astNode *dest, symtable *symtableIf, astNode *body);
+void createAssignNode(astNode *dest, char *id, astNode *expression, dataType dataT);
+void createDefVarNode(astNode *dest, char *id, astNode *initExpr, symNode *symtableEntry);
+void createDefFuncNode(astNode *dest, char *id, symtable *symtableFun, astNode *body, char **paranNames, int paramNum, dataType returnType, bool nullable);
+void createReturnNode(astNode *dest, astNode *returnExp, dataType returnType, bool inMain);
+void createBinOpNode(astNode *dest, symbol_number op, astNode *left, astNode *right, dataType dataT);
+void createLiteralNode(astNode *dest, dataType dataT, void *value);
+void createVarNode(astNode *dest, char *id, dataType dataT, symNode *symtableEntry);
+void createFuncCallNode(astNode *dest, char *id, dataType retType, bool builtin, symNode *symtableEntry, astNode **exprParams, int paramNum, bool isNullable);
+void createUnusedNode(astNode *dest, astNode *expr);
 void createExpressionNode(astNode *dest, dataType type, astNode *exprRoot, bool isNullable, bool duringCompile);
 astNode *createRootNode();
 
