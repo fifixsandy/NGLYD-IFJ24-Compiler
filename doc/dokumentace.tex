@@ -61,7 +61,7 @@ Luckily, no problems were encountered and communication ran smoothly for the who
 
 \subsection{Task distribution}\label{sec:TASKS}
 \begin{itemize}
-
+    \itemsep-0.3em
     \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
     \item \textbf{Tibor Malega xmalegt00}\,--\,finite automaton design, lexical analysis
     \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols, testing, AST
@@ -77,6 +77,9 @@ analysis. Lexical analyser (scanner) processes source code and tokenizes it base
 During parsing, \newline semantic analysis is performed and abstract syntax tree (AST) is constructed for internal representation.
 Compiler uses table of symbols, implemented as height-balanced binary search tree for keeping information about defined functions and variables.
 Three-address code is generated through recursive traversal of constructed AST. Compiler is written exclusively in \verb|C| language.
+Test cases covering basic and advanced programs, both correct and incorrect were created. 
+Exit codes and output were compared to reference.
+Programs expecting input from user were automated as well.
 
 \section{Lexical analysis}\label{sec:LEX}
 \textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it into \textbf{tokens}.
@@ -86,6 +89,7 @@ More complicated tokens such as number, ID or string tokens have its own functio
 to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
 Each token contains: 
 \begin{itemize}
+    \itemsep-0.3em
 \item a \textbf{type}, represented by an element from an enumeration \verb|token_types|
 \item a \textbf{value} holding the content of the token, represented as a string of characters
 \item \textbf{line} and \textbf{column number} of the currently processed token
@@ -135,8 +139,8 @@ Recursive parser is implemented as a set of functions, each representing certain
 Functions validate sequence of tokens received by invoking scanner with function \verb|getToken()| (or macro \verb|GT| for 
 compactness). When another non-terminal is expected, function representing it is called.
 Each function returns \verb|0| when processing of the non-terminal was successful. If an error occurs, \verb|ERROR| is called\footnote{See section
-about errors \ref{sec:ERR}.}.
-\par
+about errors \ref{sec:ERR}.}. \newpage
+\par 
 In the first traversal, information about user-defined functions are collected. This includes:
 \begin{itemize}
 \item function IDs
@@ -277,7 +281,7 @@ Violating any of these rules results in a \textbf{semantic type error}.
 Data structure representing symbol tables in implementation is \textit{height-balanced binary search tree}.
 Functions for working with symbol tables, structs representing nodes or node data and functions for printing
 .dot visualisation of symbol table can be found in \verb|symtable.c| and \verb|symtable.h|. Recursive approach was adopted because the binary tree itself is recursive in nature.
-\par
+\par\newpage
 Compiler utilizes three distinct types of symbol tables: 
 \begin{itemize}
     \item symbol table for user-defined functions
