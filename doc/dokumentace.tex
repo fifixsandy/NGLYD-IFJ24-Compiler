@@ -6,7 +6,7 @@
     \usepackage{graphics}
     \usepackage{subcaption}
     \usepackage{hyperref}
-    \pdfminorversion=7
+    \usepackage{minted}
 
 
 \begin{document}
@@ -42,13 +42,41 @@
 % ITALICS \textit{TEXT}
 % KEBY HOCICO INE POTREBUJETE TAK TAG ME
 
-\section{Design and implementation of the compiler}
+
+
+\section{Teamwork}\label{sec:TEAM}
+Implementing a compiler is not an easy task, that is why the work has begun as soon as 
+the assignment was published. Firstly, tasks were distributed among all members based on 
+preferences.\par 
+Test submission was set as deadline for implementation. This deadline
+was successfully met with time left for fixing errors and further testing. Pair programming as well as 
+code reviews were practised. 
+
+\subsection{Communication}\label{sec:COMM}
+Discord was chosen as primary mean of communication. In specialised voice and text channels meetings were
+held at least once a week. Git was used as versioning system with remote repository hosted by team leader at
+GitHub. Using webhook, Discord bot for notifications about changes on remote repository was added.\par
+Email addresses and telephone numbers were shared among all members in case of an unexpected situation.
+Luckily, no problems were encountered and communication ran smoothly for the whole duration of the project.
+
+\subsection{Task distribution}\label{sec:TASKS}
+\begin{itemize}
+
+    \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
+    \item \textbf{Tibor Malega xmalegt00}\,--\,finite automaton design, lexical analysis
+    \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols, testing, AST
+    \item \textbf{Ján Skovajsa xskovaj00}\,--\,code generating, testing
+
+\end{itemize}
+The remaining parts of the project were developed by all members of the team simultaneously.
+
+\section{General information about implementation of compiler}
 Compiler uses double-traversal method of the source code based on "top-down" recursive parsing specified by
 LL(1) grammar\footnote{See figures \ref{ll1rules} and \ref{ll1table}.}. Expressions are processed using precedence syntactic
 analysis. Lexical analyser (scanner) processes source code and tokenizes it based on deterministic finite automaton\footnote{See figure \ref{automaton}.}.
 During parsing, semantic analysis is performed and abstract syntax tree (AST) is constructed for internal representation.
 Compiler uses table of symbols, implemented as height-balanced binary search tree for keeping information about defined functions and variables.
-Code is generated through recursive traversal of constructed AST.
+Three-address code is generated through recursive traversal of constructed AST. Compiler is written exclusively in \verb|C| language.
 
 \section{Lexical analysis}\label{sec:LEX}
 \textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it into \textbf{tokens}.
@@ -134,18 +162,18 @@ Further validation of their correctness is done in \verb|prog()|. If either of t
 is raised and program exits with error code \verb|2|.
 
 \subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
-The analysis involves processing expressions using a \textbf{precedence table}\footnote{See figure \ref{prectable}}, which defines the relationships between operands, arithmetic 
+The analysis involves processing expressions using a \textbf{precedence table}\footnote{See figure \ref{prectable}.}, which defines the relationships between operands, arithmetic 
 and relational operators. A \textbf{stack} is employed to facilitate this analysis. The functions responsible for the analysis are implemented 
 in the files \verb|expression_parser.c|, \verb|expression_parser.h|.
 \par
 At the start of the analysis, the symbol \verb|STOP| is added to the stack. Each subsequent element of the expression is retrieved using the \verb|getToken()| 
 function (the \verb|GT| macro). The retrieved token is then assigned a symbol that represents its \textbf{role} in the expression, determined by the 
 \verb|evaluate_given_token()| function. If the token represents a \textbf{variable}, a \textbf{constant}, or a \textbf{function call}, control is handed 
-over to the parser via the \verb|wasDefined()| or \verb|funCallHandle()| functions. However, if a token does not conform to the rules defined in the precedence 
+over to the parser via the \verb|wasDefined()| or \verb|funCallHandle()| functions\footnote{See section \ref{sec:funexp}.}. However, if a token does not conform to the rules defined in the precedence 
 table, it is assigned the symbol \verb|STOP|, signaling the termination of processing.
 \par
 Each terminal symbol from the input is placed on the stack according to the rules of precedence analysis 
-(via the \verb|shift()| function) and subsequently reduced to \textbf{non-terminal symbols} based on reduction rules (via the \verb|reduce()| function)\footnote{See figure \ref{Precedence_grammar}}. 
+(via the \verb|shift()| function) and subsequently reduced to \textbf{non-terminal symbols} based on reduction rules (via the \verb|reduce()| function)\footnote{See figure \ref{Precedence_grammar}.}. 
 If the precedence rules are violated, the program raises a \textbf{syntax error}.
 \par
 The analysis concludes when the terminal symbol in the input is \verb|STOP| and the topmost terminal symbol 
@@ -154,8 +182,13 @@ which is then passed to the parser. \textbf{The parser} must verify whether the 
 during precedence analysis is valid within the program context. If it is not, a \textbf{syntax error} is reported.
 
 \section{Semantic analysis}\label{sec:SEMANTIC}
-ADD TEXT
+Semantic actions are executed together with syntactic analysis, both in "top-down" and "bottom-up" parsers.
+Various functions, encapsulating these actions were created to make the code readable and structured. 
+
 \subsection{Semantic analysis in "top-down" parser}
+This subsection lists and briefly explains all semantic actions taken in "top-down" parser.
+By incorporating them directly into parser, there is no need for unnecessary and complicated traversals of AST.
+
 \subsubsection{Variables}
 When defining a variable, parser ensures no \textbf{redefinition} of already
 existing variable occurs within the same nested blocks. This is achieved by searching stack using
@@ -188,7 +221,8 @@ Function returns \verb|true|, if:
     \item all paths in \verb|if| and \verb|else| blocks return true
     \item all paths in \verb|while| block return true
 \end{itemize}
-When a different AST node is encountered, \verb|allReturns()| is called on the \verb|next| of the AST node.
+When a different AST node is encountered, \verb|allReturns()| is called on the \verb|next| of the AST node
+\footnote{\textsc{templatetypedef}. \textit{Stack overflow}. Online. Accessible through: \href{https://stackoverflow.com/questions/21945891/how-do-i-check-whether-all-code-paths-return-a-value}{stackoverflow.com/questions/21945891}. [cited 2024-12-03].}.
 \par
 \textbf{Type compatibility in returning expression} is checked with each \verb|return| statement. If it is not compatible with
 expected return type (from function definition), error is raised. Similarly, when a \verb|void| function returns an expression,
@@ -206,6 +240,10 @@ In statements without the nullable variable part, logical expression is expected
 condition has to be nullable.
 
 \subsection{Semantic analysis in "bottom-up" parser}
+The "bottom-up" semantic checks primarily focuse on the compatibility of types in expressions. 
+Analysis verifies whether the right types of operands are used together in operations. 
+When necessary, it performs retyping of these operands. 
+The semantic functions for this parser are defined in the \verb|expression.c| and \verb|parser.c| files.
 \subsubsection{Semantic Analysis of ID Symbols}
 In the \verb|evaluate_given_token()| function, when the parser evaluates a variable or a function call as valid, semantic 
 type-casting verification is performed. Castable variables (\textbf{constants} with values \textbf{known at compile-time}) 
@@ -213,6 +251,9 @@ are stored in the AST as \textbf{literal nodes} to facilitate easier manipulatio
 \par
 For elements of type \textbf{ID} (variables, function calls, or literals), the \verb|control| structure is populated during token 
 evaluation. This structure stores additional information necessary for further semantic checks of the given element.
+\par
+If not-defined function or variable is encountered, semantic error of undefined variable or function is envoked.
+
 
 \subsubsection{Semantic check for binary operations}
 When the reduction of binary operations is required, the \verb|semantic_check()| function is invoked to verify the compatibility 
@@ -311,7 +352,7 @@ The AST includes the following node types, each representing a specific syntacti
 \end{minipage}
 \newline
 \par
-Each node has distinct set of information needed for semantic analysis or code generation, implemented with
+Each node has distinct set of information needed for semantic analysis or code generating, implemented with
 \verb|struct|. Nodes may include pointer to a different nodes (e.g. condition in \textit{while} or \textit{if-else}, expression node in assign or return).
 All nodes in constructed AST are \verb|struct astNode|, which serves a purpose of general representation.
 Information included in \verb|astNode|:
@@ -326,15 +367,15 @@ with all information needed to be stored as parameters.
 \par Special node \verb|root| only includes a \verb|next| pointer, which serves as a connecting piece for
 bodies of functions, \textit{if-else} or \textit{while}. Global variable \verb|AST ASTree|, declared in \verb|main.c| is an
 encapsulation of the \verb|root| of the AST of the whole source code. It is the product of syntactic analysis.
-\par  Functions for printing .dot representation for visualisaton of AST are also implemented.
+\par  Functions for printing .dot representation for visualisaton of AST are also implemented\footnote{See figures \ref{program},\ref{AST_vis}. Inspiration from BuDDy library}.
 
-\section{Code generation}\label{sec:CODEGEN}
+\section{Generating of \textsc{IFJcode24}}\label{sec:CODEGEN}
 
-Code generation was performed by traversing the \textsc{Abstract Syntax Tree} (AST). This traversal involved an iterative approach for the overall structure and recursive processing for function bodies.
+Code generating was performed by traversing the \textsc{Abstract Syntax Tree} (AST). This traversal involved an iterative approach for the overall structure and recursive processing for function bodies.
 
 \subsection{Code Buffer}
 
-For code generation, an additional data structure, \verb|Buffer_ll|, was developed and implemented in the modules \verb|code_buffer.h| and \verb|code_buffer.c|. The \verb|Buffer_ll| structure is designed as a linked list where each node contains a pointer to a string, typically representing one line of code. Exceptions include cases like generating headers or built-in functions.
+For generating of code, an additional data structure, \verb|Buffer_ll|, was developed and implemented in the modules \verb|code_buffer.h| and \verb|code_buffer.c|. The \verb|Buffer_ll| structure is designed as a linked list where each node contains a pointer to a string, typically representing one line of code. Exceptions include cases like generating headers or built-in functions.
 
 The \verb|Buffer_ll| also incorporates:
 \begin{itemize}
@@ -345,7 +386,7 @@ The \verb|Buffer_ll| also incorporates:
 
 \subsection{Header and Built-In Functions}
 
-At the start of code generation, a header is generated. This includes:
+At the start of code generating, a header is generated. This includes:
 \begin{itemize}
     \item The declaration of the intermediate code header: \verb|.IFJcode24|.
     \item Global variable declarations for storing function return values.
@@ -373,18 +414,24 @@ For generating \textit{if} and \textit{while} statements, unique labels are requ
 
 \subsection{Expressions}
 
-Expressions are generated using a stack, which supports \verb|IFJcode24| instructions. This approach simplifies the processing of expressions derived from a binary tree. Expression generation involves:
+Expressions are generated using a stack, which supports \verb|IFJcode24| instructions. This approach simplifies the processing of expressions derived from a binary tree. Expression generating involves:
 \begin{itemize}
     \item Traversing the top-level binary tree for expression recursively using \textit{post-order} traversal.
     \item For binary operators, invoking the corresponding \verb|IFJcode24| instruction ensures the correct order of values is maintained in the stack.
 \end{itemize}
 
-This design ensures efficient and reliable processing of expressions during code generation.
+This design ensures efficient and reliable processing of expressions during code generating.
 
 
 \section{Error handling and memory management}\label{sec:ERR}
+When lexical, syntax or semantic error is detected during analysis, an error is raised using \verb|ERROR| or \verb|ERRORLEX| macros,
+defined in \verb|error.h|. Allocated memory is freed\footnote{This includes: main AST, tables of symbols and string values produced by scanner.}.
+Suitable error message along with line and column number is printed to \verb|stderr| and program exits with one of the error codes.
+\par This memory management, when encountering error, is the reason some elements are implemented as global variables. 
+Returning back to \verb|main()| function is not needed and process is simplified. 
 
-\section{\textsc{Funexp}}
+
+\section{\textsc{Funexp}}\label{sec:funexp}
 If a token of type \verb|id| is encountered as input during precedence syntactic analysis, it is first checked whether it represents a variable 
 or a constant. If not, it is verified whether it might be a function call. For a token to be considered a 
 function call, the next token must be of type \verb|lbracket| (left bracket) or \verb|dot| (period). In such
@@ -396,51 +443,15 @@ as a type \verb|ID|. This reuse efficiently and effectively handles function cal
 \footnote{See rule 29. in LL(1) grammar (\ref{ll1rules}).}.
 
 
-\section{Teamwork}\label{sec:TEAM}
-Implementing a compiler is not an easy task, that is why the work has begun as soon as 
-the assignment was published. Firstly, tasks were distributed among all members based on 
-preferences.\par 
-Test submission was set as deadline for implementation. This deadline
-was successfully met with time left for fixing errors and further testing. Pair programming as well as 
-code reviews were practised. 
-
-\subsection{Communication}\label{sec:COMM}
-Discord was chosen as primary mean of communication. In specialised voice and text channels meetings were
-held at least once a week. Git was used as versioning system with remote repository hosted by team leader at
-GitHub. Using webhook, Discord bot for notifications about changes on remote repository was added.\par
-Email addresses and telephone numbers were shared among all members in case of an unexpected situation.
-Luckily, no problems were encountered and communication ran smoothly for the whole duration of the project.
-
-\subsection{Task distribution}\label{sec:TASKS}
-\begin{itemize}
-
-    \item \textbf{Matúš Fignár xfignam00}\,--\,precedence table, "bottom-up" expression parsing
-    \item \textbf{Tibor Malega xmalegt00}\,--\,finite automaton design, lexical analysis
-    \item \textbf{Filip Novák xnovakf00}\,--\,"top-down" recursive parsing, table of symbols, testing, AST
-    \item \textbf{Ján Skovajsa xskovaj00}\,--\,code generation, testing
-
-\end{itemize}
-The remaining parts of the project were developed by all members of the team simultaneously.
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 \newpage
-\section{Attachments}
+\section*{Attachments}
+\addcontentsline{toc}{section}{Attachments}
 \begin{figure}[ht]
     \begin{center}
         \scalebox{0.2395}{\includegraphics{doc/automaton.pdf}}
-        \label{automaton}
+
     \end{center}
     \textbf{Legend:}
     \begin{itemize}
@@ -448,6 +459,7 @@ The remaining parts of the project were developed by all members of the team sim
     \item \verb|WHITE_S| = \{\verb|EOL|, \verb|EOF|, \verb|TAB|, \verb|SPACE|\}
     \end{itemize}
     \caption{Deterministic finite automaton for lexical analysis}
+    \label{automaton}
 \end{figure}
 
 \begin{figure}[ht]
@@ -515,7 +527,6 @@ The remaining parts of the project were developed by all members of the team sim
     \end{center}
 \end{figure}
 
-
 \begin{figure}[ht]
     \begin{center}
     \begin{enumerate}
@@ -547,8 +558,36 @@ The remaining parts of the project were developed by all members of the team sim
     \end{center}
 \end{figure}
 
+\begin{figure}[ht]
+    \begin{minted}{zig}
+        const ifj = @import("ifj24.zig");
+    
+        pub fn main() void {
+        
+            const number : i32 = 5;
+            
+            if(number == 9){
+                ifj.write(number);
+            }
+            else{
+                return;
+            }
+        
+        }
+        \end{minted}
+        \caption{Simple program in \textsc{Ifj24} language}
+        \label{program}
+    \end{figure}
+    
 
-\end{document}
+\begin{figure}[ht]
+    \begin{center}
+        \scalebox{0.6}{\includegraphics{doc/AST_visual.pdf}}
+        \caption{AST visualisation for program in figure \ref{program}}
+        \label{AST_vis}
+    \end{center}
+\end{figure}
+
 
 
 \end{document}
