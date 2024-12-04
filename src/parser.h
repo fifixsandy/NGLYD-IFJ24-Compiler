@@ -29,8 +29,9 @@
 #endif
 
 #define GT currentToken = getToken(); // encapsulating the assignment
-extern Token currentToken;
-extern AST   ASTree;
+
+extern Token currentToken; // last token produced by scanner
+extern AST   ASTree;       // AST for the whole program
 
 
 astNode *parser();

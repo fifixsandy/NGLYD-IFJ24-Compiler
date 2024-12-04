@@ -610,10 +610,10 @@ void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *
 
     if((operator->expr == NOT_EQUAL || operator->expr == EQUAL)){
         if(left_operand->control->type == null_ && right_operand->control->is_nullable == false){
-            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+            ERROR(ERR_SEM_TYPE, "Cannot compare null value with non null operand\n");
         }
         else if(right_operand->control->type == null_ && left_operand->control->is_nullable == false){
-            ERROR(ERR_SEM_TYPE, "Cannot compere null value with non null operand\n");
+            ERROR(ERR_SEM_TYPE, "Cannot compare null value with non null operand\n");
         }
         else{
             if(left_operand->control->type == null_ || right_operand->control->type == null_){
@@ -628,7 +628,7 @@ void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *
 
 
     if(left_operand->control->type == u8 || right_operand->control->type == u8 || left_operand->control->type == string || right_operand->control->type == string ){
-        ERROR(ERR_SEM_TYPE, ("Cannont use u8 type or string in arithmetical or logical operations\n"));
+        ERROR(ERR_SEM_TYPE, ("Cannot use []u8 type or string in arithmetical or logical operations\n"));
     }
     if((left_operand->control->is_nullable == true || right_operand->control->is_nullable == true) && operator->expr != NOT_EQUAL && operator->expr != EQUAL){
         ERROR(ERR_SEM_TYPE, "Operand with null cannot be used in expression other than == and != \n");
@@ -702,7 +702,7 @@ void semantic_check(stack_item *left_operand, stack_item *operator, stack_item *
 
     }
     else{
-        ERROR(ERR_SEM_TYPE, "types of operands in expresions don't match\n");
+        ERROR(ERR_SEM_TYPE, "Types of operands in expressions don't match\n");
     }
 
 }
