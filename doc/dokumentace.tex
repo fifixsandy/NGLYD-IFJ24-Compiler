@@ -106,10 +106,10 @@ column number before returning the token.
 \par
 \textbf{Number} lexems are recognized in \verb|getToken()| function by their first character and function \newline\verb|process_Number_Token()| 
 is called. This function reads through input and accepts characters as shown in the finite state automaton. 
-\textbf{whole}, \textbf{decimal}, \textbf{exponential} and \textbf{zero} lexemes are all processed in this function 
+\textbf{Whole}, \textbf{decimal}, \textbf{exponential} and \textbf{zero} lexemes are all processed in this function 
 and all lexical errors regarding those types are covered here. 
 \par
-\textbf{String} lezxemes are recognized by their first character '"' in getToken function. The lexeme is then processed 
+\textbf{String} lexemes are recognized by their first character '"' in \verb|getToken()| function. The lexeme is then processed 
 in \verb|process_String_Token()| function. This function reads and saves all characters until it reaches the second '"' 
 or ends in lexical error. All \textbf{escape sequences} in the string are directly transformed to what they represent 
 and inserted into the \textbf{token value}. \textbf{Hexadecimal numbers} in string are also transformed into their 
@@ -119,7 +119,7 @@ a \textbf{backslash} as the first character read. This function has a similar pu
 transform escape sequences nor hexadecimal numbers and is used purely for Multiline strings.
 \par
 Lexemes of type \textbf{ID} are processed in function \verb|process_ID_Token()| which is called as a \textbf{default case} 
-in switch located in getToken. Lexeme is processed in this function if none of the above token types criteria were met.
+in switch located in \verb|getToken()|. Lexeme is processed in this function if none of the above token types criteria were met.
 \par
 \textbf{Keywords} are initially recognized as IDs and are processed in the \textbf{ID function}. After the ID 
 is processed, a function for recognizing ID as a keyword is called and assigns it the correct keyword type as \textbf{element} from enumeration \verb|token_types|. List of keywords is stored
@@ -138,7 +138,7 @@ Recursive parser is implemented as a set of functions, each representing certain
 \verb|parser.c, parser.h|.
 Functions validate sequence of tokens received by invoking scanner with function \verb|getToken()| (or macro \verb|GT| for 
 compactness). When another non-terminal is expected, function representing it is called.
-Each function returns \verb|0| when processing of the non-terminal was successful. If an error occurs, \verb|ERROR| is called\footnote{See section
+Each function returns \verb|true| when processing of the non-terminal was successful. If an error occurs, \verb|ERROR| is called\footnote{See section
 about errors \ref{sec:ERR}.}. 
 \par 
 In the first traversal, information about user-defined functions are collected. This includes:
@@ -156,7 +156,7 @@ Second traversal performs regular parsing of the source code with validation of 
 AST.
 \par
 To support double traversal, function processing user-defined functions was split into two separate with 
-adjusted logic: \verb|def_func_first()| and \verb|def_func_sec()|. For readability and reusability, \verb|after_id|~
+adjusted logic: \verb|def_func_first()| and \verb|def_func_sec()|. For readability and reusability, \verb|after_id()|~
 function was split into two parts: \verb|funCallHandle()|, processing standalone function calls in source code (or function calls 
 in expressions) and \verb|assignmentHandle()|, processing assignment to variables.
 \par
@@ -248,7 +248,7 @@ The "bottom-up" semantic checks primarily focuse on the compatibility of types i
 Analysis verifies whether the right types of operands are used together in operations. 
 When necessary, it performs retyping of these operands. 
 The semantic functions for this parser are defined in the \verb|expression_parser.c| and \verb|parser.c| files.
-\subsubsection{Semantic Analysis of ID Symbols}
+\subsubsection{Semantic analysis of ID Symbols}
 In the \verb|evaluate_given_token()| function, when the parser evaluates a variable or a function call as valid, semantic 
 type-casting verification is performed. Castable variables (\textbf{constants} with values \textbf{known at compile-time}) 
 are stored in the AST as \textbf{literal nodes} to facilitate easier manipulation during subsequent semantic checks.
@@ -362,7 +362,7 @@ All nodes in constructed AST are \verb|struct astNode|, which serves a purpose o
 Information included in \verb|astNode|:
 \begin{itemize}
     \item type of node
-    \item pointer to the next statement in block (in case node itself represent a statement)
+    \item pointer to the next statement in block (in case node itself represents a statement)
     \item union of node representations (exact representation of a node, as mentioned before)
 \end{itemize}
 
@@ -371,7 +371,7 @@ with all information needed to be stored as parameters.
 \par Special node \verb|root| only includes a \verb|next| pointer, which serves as a connecting piece for
 bodies of functions, \textit{if-else} or \textit{while}. Global variable \verb|AST ASTree|, declared in \verb|main.c| is an
 encapsulation of the \verb|root| of the AST of the whole source code. It is the product of syntactic analysis.
-\par  Functions for printing .dot representation for visualisaton of AST are also implemented\footnote{See figures \ref{program},\ref{AST_vis}. Inspiration from BuDDy library}.
+\par  Functions for printing .dot representation for visualisaton of AST are also implemented\footnote{See figures \ref{program},\ref{AST_vis}. Inspiration from BuDDy library.}.
 
 \section{Generating of \textsc{IFJcode24}}\label{sec:CODEGEN}
 
