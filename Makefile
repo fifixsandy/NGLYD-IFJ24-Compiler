@@ -43,8 +43,8 @@ $(OBJFOLDER)/%.o: $(SRCFOLDER)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 doc: ./doc/dokumentace.tex
-	pdflatex ./doc/dokumentace.tex
-	pdflatex ./doc/dokumentace.tex
+	pdflatex -shell-escape ./doc/dokumentace.tex
+	pdflatex -shell-escape ./doc/dokumentace.tex
 
 # Clean up the compiled files and the executable
 clean:

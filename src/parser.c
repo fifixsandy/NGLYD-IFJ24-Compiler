@@ -377,6 +377,9 @@ bool params(int *paramNum, dataType **paramTypes, char ***paramNames, bool **par
 
         type(&nullable, &paramType) ;       
         // all information are known, set them accordingly
+        if(*paramNum >= MAX_PARAM_NUM){
+            ERROR(ERR_INTERNAL, "Too many parameters.\n");
+        }
         (*paramNames)[*paramNum]    = paramID;
         (*paramTypes)[*paramNum]    = paramType;
         (*paramNullable)[*paramNum] = nullable;
@@ -1207,7 +1210,9 @@ bool expr_params(astNode **params, int *paramCnt){
     }
     // RULE 24 <expr_params> -> expression <expr_params_n>
     else if(expression(expr)){ 
-
+        if(*paramCnt >= MAX_PARAM_NUM){
+            ERROR(ERR_INTERNAL, "Too many parameters.\n");
+        }
         params[*paramCnt] = expr;
         (*paramCnt)++;
 

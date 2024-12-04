@@ -82,12 +82,12 @@ Exit codes and output were compared to reference.
 Programs expecting input from user were automated as well.
 
 \section{Lexical analysis}\label{sec:LEX}
-\textbf{Lexical analysis} is mediated by a \textbf{scanner} which reads from standard input and processes it into \textbf{tokens}.
+\textbf{Lexical analysis} is mediated by a \textbf{scanner} (\verb|scanner.c, scanner.h|) which reads from standard input and processes it into \textbf{tokens}.
 It is entirely based on the \textbf{deterministic finite state automaton}. The lexical analysis starts in \verb|getToken()| function and works based on the 
-first character read from input and, according to it, continues to process the token. 
-More complicated tokens such as number, ID or string tokens have its own functions which process tokens of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls \verb|ERRORLEX|
-to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. 
-Each token contains: 
+first character read from input and, according to it, continues to process the lexeme. 
+More complicated lexemes such as number, ID or string lexemes have its own functions which process lexemes of those types. Additionally, the scanner indentifies \textbf{lexical errors} and calls \verb|ERRORLEX|
+to handle all errors with the appropriate error message and the \textbf{line} and \textbf{column number}. \newpage
+Each created token contains: 
 \begin{itemize}
     \itemsep-0.3em
 \item a \textbf{type}, represented by an element from an enumeration \verb|token_types|
@@ -98,18 +98,18 @@ The value of token is dynamically resized when necessary to ensure sufficient me
 into a linked list \verb|TokenValues|, which is used to correctly free all allocated memory for token values. 
 Every not empty value of a token is terminated with a null string at the end of processing the token. 
 Since scanner and specifically \verb|getToken()| function is called many times during the compiling process, line and column 
-number are defined as global variables in order to keep track of them even when the process of a single token ends. 
+number are defined as global variables in order to keep track of them even when the process of a single lexeme ends. 
 
 \subsection{Functionality}
-A \textbf{single character} tokens are processed directly in \verb|getToken()| function by assigning a type, line and 
+A \textbf{single character} lexemes are processed directly in \verb|getToken()| function by assigning a type, line and 
 column number before returning the token.
 \par
-\textbf{Number} tokens are recognized in \verb|getToken()| function by their first character and \verb|process_Number_Token()| 
-function is called. This function reads through input and accepts characters as shown in the finite state automaton. 
-\textbf{whole}, \textbf{decimal}, \textbf{exponential} and \textbf{zero} tokens are all processed in this function 
+\textbf{Number} lexems are recognized in \verb|getToken()| function by their first character and function \newline\verb|process_Number_Token()| 
+is called. This function reads through input and accepts characters as shown in the finite state automaton. 
+\textbf{whole}, \textbf{decimal}, \textbf{exponential} and \textbf{zero} lexemes are all processed in this function 
 and all lexical errors regarding those types are covered here. 
 \par
-\textbf{String} tokens are recognized by their first character '"' in getToken function. The token is then processed 
+\textbf{String} lezxemes are recognized by their first character '"' in getToken function. The lexeme is then processed 
 in \verb|process_String_Token()| function. This function reads and saves all characters until it reaches the second '"' 
 or ends in lexical error. All \textbf{escape sequences} in the string are directly transformed to what they represent 
 and inserted into the \textbf{token value}. \textbf{Hexadecimal numbers} in string are also transformed into their 
@@ -118,14 +118,14 @@ is handled in a separate \verb|process_Multiline_String_Token()| function. This 
 a \textbf{backslash} as the first character read. This function has a similar purpose to \verb|process_String_Token()| but it \textbf{doesn't} 
 transform escape sequences nor hexadecimal numbers and is used purely for Multiline strings.
 \par
-Tokens of type \textbf{ID} are processed in function \verb|process_ID_Token()| which is called as a \textbf{default case} 
-in switch located in getToken. Token is processed in this function if none of the above token types criteria were met.
+Lexemes of type \textbf{ID} are processed in function \verb|process_ID_Token()| which is called as a \textbf{default case} 
+in switch located in getToken. Lexeme is processed in this function if none of the above token types criteria were met.
 \par
-\textbf{Keyword} tokens are initially recognized as ID tokens and are processed in the \textbf{ID function}. After the ID token 
+\textbf{Keywords} are initially recognized as IDs and are processed in the \textbf{ID function}. After the ID 
 is processed, a function for recognizing ID as a keyword is called and assigns it the correct keyword type as \textbf{element} from enumeration \verb|token_types|. List of keywords is stored
 as an array of strings.
 \par
-\textbf{Import} type tokens are processed in \verb|process_Import()| function after getting a '@' as the first character. 
+\textbf{Import} type lexemes are processed in \verb|process_Import()| function after getting a '@' as the first character. 
 
 \section{Syntactic analysis}\label{sec:SYNTACTIC}
 Syntactic analysis is divided into two parts\,--\,expression parser and
@@ -139,7 +139,7 @@ Recursive parser is implemented as a set of functions, each representing certain
 Functions validate sequence of tokens received by invoking scanner with function \verb|getToken()| (or macro \verb|GT| for 
 compactness). When another non-terminal is expected, function representing it is called.
 Each function returns \verb|0| when processing of the non-terminal was successful. If an error occurs, \verb|ERROR| is called\footnote{See section
-about errors \ref{sec:ERR}.}. \newpage
+about errors \ref{sec:ERR}.}. 
 \par 
 In the first traversal, information about user-defined functions are collected. This includes:
 \begin{itemize}
@@ -168,7 +168,7 @@ is raised and program exits with error code \verb|2|.
 \subsection{"Bottom-up" syntactic analysis of expressions}\label{sec:EXPRPARSER}
 The analysis involves processing expressions using a \textbf{precedence table}\footnote{See figure \ref{prectable}.}, which defines the relationships between operands, arithmetic 
 and relational operators. A \textbf{stack} is employed to facilitate this analysis. The functions responsible for the analysis are implemented 
-in the files \verb|expression_parser.c|, \verb|expression_parser.h|.
+in \verb|expression_parser.c|, \verb|expression_parser.h|.
 \par
 At the start of the analysis, the symbol \verb|STOP| is added to the stack. Each subsequent element of the expression is retrieved using the \verb|getToken()| 
 function (the \verb|GT| macro). The retrieved token is then assigned a symbol that represents its \textbf{role} in the expression, determined by the 
@@ -247,7 +247,7 @@ condition has to be nullable.
 The "bottom-up" semantic checks primarily focuse on the compatibility of types in expressions. 
 Analysis verifies whether the right types of operands are used together in operations. 
 When necessary, it performs retyping of these operands. 
-The semantic functions for this parser are defined in the \verb|expression.c| and \verb|parser.c| files.
+The semantic functions for this parser are defined in the \verb|expression_parser.c| and \verb|parser.c| files.
 \subsubsection{Semantic Analysis of ID Symbols}
 In the \verb|evaluate_given_token()| function, when the parser evaluates a variable or a function call as valid, semantic 
 type-casting verification is performed. Castable variables (\textbf{constants} with values \textbf{known at compile-time}) 
@@ -281,7 +281,7 @@ Violating any of these rules results in a \textbf{semantic type error}.
 Data structure representing symbol tables in implementation is \textit{height-balanced binary search tree}.
 Functions for working with symbol tables, structs representing nodes or node data and functions for printing
 .dot visualisation of symbol table can be found in \verb|symtable.c| and \verb|symtable.h|. Recursive approach was adopted because the binary tree itself is recursive in nature.
-\par\newpage
+\par
 Compiler utilizes three distinct types of symbol tables: 
 \begin{itemize}
     \item symbol table for user-defined functions
@@ -309,7 +309,7 @@ Scopes, in which defined variable is accessible are implemented using stack of s
 Stack is implemented as singly linked list. Function \verb|findInStack()| is used to traverse symbol table stack and look for nodes with given key.
 If no entry is found in the whole stack, \verb|NULL| is returned.
 
-
+\newpage
 \section{Abstract syntax tree}\label{sec:AST}
 Abstract syntax tree (found in \verb|ast.c, ast.h|) is implemented as acyclic graph with specialised node types to represent
 different components of the source code.
@@ -375,7 +375,8 @@ encapsulation of the \verb|root| of the AST of the whole source code. It is the 
 
 \section{Generating of \textsc{IFJcode24}}\label{sec:CODEGEN}
 
-Code generating was performed by traversing the \textsc{Abstract Syntax Tree} (AST). This traversal involved an iterative approach for the overall structure and recursive processing for function bodies.
+Code generating was performed by traversing the \textsc{Abstract Syntax Tree} (AST). This traversal involved an iterative approach for the overall structure and recursive processing for function bodies. Implementation
+can be found in \verb|code_generator.c, code_generator.h|.
 
 \subsection{Code Buffer}
 
@@ -411,6 +412,7 @@ Function bodies are generated recursively by traversing the \textsc{AST} and pro
 
 For generating \textit{if} and \textit{while} statements, unique labels are required throughout the generated code. To achieve this:
 \begin{itemize}
+    \itemsep-0.5em
     \item A static variable, \verb|count|, is used to store the number of generated labels.
     \item Before generating a new statement, \verb|count| is incremented.
     \item A special function is called to generate a unique and relevant label for the statement.
@@ -445,6 +447,8 @@ This approach was chosen due to the existence of the \verb|funCallHandle()| func
 uses to process function calls in the program. A \textbf{valid} function call is further processed in the expression 
 as a type \verb|ID|. This reuse efficiently and effectively handles function calls as well as expressions as function call parameters
 \footnote{See rule 29. in LL(1) grammar (\ref{ll1rules}).}.
+Maximum number of parameters for user defined functions is set to 300 (\verb|MAX_PARAM_NUM| in \verb|symtable.h|). This number should be more than enough and 
+reallocation is therefore not needed.
 
 
 
