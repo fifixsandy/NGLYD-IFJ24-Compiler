@@ -22,8 +22,6 @@ Token currentToken;
 
 int main(){
     ASTree.root = parser();
-    FILE *file = fopen("file.txt", "w");
-    printASTree(file, ASTree.root);
     generate_code(ASTree.root);
     delete_all_allocated();
 }
