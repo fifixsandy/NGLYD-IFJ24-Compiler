@@ -2,7 +2,7 @@
 ## Description
 In this repository you can find implementation of a compiler for a subset of Zig programming language - IFJ24.
 It has been developed by team NGLYD as a semestral project for [IFJ (Formal languages and compilers)](https://www.fit.vut.cz/study/course/280931/.cs) course on Brno University of Technology, Faculty of information technologies.
----
+
 Compiler consists of following parts:
 
 - lexical analyser based on *finite automaton*
